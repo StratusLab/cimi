@@ -1,4 +1,4 @@
-(ns eu.stratuslab.authn.vm-rest.utils
+(ns eu.stratuslab.cimi.utils
   (:import [java.util UUID]))
 
 (defn create-uuid

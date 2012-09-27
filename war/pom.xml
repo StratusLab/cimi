@@ -135,8 +135,8 @@
             <phase>compile</phase>
             <configuration>
               <namespaces>
-                <namespace>eu.stratuslab.authn.vm-rest.servlet</namespace>
-                <namespace>eu.stratuslab.authn.vm-rest.main</namespace>
+                <namespace>eu.stratuslab.cimi.servlet</namespace>
+                <namespace>eu.stratuslab.cimi.main</namespace>
               </namespaces>
               <compileDeclaredNamespaceOnly>true</compileDeclaredNamespaceOnly>
             </configuration>
@@ -162,7 +162,7 @@
         <artifactId>exec-maven-plugin</artifactId>
 	
 	<configuration>
-	  <mainClass>eu.stratuslab.authn.vm_rest.main</mainClass>
+	  <mainClass>eu.stratuslab.cimi.main</mainClass>
           <classpathScope>test</classpathScope>
 	</configuration>
 	

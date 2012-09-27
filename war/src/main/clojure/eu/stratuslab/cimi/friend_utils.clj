@@ -1,4 +1,4 @@
-(ns eu.stratuslab.authn.vm-rest.friend-utils
+(ns eu.stratuslab.cimi.friend-utils
   "Utilities for setting up the friend authentication framework."
   (:require [noir.server :as server]
             [cemerick.friend :as friend]

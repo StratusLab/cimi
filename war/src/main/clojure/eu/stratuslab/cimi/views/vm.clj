@@ -1,9 +1,9 @@
-(ns eu.stratuslab.authn.vm-rest.views.vm
+(ns eu.stratuslab.cimi.views.vm
   (:require [noir.core :refer [defpage]]
             [noir.response :as resp]
             [clojure.tools.logging :as log]
             [net.cgrand.enlive-html :refer [deftemplate content]]
-            [eu.stratuslab.authn.vm-rest.vmm.dummy :as dummy]))
+            [eu.stratuslab.cimi.vmm.dummy :as dummy]))
 
 ;;
 ;; All resources are available to authenticated users only.  The

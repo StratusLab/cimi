@@ -1,4 +1,4 @@
-(ns eu.stratuslab.authn.vm-rest.vmm.one
+(ns eu.stratuslab.cimi.vmm.one
   (:require [clojure.tools.logging :as log]))
 
 (defn create

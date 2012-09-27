@@ -1,4 +1,4 @@
-(ns eu.stratuslab.authn.vm-rest.servlet
+(ns eu.stratuslab.cimi.servlet
   "The servlet created by this class dynamically loads the actual
    implementation to avoid having to AOT compile the complete
    application.  The namespace and methods are hardcoded here, but
@@ -15,7 +15,7 @@
 
 (defn -init-void [this]
   (log/info "loading servlet implementation and initializing state")
-  (let [n (symbol "eu.stratuslab.authn.vm-rest.server")
+  (let [n (symbol "eu.stratuslab.cimi.server")
         servlet-handler (symbol "servlet-handler")
         init-fn (symbol "init")]
     (require n)

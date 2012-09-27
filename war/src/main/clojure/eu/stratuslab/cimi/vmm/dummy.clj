@@ -1,7 +1,7 @@
-(ns eu.stratuslab.authn.vm-rest.vmm.dummy
+(ns eu.stratuslab.cimi.vmm.dummy
   "Dummy implementation of a virtual machine manager backend.  This is
    used to test and verify the application logic."
-  (:require [eu.stratuslab.authn.vm-rest.utils :as utils]
+  (:require [eu.stratuslab.cimi.utils :as utils]
             [clojure.tools.logging :as log]))
 
 (def vm-database (atom {}))

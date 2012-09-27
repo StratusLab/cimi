@@ -1,4 +1,4 @@
-(ns eu.stratuslab.authn.vm-rest.views.status
+(ns eu.stratuslab.cimi.views.status
   (:require [noir.core :refer [defpage pre-route]]
             [noir.response :as resp]
             [cemerick.friend :as friend]
