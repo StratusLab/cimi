@@ -1,9 +1,12 @@
 (ns eu.stratuslab.cimi.utils.filter
-  (:require [com.lithinos.amotoen.core :refer [pegs lpegs]]))
+  (:require [com.lithinos.amotoen.core :refer [pegs lpegs]]
+            [clojure.string :as str]))
 
 (def ^:const digits "0123456789")
 
 (def ^:const letters "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_")
+
+(def ^:const alphanum (str digits letters))
 
 (def ^:const operators ["<" "<=" "=" ">=" ">" "!="])
 
@@ -16,6 +19,37 @@
 (defn digits-to-string [digit & others]
   true)
 
+(defn concat-chars [v]
+  (if v (apply str v)))
+
+(defn ignore [_] "")
+
+(defn value-as-string [v]
+  (apply str (map #(first (vals %)) (flatten  v))))
+
+(defn process-string-value [v]
+  (let [v (if (seq? v) (flatten v) [v])]
+    (apply str v)))
+
+(defn process-string [v]
+  (first (vals (first (filter map? v)))))
+
+(defn process-op [v]
+  (let [op (apply str v)]
+    (if (= op "!=")
+      "not="
+      op)))
+
+(defn process-propexpr [v]
+  (println v)
+  (let [args (filter map? v)
+        _ (println args)
+        [attr op value] (map #(first (vals %)) args)]
+    (format "(%s (get properties \"%s\") \"%s\")" op attr value)))
+
+(defn take-value [v]
+  v)
+
 ;;
 ;; There are a couple of ambiguities in the standard for the filter
 ;; syntax.  First, an attribute name can appear next to a literal
@@ -25,29 +59,50 @@
 ;;
 (def filter-grammar
      {
-      :Filter [:AndExpr (list '* [(literal "or") :Filter]) :$]
-      :AndExpr [:Comp (list '* [(literal "and") :AndExpr])]
-      :Comp '(| [:Attribute :Op :Value]
-                [:Value :Op :Attribute]
-                [\( :Filter \)])
+      :Filter [:AndExpr '(* [:or :AndExpr])]
+      :AndExpr [:Comp '(* [:and :AndExpr])]
+      :Comp '(| [\( :Filter \)]
+                [:Attribute :Op :Value]
+                [:Value :Op :Attribute])
       :Op (apply list '| (map pegs operators))
       :Attribute '(| :Name :PropExpr)
       
       :Value '(| :IntValue :StringValue :BoolValue)
 
       :IntValue [:digit '(* :digit)]
-      :StringValue '(| :double-quoted-string :single-quoted-string)
-      :BoolValue (list '|
-                       (literal "true")
-                       (literal "false"))
+      :StringValue '(| [\" :double-quoted-value \"]
+                       [\' :single-quoted-value \'])
+      :BoolValue (list 'f concat-chars (list '| (pegs "true") (pegs "false")))
 
       :Name [:alpha '(* :alphanum)]
 
-      :PropExpr [(literal "property[") :StringValue (literal "]") :Op :StringValue]
+      :PropExpr [:prefix :StringValue :suffix]
 
-      :double-quoted-string [\" '(| [\\ \"] [\\ \\] (% \")) \"]
-      :single-quoted-string [\' '(| [\\ \'] [\\ \\] (% \')) \']
-      
+      :double-quoted-value '(* (| [\\ \"] [\\ \\] (% \")))
+      :single-quoted-value '(* (| [\\ \'] [\\ \\] (% \')))
+
       :digit (lpegs '| digits)
       :alpha (lpegs '| letters)
-      :alphanum '(| :alpha :digit)})
+      :alphanum (lpegs '| alphanum)
+
+      :or (pegs "or")
+      :and (pegs "and")
+      :prefix (pegs "property[")
+      :suffix (pegs "]")
+      })
+
+(def to-clj-fns
+     {:IntValue value-as-string
+      :BoolValue take-value
+      :StringValue process-string
+      :Name value-as-string
+      :Op process-op
+      :PropExpr process-propexpr
+      :single-quoted-value process-string-value
+      :double-quoted-value process-string-value})
+
+(def test-fns
+     {:or ignore
+      :and ignore
+      :prefix ignore
+      :suffix ignore})
