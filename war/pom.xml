@@ -33,10 +33,6 @@
       <artifactId>clj-http</artifactId>
     </dependency>    
     <dependency>
-      <groupId>com.lithinos</groupId>
-      <artifactId>amotoen</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.xmlrpc</groupId>
       <artifactId>xmlrpc-client</artifactId>
     </dependency>
