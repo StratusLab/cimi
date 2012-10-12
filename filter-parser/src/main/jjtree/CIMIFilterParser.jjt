@@ -27,6 +27,8 @@ PARSER_BEGIN(CIMIFilterParser)
 
 package eu.stratuslab.cimi;
 
+import org.joda.time.DateTime;
+
 public class CIMIFilterParser { 
 
 }
@@ -44,10 +46,6 @@ TOKEN : /* Operators and punctuation. */
   |
   <RPAREN: ")">
   |
-  <OR: "|">
-  |
-  <AND: "&">
-  |
   <GT: ">">
   |
   <LT: "<">
@@ -59,6 +57,10 @@ TOKEN : /* Operators and punctuation. */
   <GE: ">=">
   |
   <LE: "<=">
+  |
+  <OR: "or">
+  |
+  <AND: "and">
 }
 
 TOKEN : /* Literals. */
@@ -68,6 +70,8 @@ TOKEN : /* Literals. */
   < FALSE: "false">
   |
   < DECIMAL_LITERAL: (["0"-"9"])+ >
+  |
+  < DATE_LITERAL: (["0"-"9", "T", "Z", ":", ".", "+", "-"])+ >
   |
   < SINGLE_QUOTED_STRING: "'" ( "\\'" | "\\\\" | (~["'"]) )* "'" >
   |
@@ -107,22 +111,67 @@ void endOfFile() #void :
 /*************************************************************************
 Literals.  
 *************************************************************************/
-void stringValue() #StringValue :
+String stringValue() #StringValue :
 { Token t; }
 {
-  ( t=<SINGLE_QUOTED_STRING> | t=<DOUBLE_QUOTED_STRING> )
+  ( t=<SINGLE_QUOTED_STRING> )
+  {
+    String v = t.image.replaceAll("\\\\(\\\\|')", "$1");
+    v = v.substring(1,v.length()-1);
+    jjtThis.jjtSetValue(v);
+    return v;
+  }
+  |
+  ( t=<DOUBLE_QUOTED_STRING> )
+  {
+    String s = t.image.replaceAll("\\\\(\\\\|\")", "$1");
+    s = s.substring(1,s.length()-1);
+    jjtThis.jjtSetValue(s);
+    return s;
+  }
 }
 
-void intValue() #IntValue :
+Integer intValue() #IntValue :
 { Token t; }
 {
   ( t=<DECIMAL_LITERAL> )
+  {
+    try {
+      Integer i = Integer.valueOf(t.image);
+      jjtThis.jjtSetValue(i);
+      return i;
+    } catch (NumberFormatException consumed) {
+      String msg = String.format("invalid integer at [%d, %d]", t.beginLine, t.beginColumn);
+      throw new ParseException(msg);
+    }
+  }
 }
 
-void boolValue() #BoolValue :
+DateTime dateValue() #DateValue :
+{ Token t; }
+{
+  ( t=<DATE_LITERAL> )
+  {
+    try {
+      DateTime instant = DateTime.parse(t.image);
+      jjtThis.jjtSetValue(instant);
+      return instant;
+    } catch (Exception e) {
+      String msg = String.format("invalid date/time at [%d, %d]", t.beginLine, t.beginColumn);
+      throw new ParseException(msg);      
+    }
+  }
+}
+
+Boolean boolValue() #BoolValue :
 { Token t; }
 {
   ( t=<TRUE> | t=<FALSE> )
+  {
+    Boolean b = Boolean.valueOf(t.image);
+    jjtThis.jjtSetValue(b);
+    return b;
+  }
 }
 
 /*************************************************************************
@@ -139,26 +188,26 @@ ASTFilter filter() #Filter :
   }
 }
 
-void logicalOrExpression() #void : 
+void logicalOrExpression() #logicalOrExpression(>1) : 
 { }
 {
   logicalAndExpression() ( <OR> logicalAndExpression() #logicalOrExpression(2) )*
 }
 
-void logicalAndExpression() #void : 
+void logicalAndExpression() #logicalAndExpression(>1) : 
 { }
 {
   comp() ( <AND> comp() #logicalAndExpression(2) )*
 }
 
-void comp() #void : 
+void comp() #Comp(>1) : 
 { }
 {
-  attribute() op() value()
+  ( attribute() op() value() )
   |
-  value() op() attribute()
+  ( value() op() attribute() )
   |
-  <LPAREN> filter() <RPAREN>
+  ( <LPAREN> logicalOrExpression() <RPAREN> )
 }
 
 void attribute() #void :
@@ -170,27 +219,40 @@ void attribute() #void :
 }
 
 void attributeName() #AttributeName :
-{ }
+{ Token t; }
 {
-  <IDENTIFIER>
+  t=<IDENTIFIER>
+  {
+    jjtThis.jjtSetValue(t.image);
+  }
+
 }
 
 void propExpr() #PropExpr :
-{ }
+{ String s;}
 {
-  <PROPERTY_PREFIX> stringValue() <PROPERTY_SUFFIX>
+  <PROPERTY_PREFIX> s=stringValue() <PROPERTY_SUFFIX>
+  {
+    jjtThis.jjtSetValue(s);
+  }
 }
 
-void op() #void :
-{ }
+void op() #Op :
+{ Token t; }
 {
-  <LT> | <LE> | <EQ> | <GE> | <GT> | <NE>
+  (t=<LT> | t=<LE> | t=<EQ> | t=<GE> | t=<GT> | t=<NE>)
+  {
+    String s = t.image;
+    jjtThis.jjtSetValue("!=".equals(s) ? "not=" : s);
+  }
 }
 
 void value() #void :
 { }
 {
   intValue()
+  |
+  dateValue()
   |
   stringValue()
   |
