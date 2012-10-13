@@ -9,7 +9,7 @@
             [eu.stratuslab.cimi.views.ring-request-map :as debug]))
 
 (defroutes main-routes
-  (GET "/" [base-url] (cloud-entry-point/retrieve base-url))
-  (GET "/debug" {:as req} (debug/retrieve req))
+  (GET "/" {:keys [base-url]} (cloud-entry-point/retrieve base-url))
+  (GET "/debug" {:as req} {:body req})
   (route/resources "/")
   (route/not-found "Page not found"))

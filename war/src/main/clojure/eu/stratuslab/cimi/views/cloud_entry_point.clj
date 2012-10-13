@@ -13,5 +13,6 @@
 
 (defn retrieve
   [baseURI]
-  {:resourceURI resource-uri
-   :baseURI baseURI})
+  {:body 
+   {:resourceURI resource-uri
+    :baseURI baseURI}})

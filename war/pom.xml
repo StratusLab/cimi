@@ -45,6 +45,10 @@
       <artifactId>compojure</artifactId>
     </dependency>
     <dependency>
+      <groupId>ring-middleware-format</groupId>
+      <artifactId>ring-middleware-format</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.cemerick</groupId>
       <artifactId>friend</artifactId>
     </dependency>
