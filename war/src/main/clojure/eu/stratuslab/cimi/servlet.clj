@@ -25,7 +25,7 @@
      {:service-fn (ring/make-service-method (ns-resolve (the-ns n) servlet-handler))
       :init-fn (ns-resolve (the-ns n) init-fn)})
     (log/info "initializing the servlet"))
-  ((-> this .state deref :init-fn) "/vm"))
+  ((-> this .state deref :init-fn) "/cimi"))
 
 (defn -destroy-void
   [this]

@@ -1,16 +1,15 @@
 (ns eu.stratuslab.cimi.friend-utils
   "Utilities for setting up the friend authentication framework."
-  (:require [noir.server :as server]
-            [cemerick.friend :as friend]
-            [cemerick.friend [workflows :as workflows]
-             [credentials :as creds]]
-            [clojure.tools.logging :as log]))
+  (:require [cemerick.friend :as friend]
+            [cemerick.friend
+             [workflows :as workflows]
+             [credentials :as creds]]))
 
 ;; FIXME!
 (defn login-failure-handler [& opts]
   "login failed")
 
-(defn configure-friend [f & [context-path]]
+#_(defn configure-friend [f & [context-path]]
   (let [context-path (or context-path "")
         login-uri (str context-path "/login")
         landing-uri (str context-path "/")]

@@ -1,16 +1,15 @@
 (ns eu.stratuslab.cimi.main
-  "Entry point for running the VM REST API as a standalone process."
-  (:require [noir.server :as noir])
+  "Entry point for running the StratusLab CIMI interface as a
+  standalone process."
+  (:require [ring.adapter.jetty :refer [run-jetty]])
   (:gen-class))
 
 (defn -main [& m]
-  (let [mode (keyword (or (first m) :dev))
-        port (Integer. (get (System/getenv) "PORT" "8080"))
-        server-options {:mode mode :ns 'eu.stratuslab.cimi.main}]
-
-    (let [n (symbol "eu.stratuslab.cimi.server")
-          init (symbol "init")]
-      (require n)
-      (let [init-fn (ns-resolve (the-ns n) init)]
-        (init-fn "")
-        (noir/start port server-options)))))
+  (let [n (symbol "eu.stratuslab.cimi.server")
+        init (symbol "init")
+        servlet-handler (symbol "servlet-handler")]
+    (require n)
+    (let [init-fn (ns-resolve (the-ns n) init)
+          handler (ns-resolve (the-ns n) servlet-handler)]
+      (init-fn "")
+      (run-jetty handler {:port 8080 :join? false}))))

@@ -37,8 +37,12 @@
       <artifactId>xmlrpc-client</artifactId>
     </dependency>
     <dependency>
-      <groupId>noir</groupId>
-      <artifactId>noir</artifactId>
+      <groupId>ring</groupId>
+      <artifactId>ring</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>compojure</groupId>
+      <artifactId>compojure</artifactId>
     </dependency>
     <dependency>
       <groupId>com.cemerick</groupId>
@@ -90,7 +94,7 @@
 	    </scanTargetPattern>
 	  </scanTargetPatterns>
 	  <webApp>
-	    <contextPath>/vmm</contextPath>
+	    <contextPath>/cimi</contextPath>
 	  </webApp>
 	</configuration>
       </plugin>
