@@ -49,6 +49,14 @@
       <artifactId>ring-middleware-format</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.clojars.paul</groupId>
+      <artifactId>clj-hector</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cassandra</groupId>
+      <artifactId>cassandra-all</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.cemerick</groupId>
       <artifactId>friend</artifactId>
     </dependency>
