@@ -6,6 +6,9 @@
             [clj-hector.serialize :as serial])
   (:import [java.util UUID]))
 
+
+(def ^:const keyspace-name "stratuslab_cimi")
+
 ;;
 ;; Default connection parameters if none are specified
 ;; explicitly in the function calls.  These are
@@ -122,3 +125,26 @@
                                 [(keyword (str "properties-" pk)) pv]))]
       (merge m flat-props))
     m))
+
+(defmacro defn-db
+  "This macro defines a function that wraps code accessing a cassandra
+  database. Two function signatures are defined: one as given in the
+  declaration and a second with an explicit keyspace prepended to the
+  parameters list.  The first declaration calls the second with the
+  default keyspace.  The body of the function is wrapped in a
+  try/catch that logs the error and re-throws the exception."
+  [name & decls]
+  (let [[docs v] (split-with (complement vector?) decls)
+        params (first v)
+        ks-params (vec (cons 'ks params))
+        body (rest v)
+        msg (str "error in " name)]
+    `(defn ~name ~@docs
+       (~params
+        (~name (ks keyspace-name) ~@params))
+       (~ks-params
+        (try
+          ~@body
+          (catch Exception e#
+            (error ~msg "--" (.getMessage e#))
+            (throw e#)))))))
