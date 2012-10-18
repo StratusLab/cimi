@@ -11,10 +11,17 @@
 
 (deftest check-create-machine-configuration
   (with-test-keyspace-opts ks cf-name column-metadata
-    (let [data {:id "c1.xlarge" :description "myconfig" :cpu 10 :property-x "value" :property-y "value"}
+    (let [data {:id "c1.xlarge"
+                :description "myconfig"
+                :cpu 10
+                :property-x "value"
+                :property-y "value"
+                :cpuArch "x86_64"}
           row-id (create ks data)]
-      (println row-id)
-      (pprint (retrieve ks row-id)))))
-
-
-
+      (is row-id)
+      (let [retrieved (retrieve ks row-id)
+            compare (dissoc retrieved :created :updated)]
+        (is (= data compare)))
+      (delete ks row-id)
+      (let [retrieved (retrieve ks row-id)]
+        (is (= {} retrieved))))))

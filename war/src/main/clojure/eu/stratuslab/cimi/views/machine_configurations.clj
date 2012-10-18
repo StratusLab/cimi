@@ -66,6 +66,4 @@
         rows (apply get-rows-cql-query ks query {:n-serializer :keyword})
         valid-rows (remove utils/ghost? rows)
         full-map (apply merge valid-rows)]
-    (if (nil? full-map)
-      {}
-      full-map)))
+    (or full-map {})))
