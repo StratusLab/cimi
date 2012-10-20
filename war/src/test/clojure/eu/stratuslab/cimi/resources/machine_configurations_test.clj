@@ -1,5 +1,5 @@
-(ns eu.stratuslab.cimi.views.machine-configurations-test
-  (:require [eu.stratuslab.cimi.views.machine-configurations :refer :all]
+(ns eu.stratuslab.cimi.resources.machine-configurations-test
+  (:require [eu.stratuslab.cimi.resources.machine-configurations :refer :all]
             [eu.stratuslab.cimi.cassandra-test-utils :refer :all]
             [clojure.test :refer :all]
             [clojure.pprint :refer [pprint]]

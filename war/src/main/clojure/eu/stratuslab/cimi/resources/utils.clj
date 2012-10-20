@@ -1,4 +1,4 @@
-(ns eu.stratuslab.cimi.views.utils
+(ns eu.stratuslab.cimi.resources.utils
   "General utilities for dealing with resources in Cassandra."
   (:require [clojure.tools.logging :refer [debug info warn error]]
             [clojure.walk :as walk]

@@ -1,4 +1,4 @@
-(ns eu.stratuslab.cimi.views.cloud-entry-point
+(ns eu.stratuslab.cimi.resources.cloud-entry-point
   "Root resource for CIMI, providing information about the locations
   of other resources within the server."
   (:require [clojure.tools.logging :refer [info warn]]

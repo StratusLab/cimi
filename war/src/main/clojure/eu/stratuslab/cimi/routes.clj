@@ -5,7 +5,7 @@
             [compojure.route :as route]
             [compojure.handler :as handler]
             [compojure.response :as response]
-            [eu.stratuslab.cimi.views.cloud-entry-point :as cloud-entry-point]))
+            [eu.stratuslab.cimi.resources.cloud-entry-point :as cloud-entry-point]))
 
 (defroutes main-routes
   (GET "/" {:keys [base-url]} (cloud-entry-point/retrieve base-url))

@@ -1,8 +1,8 @@
-(ns eu.stratuslab.cimi.views.machine-configurations
+(ns eu.stratuslab.cimi.resources.machine-configurations
   "Utilities for managing the CRUD features for machine configurations."
   (:import [java.util UUID]
            [java.nio ByteBuffer])
-  (:require [eu.stratuslab.cimi.views.utils :as utils]
+  (:require [eu.stratuslab.cimi.resources.utils :as utils]
             [clojure.pprint :refer [pprint]]
             [clojure.tools.logging :refer [debug info error]]
             [clj-hector.core :refer [put get-rows get-rows-cql-query delete-rows]]

@@ -1,5 +1,6 @@
-(ns eu.stratuslab.cimi.xml-formatter
-  "Perform serialization of a standard clojure resource map into XML."
+(ns eu.stratuslab.cimi.serial.external
+  "Serialize clojure representations of CIMI resources into external
+  representations, namely JSON and XML."
   (:require [clojure.string :as str])
   (:import [javax.xml.stream XMLOutputFactory XMLStreamWriter]
            [java.io StringWriter]
@@ -49,7 +50,7 @@
   [xml-writer data]
   (doall (map (fn [[k v]] (serialize-element xml-writer (name k) v)) data)))
 
-(defn serialize
+(defn resource-as-xml
   [{:keys [resourceURI] :as data}]
   (let [factory (xml-output-factory)]
     (with-open [writer (StringWriter.)]

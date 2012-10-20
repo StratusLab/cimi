@@ -1,5 +1,5 @@
-(ns eu.stratuslab.cimi.views.utils-test
-  (:require [eu.stratuslab.cimi.views.utils :refer :all]
+(ns eu.stratuslab.cimi.resources.utils-test
+  (:require [eu.stratuslab.cimi.resources.utils :refer :all]
             [clojure.test :refer :all]
             [clojure.pprint :refer [pprint]]))
 

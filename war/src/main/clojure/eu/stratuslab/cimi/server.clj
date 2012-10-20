@@ -9,7 +9,7 @@
             [cheshire.custom :as json]
             [eu.stratuslab.cimi.routes :as routes]
             [eu.stratuslab.cimi.friend-utils :as friend-utils]
-            [eu.stratuslab.cimi.xml-formatter :as cimi-xml]))
+            [eu.stratuslab.cimi.serial.external :as serial]))
 
 ;; Authentication must also be configured.
 ;; NOTE: the context path is hardcoded!
@@ -72,7 +72,7 @@
                                                  "application/clojure")
                                    (make-encoder wrap-yaml-in-html
                                                  "text/html")
-                                   (make-encoder cimi-xml/serialize
+                                   (make-encoder serial/resource-as-xml
                                                  "application/xml")
                                    default]
                                                 :charset "utf-8"))

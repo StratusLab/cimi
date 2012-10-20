@@ -1,5 +1,5 @@
 (ns eu.stratuslab.cimi.cassandra-test-utils
-  (:require [eu.stratuslab.cimi.views.utils :refer :all]
+  (:require [eu.stratuslab.cimi.resources.utils :refer :all]
             [clojure.test :refer :all]
             [clojure.tools.logging :refer [debug info warn error]]
             [clj-hector.core :refer [cluster keyspace]]
