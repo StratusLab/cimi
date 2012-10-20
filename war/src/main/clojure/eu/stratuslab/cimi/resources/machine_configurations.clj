@@ -8,18 +8,17 @@
             [clj-hector.core :refer [put get-rows get-rows-cql-query delete-rows]]
             [clj-hector.serialize :as serial]))
 
-(def ^:const ks-name "stratuslab_cimi")
-
 (def ^:const cf-name "machine_templates")
 
-(def ^:const column-metadata [{:name "id" :validator :utf-8}
-                              {:name "name" :validator :utf-8}
-                              {:name "description" :validator :utf-8}
-                              {:name "created" :validator :long}
-                              {:name "updated" :validator :long}
-                              {:name "cpu" :validator :long}
-                              {:name "memory" :validator :long}
-                              {:name "cpuArch" :validator :utf-8}])
+(def ^:const column-metadata
+     [{:name "id" :validator :utf-8}
+      {:name "name" :validator :utf-8}
+      {:name "description" :validator :utf-8}
+      {:name "created" :validator :long}
+      {:name "updated" :validator :long}
+      {:name "cpu" :validator :long}
+      {:name "memory" :validator :long}
+      {:name "cpuArch" :validator :utf-8}])
 
 (def serialize-values
      (utils/create-serialize-values-function
