@@ -4,7 +4,7 @@
             [clojure.walk :as walk]
             [clj-hector.core :refer [cluster keyspace]]
             [clj-hector.serialize :as serial])
-  (:import [java.util UUID]))
+  (:import [java.util UUID Date]))
 
 (def ^:const keyspace-name "stratuslab_cimi")
 
@@ -64,7 +64,7 @@
   existing? is nil/false, then the created attribute it set;
   otherwise, it is removed from the request."
   [existing? data]
-  (let [now (System/currentTimeMillis)]
+  (let [now (Date.)]
     (if existing?
       (dissoc (assoc data :updated now) :created)
       (assoc data :updated now :created now))))

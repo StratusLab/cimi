@@ -17,30 +17,51 @@
 
 (def serialize-values (common/create-serialize-values-function common/common-resource-attrs))
 
+(defn- insert-data
+  [ks data]
+  (put ks resource-name resource-name data
+       :n-serializer :keyword :v-serializer :type-inferring))
+
+(defn- get-data
+  [ks baseURI]
+  (let [rows (get-rows ks resource-name [resource-name]
+                       :n-serializer :keyword)]
+    (-> (first rows)
+        (serialize-values)
+        (get resource-name)
+        (merge {:resourceURI resource-uri
+                :baseURI baseURI}))))
+
+(utils/defn-db initialize
+  "Initialize the cloud entry point.  Calling this when the record
+  already exists will cause the name, description, create time, and
+  update time to be reset.  Returns the inserted data."
+  []
+  (let [data (utils/set-time-attributes
+              nil
+              {:id resource-name
+               :name "StratusLab Cloud"
+               :description "StratusLab Cloud"})]
+    (insert-data ks data)
+    data))
+
 (utils/defn-db retrieve
   "Returns the data associated with the CloudEntryPoint.  There is
   exactly one such entry in the database.  The row id of this entry is
-  the same as the resource name 'CloudEntryPoint'."
+  the same as the resource name 'CloudEntryPoint'.  The baseURI must
+  be passed as this is taken from the ring request."
   [baseURI]
-  (let [rows (get-rows ks resource-name [resource-name] :n-serializer :keyword)
-        row (first rows)
-        row (serialize-values row)
-        data (get row resource-name)
-        data (merge {:resourceURI resource-uri
-                     :baseURI baseURI}
-                    data)]
-    data))
+  (get-data ks baseURI))
 
 (utils/defn-db update
   "Update the cloud entry point attributes.  Note that only the common
-  resource attributes can be updated.  The active resources cannot be
-  changed."
+  resource attributes can be updated.  The active resource collections
+  cannot be changed.  For correct behavior, the cloud entry point must
+  have been previously initialized.  Returns nil."
   [data]
-  (debug "entering cloud-entry-point/update" data)
-  (let [data (utils/set-time-attributes nil data)] ;; FIXME: only set :created when necessary
-    (put ks resource-name resource-name data :n-serializer :keyword :v-serializer :type-inferring)
-    resource-name))
+  (let [data (utils/set-time-attributes true data)]
+    (insert-data ks data)))
 
 (defroutes resource-routes
-  (GET "/" {:keys [base-url]} (retrieve base-url))
-  (PUT "/" {:as data} (update data)))
+  (GET "/" {:keys [base-url]} {:body (retrieve base-url)})
+  (PUT "/" {:as data} (update data) {}))

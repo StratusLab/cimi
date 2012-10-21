@@ -14,28 +14,23 @@
 
 (deftest check-cloud-entry-point-lifecycle
   (with-test-keyspace-opts ks resource-name common/common-resource-attrs
-    (let [data {:id resource-name
-                :name "Test StratusLab Deployment"
-                :description "Test StratusLab Deployment Desc."
-                :property-x "value"
-                :property-y "value"}
-          row-id (update ks data)]
-      (is row-id)
+    (let [initial-data (initialize ks)]
+      (is (:id initial-data))
+      (is (:name initial-data))
+      (is (:description initial-data))
+      (is (:created initial-data))
+      (is (:updated initial-data))
       (let [retrieved (retrieve ks baseURI)
-            compare (-> retrieved
-                        (dissoc :created :updated :baseURI :resourceURI))]
-        (is (:created retrieved))
-        (is (:updated retrieved))
-        (is (= baseURI (:baseURI retrieved)))
-        (is (= resource-uri (:resourceURI retrieved)))
-        (is (= data compare)))
-      (let [updated (assoc data :property-x "othervalue")]
-        (update ks updated)
-        (let [retrieved (retrieve ks baseURI)
-              compare (-> retrieved
-                          (dissoc :created :updated :baseURI :resourceURI))]
-          (is (:created retrieved))
-          (is (:updated retrieved))
+            compare (dissoc retrieved :baseURI :resourceURI)]
           (is (= baseURI (:baseURI retrieved)))
           (is (= resource-uri (:resourceURI retrieved)))
-          (is (= updated compare)))))))
+          (is (= initial-data compare)))
+        (let [updated (assoc initial-data :property-x "othervalue")]
+          (update ks updated)
+          (let [retrieved (retrieve ks baseURI)
+                compare (dissoc retrieved :updated :baseURI :resourceURI)]
+            (is (:updated retrieved))
+            (is (not= (:updated initial-data) (:updated retrieved)))
+            (is (= baseURI (:baseURI retrieved)))
+            (is (= resource-uri (:resourceURI retrieved)))
+            (is (= (dissoc updated :updated) compare)))))))
