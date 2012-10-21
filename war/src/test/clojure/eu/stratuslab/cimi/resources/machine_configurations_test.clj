@@ -10,7 +10,7 @@
 (use-fixtures :each start-daemon-fixture)
 
 (deftest check-create-machine-configuration
-  (with-test-keyspace-opts ks cf-name column-metadata
+  (with-test-keyspace-opts ks resource-name resource-attrs
     (let [data {:id "c1.xlarge"
                 :description "myconfig"
                 :cpu 10

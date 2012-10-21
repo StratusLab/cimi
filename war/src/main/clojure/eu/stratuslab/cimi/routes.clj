@@ -5,10 +5,10 @@
             [compojure.route :as route]
             [compojure.handler :as handler]
             [compojure.response :as response]
-            [eu.stratuslab.cimi.resources.cloud-entry-point :as cloud-entry-point]))
+            [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]))
 
 (defroutes main-routes
-  (GET "/" {:keys [base-url]} (cloud-entry-point/retrieve base-url))
+  cep/resource-routes
   (GET "/debug" {:as req} {:body req})
   (route/resources "/")
   (route/not-found "Page not found"))

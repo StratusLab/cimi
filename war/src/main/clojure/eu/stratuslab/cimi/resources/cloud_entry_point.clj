@@ -1,7 +1,8 @@
 (ns eu.stratuslab.cimi.resources.cloud-entry-point
   "Root resource for CIMI, providing information about the locations
   of other resources within the server."
-  (:require [eu.stratuslab.cimi.resources.utils :as utils]
+  (:require [eu.stratuslab.cimi.resources.common :as common]
+            [eu.stratuslab.cimi.resources.utils :as utils]
             [clojure.tools.logging :refer [debug info warn]]
             [compojure.core :refer :all]
             [compojure.route :as route]
@@ -10,24 +11,13 @@
             [clj-hector.core :refer [put get-rows get-rows-cql-query delete-rows]]
             [clj-hector.serialize :as serial]))
 
-(def resource-name "CloudEntryPoint")
+(def ^:const resource-name "CloudEntryPoint")
 
-(def resource-uri "http://www.dmtf.org/cimi/CloudEntryPoint")
+(def ^:const resource-uri "http://www.dmtf.org/cimi/CloudEntryPoint")
 
 (def ^:const cf-name "cloud_entry_point")
 
-(def ^:const column-metadata
-     [{:name "id" :validator :utf-8}
-      {:name "name" :validator :utf-8}
-      {:name "description" :validator :utf-8}
-      {:name "created" :validator :long}
-      {:name "updated" :validator :long}])
-
-(def serialize-values
-     (utils/create-serialize-values-function
-      {:created :date
-       :updated :date
-       :default :string}))
+(def serialize-values (common/create-serialize-values-function common/common-resource-attrs))
 
 (utils/defn-db retrieve
   "Returns the data associated with the CloudEntryPoint.  There is
@@ -59,3 +49,7 @@
   database."
   [data]
   (update ks nil data))
+
+(defroutes resource-routes
+  (GET "/" {:keys [base-url]} (retrieve base-url))
+  (PUT "/" {:as data} (update data)))

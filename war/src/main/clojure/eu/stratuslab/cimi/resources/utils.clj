@@ -6,7 +6,6 @@
             [clj-hector.serialize :as serial])
   (:import [java.util UUID]))
 
-
 (def ^:const keyspace-name "stratuslab_cimi")
 
 ;;
@@ -59,32 +58,6 @@
   (let [columns (first (vals row))
         values (vals columns)]
     (every? nil? values)))
-
-(defn create-value-serializer-function
-  "Creates a value serializer function from a map.  The map should
-  contain the column keyword as a key with the serializer keyword as
-  the value.  The serializer given with the :default key will be used
-  for any column that doesn't have an explicit serializer.  The input
-  is a vector of a key value pair.  If the value is not a byte array,
-  then it is returned unmodified."
-  [m]
-  (fn [[key bytes]]
-    (if (instance? (Class/forName "[B") bytes)
-      (if-let [serializer-name (or (get m key) (:default m))]
-        (let [s (serial/serializer serializer-name)]
-          [key (.fromBytes s bytes)])
-        [key bytes])
-      [key bytes])))
-
-(defn create-serialize-values-function
-  "Returns a function that recursively transforms all map values from
-  byte arrays to clojure values using a serializer based on the key.
-  The map provides the mapping between the column name (as a keyword)
-  and the serializer (also as a keyword)."
-  [serializer-map]
-  (let [f (create-value-serializer-function serializer-map)]
-    (fn [data]
-      (walk/postwalk (fn [x] (if (map? x) (into {} (map f x)) x)) data))))
 
 (defn set-time-attributes
   "Sets the updated and created attributes in the request.  If the
