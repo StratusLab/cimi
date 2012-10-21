@@ -60,11 +60,6 @@
       <groupId>com.cemerick</groupId>
       <artifactId>friend</artifactId>
     </dependency>
-    <dependency>
-      <groupId>enlive</groupId>
-      <artifactId>enlive</artifactId>
-      <version>1.0.1</version>
-    </dependency>
     
     <dependency>
       <groupId>reply</groupId>
