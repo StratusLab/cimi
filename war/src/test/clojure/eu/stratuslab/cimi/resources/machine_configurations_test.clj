@@ -9,7 +9,7 @@
 
 (use-fixtures :each start-daemon-fixture)
 
-(deftest check-create-machine-configuration
+(deftest check-machine-configuration-lifecycle
   (with-test-keyspace-opts ks resource-name resource-attrs
     (let [data {:id "c1.xlarge"
                 :description "myconfig"
@@ -21,7 +21,16 @@
       (is row-id)
       (let [retrieved (retrieve ks row-id)
             compare (dissoc retrieved :created :updated)]
+        (is (:created retrieved))
+        (is (:updated retrieved))
         (is (= data compare)))
+      (let [updated (assoc data :property-x "othervalue")]
+        (update ks row-id updated)
+        (let [retrieved (retrieve ks row-id)
+              compare (dissoc retrieved :created :updated)]
+          (is (:created retrieved))
+          (is (:updated retrieved))
+          (is (= updated compare))))
       (delete ks row-id)
       (let [retrieved (retrieve ks row-id)]
         (is (= {} retrieved))))))

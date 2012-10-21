@@ -15,8 +15,6 @@
 
 (def ^:const resource-uri "http://www.dmtf.org/cimi/CloudEntryPoint")
 
-(def ^:const cf-name "cloud_entry_point")
-
 (def serialize-values (common/create-serialize-values-function common/common-resource-attrs))
 
 (utils/defn-db retrieve
@@ -24,14 +22,14 @@
   exactly one such entry in the database.  The row id of this entry is
   the same as the resource name 'CloudEntryPoint'."
   [baseURI]
-  (let [rows (get-rows ks cf-name [resource-name] :n-serializer :keyword)
+  (let [rows (get-rows ks resource-name [resource-name] :n-serializer :keyword)
         row (first rows)
         row (serialize-values row)
         data (get row resource-name)
         data (merge {:resourceURI resource-uri
                      :baseURI baseURI}
                     data)]
-    {:body data}))
+    data))
 
 (utils/defn-db update
   "Update the cloud entry point attributes.  Note that only the common
@@ -39,16 +37,9 @@
   changed."
   [data]
   (debug "entering cloud-entry-point/update" data)
-  (let [data (utils/set-time-attributes resource-name data)]
-    (put ks cf-name resource-name data :n-serializer :keyword :v-serializer :type-inferring)
+  (let [data (utils/set-time-attributes nil data)] ;; FIXME: only set :created when necessary
+    (put ks resource-name resource-name data :n-serializer :keyword :v-serializer :type-inferring)
     resource-name))
-
-(utils/defn-db create
-  "Create a new cloud entry point in the database.  This should only
-  be called through external utilities used to initialize the
-  database."
-  [data]
-  (update ks nil data))
 
 (defroutes resource-routes
   (GET "/" {:keys [base-url]} (retrieve base-url))
