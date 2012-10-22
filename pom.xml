@@ -115,7 +115,7 @@ StratusLab services.
       <dependency>
         <groupId>org.apache.cassandra</groupId>
         <artifactId>cassandra-all</artifactId>
-        <version>1.1.5</version>
+        <version>1.1.6</version>
       </dependency>
       <dependency>
         <groupId>com.cemerick</groupId>
