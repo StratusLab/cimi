@@ -1,6 +1,8 @@
 (ns eu.stratuslab.cimi.main
   "Entry point for running the StratusLab CIMI interface as a
-  standalone process."
+  standalone process.  This dynamically loads the CIMI implementation
+  to avoid having to AOT compile the entire service.  The
+  implementation names are hardcoded."
   (:require [ring.adapter.jetty :refer [run-jetty]])
   (:gen-class))
 
