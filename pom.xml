@@ -29,6 +29,7 @@ StratusLab services.
   <modules>
     <module>war</module>
     <module>filter-parser</module>
+    <module>authn</module>
   </modules>
 
   <issueManagement>
@@ -74,7 +75,7 @@ StratusLab services.
       <dependency>
         <groupId>org.clojure</groupId>
         <artifactId>clojure</artifactId>
-        <version>1.4.0</version>
+        <version>1.5.0-RC16</version>
       </dependency>
       <dependency>
         <groupId>org.clojure</groupId>
@@ -120,7 +121,7 @@ StratusLab services.
       <dependency>
         <groupId>com.cemerick</groupId>
         <artifactId>friend</artifactId>
-        <version>0.1.2</version>
+        <version>0.1.3</version>
         <exclusions>
           <exclusion>
             <groupId>ring</groupId>
@@ -143,6 +144,18 @@ StratusLab services.
         <artifactId>joda-time</artifactId>
         <version>2.1</version>
       </dependency>
+
+      <dependency>
+        <groupId>kerodon</groupId>
+        <artifactId>kerodon</artifactId>
+        <version>0.1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.clojars.pntblnk</groupId>
+        <artifactId>clj-ldap</artifactId>
+        <version>0.0.9</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 

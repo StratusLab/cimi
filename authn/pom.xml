@@ -1,0 +1,160 @@
+<project 
+    xmlns="http://maven.apache.org/POM/4.0.0" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>authn-jar</artifactId>
+  <name>StratusLab CIMI Authn (JAR)</name>
+
+  <packaging>jar</packaging>
+
+  <parent>
+    <groupId>eu.stratuslab.cimi</groupId>
+    <artifactId>cimi</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>clojure</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>tools.logging</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>clj-http</groupId>
+      <artifactId>clj-http</artifactId>
+    </dependency>    
+    <dependency>
+      <groupId>ring</groupId>
+      <artifactId>ring</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>compojure</groupId>
+      <artifactId>compojure</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.cemerick</groupId>
+      <artifactId>friend</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>kerodon</groupId>
+      <artifactId>kerodon</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.clojars.pntblnk</groupId>
+      <artifactId>clj-ldap</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>reply</groupId>
+      <artifactId>reply</artifactId>
+      <version>0.1.0-beta11</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>jline</groupId>
+      <artifactId>jline</artifactId>
+      <version>2.8</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>codox</groupId>
+      <artifactId>codox.core</artifactId>
+      <version>0.6.4</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+
+    <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <id>codox script</id>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <phase>process-resources</phase>
+
+            <configuration>
+              <resources>
+                <resource>
+                  <filtering>true</filtering>
+                  <directory>src/main/scripts</directory>
+                  <includes>
+                    <include>run_codox.clj</include>
+                  </includes>
+                </resource>
+              </resources>
+              <outputDirectory>target</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.theoryinpractise</groupId>
+        <artifactId>clojure-maven-plugin</artifactId>
+
+        <configuration>
+          <!-- Uncomment and modify to run only some tests.
+          <testScript>src/main/scripts/test-runner.clj</testScript>
+          -->
+        </configuration>
+
+        <executions>
+
+          <execution>
+            <id>syntax-check</id>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+            <phase>compile</phase>
+            <configuration>
+              <temporaryOutputDirectory>true</temporaryOutputDirectory>
+              <sourceDirectories>
+                <sourceDirectory>src/main/clojure</sourceDirectory>
+              </sourceDirectories>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>run-codox</id>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <phase>package</phase>
+            <configuration>
+              <script>${basedir}/target/run_codox.clj</script>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>run-tests</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <phase>test</phase>
+            <configuration>
+              <temporaryOutputDirectory>true</temporaryOutputDirectory>
+            </configuration>
+          </execution>
+
+        </executions>
+
+      </plugin>
+
+    </plugins>
+
+  </build>
+
+</project>
