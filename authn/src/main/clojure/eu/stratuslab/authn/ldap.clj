@@ -1,5 +1,7 @@
 (ns eu.stratuslab.authn.ldap
-  (:require [clj-ldap.client :as ldap]))
+  "Functions to allow Friend authentication against an LDAP database."
+  (:require [clojure.string :as str]
+    [clj-ldap.client :as ldap]))
 
 (def ldap-params {:host {:address "localhost" :port 10389}
                   :bind-dn "cn=admin,o=cloud"
@@ -28,11 +30,17 @@
   "create LDAP filter for user records from values for
    :user-object-class, :user-id-attr, and :username"
   [{:keys [user-object-class user-id-attr username]}]
-  (format filter-template user-object-class user-id-attr username))
+  (if (not-any? str/blank? [user-object-class user-id-attr username])
+    (format filter-template user-object-class user-id-attr username)
+    (throw (IllegalArgumentException. "user-object-class user-id-attr and username cannot be blank"))))
 
 (defn role-filter
+  "create LDAP filter for roles for a particular user DN from 
+   values for :role-object-class, :role-member-attr, and :user-dn"
   [{:keys [role-object-class role-member-attr user-dn]}]
-  (format filter-template role-object-class role-member-attr user-dn))
+  (if (not-any? str/blank? [role-object-class role-member-attr user-dn])
+    (format filter-template role-object-class role-member-attr user-dn)
+    (throw (IllegalArgumentException. "role-object-class role-member-attr and user-dn cannot be blank"))))
 
 (defn user-dn
   [pool {:keys [user-base-dn] :as params}]
@@ -59,9 +67,9 @@
 (defn authn-map
   [pool params]
   (->>
-    (user-dn ldap-pool params)
+    (user-dn pool params)
     (assoc params :user-dn)
-    (roles ldap-pool)
+    (roles pool)
     (conj :eu.stratuslab.authn.handler/user)))
 
 (defn ldap-credential-fn

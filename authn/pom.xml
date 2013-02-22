@@ -66,6 +66,22 @@
       <artifactId>codox.core</artifactId>
       <version>0.6.4</version>
     </dependency>
+    
+    <dependency>
+      <groupId>org.apache.directory.server</groupId>
+      <artifactId>apacheds-all</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>fs</groupId>
+      <artifactId>fs</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <scope>test</scope>
+    </dependency>
 
   </dependencies>
 
