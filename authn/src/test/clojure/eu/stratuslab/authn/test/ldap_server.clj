@@ -1,7 +1,10 @@
 (ns eu.stratuslab.authn.test.ldap-server
   "An embedded ldap server for unit testing.  This file comes from 
    https://github.com/pauldorman/clj-ldap and is licensed under the
-   Eclipse Public License."
+   Eclipse Public License.
+
+   This file has been modified from the original to include the 
+   users and groups organizational units."
   (:require [clj-ldap.client :as ldap]
             [fs.core :as fs])
   (:import [org.apache.directory.server.core
@@ -47,7 +50,7 @@
                         (.setEnableSSL true))
         ldap-server (doto (LdapServer.)
                       (.setDirectoryService directory-service)
-                      (.setAllowAnonymousAccess true)
+                      ;; remove-want user checking (.setAllowAnonymousAccess true)
                       (.setTransports
                        (into-array [ldap-transport ssl-transport])))]
     (-> (add-partition! directory-service
@@ -66,6 +69,12 @@
   (ldap/add connection "ou=people,dc=alienscience,dc=org,dc=uk"
             {:objectClass ["top" "organizationalUnit"]
              :ou "people"})
+  (ldap/add connection "ou=users,dc=alienscience,dc=org,dc=uk"
+            {:objectClass ["top" "organizationalUnit"]
+             :ou "users"})
+  (ldap/add connection "ou=groups,dc=alienscience,dc=org,dc=uk"
+            {:objectClass ["top" "organizationalUnit"]
+             :ou "groups"})
   (ldap/add connection
             "cn=Saul Hazledine,ou=people,dc=alienscience,dc=org,dc=uk"
             {:objectClass ["top" "Person"]
