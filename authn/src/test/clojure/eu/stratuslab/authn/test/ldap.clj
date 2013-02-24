@@ -7,65 +7,7 @@
     [eu.stratuslab.authn.test.ldap-server :as server])
   (:import [com.unboundid.ldap.sdk LDAPException]))
 
-(deftest correct-user-filter
-  (let [params {:user-object-class "a"
-                :user-id-attr "b"
-                :username "c"}
-        result (user-filter params)]
-    (is (= result "(&(objectClass=a)(b=c))"))))
-
-(deftest correct-role-filter
-  (let [params {:role-object-class "a"
-                :role-member-attr "b"
-                :user-dn "c"}
-        result (role-filter params)]
-    (is (= result "(&(objectClass=a)(b=c))"))))
-
-(deftest invalid-user-filter-combinations
-  (let [values ["a" "b" "c" "" " " nil]]
-    (doall
-      (for [a values b values c values]
-        (let [params {:user-object-class a
-                      :user-id-attr b
-                      :username c}]
-          (if (some str/blank? [a b c])
-            (is (thrown? IllegalArgumentException (user-filter params)))))))))
-
-(deftest missing-user-filter-parameters
-  (let [values ["a" nil]]
-    (doall
-      (for [a values b values c values]
-        (let [params {:user-object-class a
-                      :user-id-attr b
-                      :username c}
-              params (into {} (filter (fn [[k v]] v) params))]
-          (if (not= 3 (count params))
-            (is (thrown? IllegalArgumentException (user-filter params)))
-            (is (user-filter params))))))))
-
-(deftest invalid-role-filter-combinations
-  (let [values ["a" "b" "c" "" " " nil]]
-    (doall
-      (for [a values b values c values]
-        (let [params {:role-object-class a
-                      :role-member-attr b
-                      :user-dn c}]
-          (if (some str/blank? [a b c])
-            (is (thrown? IllegalArgumentException (role-filter params)))))))))
-
-(deftest missing-role-filter-parameters
-  (let [values ["a" nil]]
-    (doall
-      (for [a values b values c values]
-        (let [params {:role-object-class a
-                      :role-member-attr b
-                      :user-dn c}
-              params (into {} (filter (fn [[k v]] v) params))]
-          (if (not= 3 (count params))
-            (is (thrown? IllegalArgumentException (user-filter params)))
-            (is (role-filter params))))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; UTILITY FUNCTIONS
 
 ;; Tests are run over a variety of connection types
 (def port* 1389)
@@ -87,7 +29,7 @@
 (def ^:dynamic *side-effects* nil)
 
 ;; Result of a successful write
-(def success*      {:code 0 :name "success"})
+(def success* {:code 0 :name "success"})
 
 ;; People to test with
 (def person-a*
@@ -232,6 +174,66 @@
 
 (use-fixtures :each test-data)
 (use-fixtures :once test-server)
+
+;; TESTS BEGIN HERE!
+
+(deftest correct-user-filter
+  (let [params {:user-object-class "a"
+                :user-id-attr "b"
+                :username "c"}
+        result (user-filter params)]
+    (is (= result "(&(objectClass=a)(b=c))"))))
+
+(deftest correct-role-filter
+  (let [params {:role-object-class "a"
+                :role-member-attr "b"
+                :user-dn "c"}
+        result (role-filter params)]
+    (is (= result "(&(objectClass=a)(b=c))"))))
+
+(deftest invalid-user-filter-combinations
+  (let [values ["a" "b" "c" "" " " nil]]
+    (doall
+      (for [a values b values c values]
+        (let [params {:user-object-class a
+                      :user-id-attr b
+                      :username c}]
+          (if (some str/blank? [a b c])
+            (is (thrown? IllegalArgumentException (user-filter params)))))))))
+
+(deftest missing-user-filter-parameters
+  (let [values ["a" nil]]
+    (doall
+      (for [a values b values c values]
+        (let [params {:user-object-class a
+                      :user-id-attr b
+                      :username c}
+              params (into {} (filter (fn [[k v]] v) params))]
+          (if (not= 3 (count params))
+            (is (thrown? IllegalArgumentException (user-filter params)))
+            (is (user-filter params))))))))
+
+(deftest invalid-role-filter-combinations
+  (let [values ["a" "b" "c" "" " " nil]]
+    (doall
+      (for [a values b values c values]
+        (let [params {:role-object-class a
+                      :role-member-attr b
+                      :user-dn c}]
+          (if (some str/blank? [a b c])
+            (is (thrown? IllegalArgumentException (role-filter params)))))))))
+
+(deftest missing-role-filter-parameters
+  (let [values ["a" nil]]
+    (doall
+      (for [a values b values c values]
+        (let [params {:role-object-class a
+                      :role-member-attr b
+                      :user-dn c}
+              params (into {} (filter (fn [[k v]] v) params))]
+          (if (not= 3 (count params))
+            (is (thrown? IllegalArgumentException (user-filter params)))
+            (is (role-filter params))))))))
 
 (deftest get-user-dn
   (doall

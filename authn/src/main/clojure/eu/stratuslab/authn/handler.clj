@@ -1,39 +1,53 @@
 (ns eu.stratuslab.authn.handler
   (:require
-    [eu.stratuslab.authn.ldap :as ldap]
     [compojure.core :refer :all]
     [compojure.handler :as handler]
     [compojure.route :as route]
     [cemerick.friend :as friend]
-    [cemerick.friend.workflows :as workflows]
-    [cemerick.friend.credentials :as credentials]
     [ring.util.response :as response]))
 
-(def users {"user" {:username "user"
-                    :password (credentials/hash-bcrypt "password")
-                    :roles #{::user}}})
+(def ^{:const true
+       :doc "Format string for page to be used with form-based login."}
+  login-page 
+"<html>
+  <head>
+    <title>login</title>
+  </head>
+  <body>
+    <div id='msg'>%s</div>
+    <form>
+      <label for='username'>user</label>
+      <input type='text' name='username' value='%s'>
+      <label for='password'>password</label>
+      <input type='password' name='password'>
+      <input type='submit' value='login'>
+    </form>
+  </body>
+</html>
+")
 
 (defroutes app-routes
-  (GET "/" [] "Hello World")
-  (GET "/user" [] (friend/authorize #{::user} "Hello User!"))
-  (friend/logout (GET "/logout" [] (response/redirect "/")))
+
+  (GET "/" []
+    "Hello World")
+
+  (GET "/user" []
+    (friend/authorize #{::user} "Hello User!"))
+
+  (friend/logout
+    (GET "/logout" []
+      (response/redirect "/")))
+
   (GET "/login" [login_failed username]
-       (str (if login_failed 
-              (str "<div id='error'>Login failed.</div>"))
-         "<form>"
-         "<label for='username'>User</label>"
-         "<input type='text' name='username' value='" username "'>"
-         "<label for='password'>Password</label>"
-         "<input type='text' name='password'>"
-         "<input type='submit' value='login'>"
-         "</form>"))
+    (let [msg (if login_failed "Login failed." "")
+          username (or username "")]
+      (format login-page msg username)))
+
   (route/not-found "Not Found"))
 
-(def app
-  (-> app-routes
-    (friend/authenticate 
-      {:workflows [(workflows/interactive-form)]
-       :credential-fn (partial credentials/bcrypt-credential-fn users)
-       ;;:credential-fn ldap/ldap-credential-fn
-       })
+(defn authn-wrapper
+  [workflows app-handler]
+  (-> app-handler
+    (friend/authenticate {:workflows workflows
+                          :credential-fn (constantly nil)})
     handler/site))
