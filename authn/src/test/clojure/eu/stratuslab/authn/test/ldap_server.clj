@@ -21,6 +21,15 @@
 
 (defonce server (atom nil))
 
+(def ldap-port 1389)
+(def ldap-ssl-port 1636)
+
+(def root-dn "dc=alienscience,dc=org,dc=uk")
+(def users-dn (str "ou=users," root-dn))
+(def groups-dn (str "ou=groups," root-dn))
+(def user-dn-fmt (str "uid=%s," users-dn))
+(def group-dn-fmt (str "cn=%s," groups-dn))
+
 (defn- add-partition! 
   "Adds a partition to the embedded directory service"
   [service id dn]
@@ -50,11 +59,10 @@
                         (.setEnableSSL true))
         ldap-server (doto (LdapServer.)
                       (.setDirectoryService directory-service)
-                      ;; remove-want user checking (.setAllowAnonymousAccess true)
+                      ;; remove--need user checking for bind (.setAllowAnonymousAccess true)
                       (.setTransports
                        (into-array [ldap-transport ssl-transport])))]
-    (-> (add-partition! directory-service
-                        "clojure" "dc=alienscience,dc=org,dc=uk")
+    (-> (add-partition! directory-service "clojure" root-dn)
         (add-index! "objectClass" "ou" "uid"))
     (.startup directory-service)
     (.start ldap-server)
@@ -63,24 +71,15 @@
 (defn- add-toplevel-objects!
   "Adds top level objects, needed for testing, to the ldap server"
   [connection]
-  (ldap/add connection "dc=alienscience,dc=org,dc=uk"
+  (ldap/add connection root-dn
             {:objectClass ["top" "domain" "extensibleObject"]
              :dc "alienscience"})
-  (ldap/add connection "ou=people,dc=alienscience,dc=org,dc=uk"
-            {:objectClass ["top" "organizationalUnit"]
-             :ou "people"})
-  (ldap/add connection "ou=users,dc=alienscience,dc=org,dc=uk"
+  (ldap/add connection users-dn
             {:objectClass ["top" "organizationalUnit"]
              :ou "users"})
-  (ldap/add connection "ou=groups,dc=alienscience,dc=org,dc=uk"
+  (ldap/add connection groups-dn
             {:objectClass ["top" "organizationalUnit"]
-             :ou "groups"})
-  (ldap/add connection
-            "cn=Saul Hazledine,ou=people,dc=alienscience,dc=org,dc=uk"
-            {:objectClass ["top" "Person"]
-             :cn "Saul Hazledine"
-             :sn "Hazledine"
-             :description "Creator of bugs"}))
+             :ou "groups"}))
 
 (defn stop!
   "Stops the embedded ldap server"
@@ -92,9 +91,11 @@
       (.shutdown directory-service))))
 
 (defn start!
-  "Starts an embedded ldap server on the given port"
-  [port ssl-port]
-  (stop!)
-  (reset! server (start-ldap-server port ssl-port))
-  (let [conn (ldap/connect {:host {:address "localhost" :port port}})]
-    (add-toplevel-objects! conn)))
+  "Starts an embedded ldap server on defined ports"
+  []
+  (let [port ldap-port
+        ssl-port ldap-ssl-port]
+    (stop!)
+    (reset! server (start-ldap-server port ssl-port))
+    (let [conn (ldap/connect {:host {:address "localhost" :port port}})]
+      (add-toplevel-objects! conn))))

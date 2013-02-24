@@ -26,10 +26,11 @@
 </html>
 ")
 
-(defroutes app-routes
-
-  (GET "/" []
-    "Hello World")
+(defroutes authn-routes
+  "Provides '/login', '/logout', and '/user' routes to support form-based
+   logins.  A generic 'Not Found' error page is thrown if no route is matched.
+   These routes are added automatically when using the authn-wrapper
+   function."
 
   (GET "/user" []
     (friend/authorize #{::user} "Hello User!"))
@@ -46,8 +47,13 @@
   (route/not-found "Not Found"))
 
 (defn authn-wrapper
-  [workflows app-handler]
-  (-> app-handler
-    (friend/authenticate {:workflows workflows
-                          :credential-fn (constantly nil)})
-    handler/site))
+  "Wraps the given application routes ('app-routes') with standard site 
+  and friend middlewares.  The provided workflows will be used to configure
+  friend.  The default credential function rejects all requests, so each
+  workflow should be configured with its own credential function."
+  [workflows app-routes]
+  (let [app-handler (routes app-routes authn-routes)]
+    (-> app-handler
+      (friend/authenticate {:workflows workflows
+                            :credential-fn (constantly nil)})
+      handler/site)))

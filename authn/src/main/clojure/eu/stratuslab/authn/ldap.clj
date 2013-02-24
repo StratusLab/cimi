@@ -90,9 +90,9 @@
         m))))
 
 (defn ldap-credential-fn
-  [m]
-  (when (map? m)
-    (when-let [params (valid-request? (merge ldap-defaults m))]
+  [ldap-params cred-map]
+  (when (every? map? [ldap-params cred-map])
+    (when-let [params (valid-request? (merge ldap-defaults ldap-params cred-map))]
       (let [pool (or (:ldap-connection-pool params) *ldap-connection-pool*)]
         (when (or (:skip-bind? params) (force-bind pool params))
           (authn-map pool params))))))
