@@ -33,7 +33,7 @@
    function."
 
   (GET "/user" []
-    (friend/authorize #{::user} "Hello User!"))
+    (friend/authorize #{:eu.stratuslab.authn/user} "Hello User!"))
 
   (friend/logout
     (GET "/logout" []

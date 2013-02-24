@@ -67,6 +67,7 @@
     (assoc {:attributes [role-name-attr]} :filter)
     (ldap/search pool role-base-dn)
     (map (keyword role-name-attr))
+    (cons :eu.stratuslab.authn/user)
     (set)))
 
 (defn force-bind

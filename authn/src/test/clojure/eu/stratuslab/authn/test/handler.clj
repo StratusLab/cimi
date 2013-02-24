@@ -14,28 +14,26 @@
 ;; will be rebound for each authentication workflow
 (def ^{:dynamic true :private true} *app* nil)
 
-(def users {"user" {:username "user"
-                    :password (credentials/hash-bcrypt "password")
-                    :roles #{:eu.stratuslab.authn.handler/user}}})
-
 ;; Holds the connection to the LDAP server
 (def ^:dynamic *conn* nil)
 
-(def user*
-  {:dn (format server/user-dn-fmt "x")
+(def user-uid "user")
+(def user-password "password")
+
+(def ldap-user
+  {:dn (format server/user-dn-fmt user-uid)
    :object {:objectClass "inetOrgPerson"
-            :uid "x"
+            :uid user-uid
             :cn "X User"
             :sn "User"
             :givenName "X"
             :mail "x@example.org"
-            :userPassword "passx"
+            :userPassword user-password
             :seeAlso "cn=Charles Loomis,ou=LAL,o=CNRS,c=FR,o=GRID-FR"}})
 
-(def users {"user" {:username "user"
-                    :password (credentials/hash-bcrypt "password")
-                    :roles #{:eu.stratuslab.authn.handler/user}}})
-
+(def users {user-uid {:username user-uid
+                      :password (credentials/hash-bcrypt user-password)
+                      :roles #{:eu.stratuslab.authn/user}}})
 
 (defn get-ldap-params []
   {:user-object-class "inetOrgPerson"
@@ -55,7 +53,7 @@
   (GET "/" []
     "Hello World"))
 
-(def workflow-list 
+(defn get-workflow-list []
   [
    ;; using fixed map for user information
    (workflows/interactive-form
@@ -63,9 +61,9 @@
      (partial credentials/bcrypt-credential-fn users))
 
    ;; use authn against LDAP database
-   ;;(workflows/interactive-form
-   ;;  :credential-fn
-   ;;  (partial ldap/ldap-credential-fn (get-ldap-params)))
+   (workflows/interactive-form
+     :credential-fn
+     (partial ldap/ldap-credential-fn (get-ldap-params)))
    ])
 
 (defn- ldap-server
@@ -75,11 +73,11 @@
   
   (binding [*conn* (ldap-client/connect {:host {:port server/ldap-port}})]
     (try
-      (ldap-client/add *conn* (:dn user*) (:object user*))
+      (ldap-client/add *conn* (:dn ldap-user) (:object ldap-user))
       (catch Exception e))
     (f)
     (try
-      (ldap-client/delete *conn* (:dn user*))
+      (ldap-client/delete *conn* (:dn ldap-user))
       (catch Exception e))
     )
   
@@ -88,7 +86,7 @@
 (defn test-each-workflow
   "Loops over defined workflow and executes all tests for each one."
   [f]
-  (doseq [workflow workflow-list]
+  (doseq [workflow (get-workflow-list)]
     (binding [*app* (authn-wrapper [workflow] hello-world)]
       (f))))
 
@@ -104,8 +102,8 @@
   (let [state (-> (session *app*)
                 (visit "/user")
                 (follow-redirect)
-                (fill-in "user" "user")
-                (fill-in "password" "password")
+                (fill-in "user" user-uid)
+                (fill-in "password" user-password)
                 (press "login"))]
     (testing "user login"
              (-> state
@@ -121,10 +119,10 @@
 (deftest failed-login-shows-error
   (-> (session *app*)
     (visit "/login")
-    (fill-in "user" "user")
+    (fill-in "user" user-uid)
     (fill-in "password" "bad")
     (press "login")
     (follow-redirect)
     (within [:#msg]
       (has (text? "Login failed.")))
-    (has (value? "user" "user"))))
+    (has (value? "user" user-uid))))

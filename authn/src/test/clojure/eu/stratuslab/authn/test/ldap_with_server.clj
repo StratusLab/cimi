@@ -65,9 +65,9 @@
             :uniqueMember [(:dn user-x*) (:dn user-y*)]}})
 
 (def groups
-  {user-x* #{"group-x" "group-xy"}
-   user-y* #{"group-y" "group-xy"}
-   user-z* #{}})
+  {user-x* #{:eu.stratuslab.authn/user "group-x" "group-xy"}
+   user-y* #{:eu.stratuslab.authn/user "group-y" "group-xy"}
+   user-z* #{:eu.stratuslab.authn/user}})
 
 (defn- connect-to-server
   "Opens a sequence of connection pools on the localhost server with the
