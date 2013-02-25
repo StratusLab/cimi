@@ -16,6 +16,7 @@
   </parent>
 
   <dependencies>
+
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>clojure</artifactId>
@@ -64,20 +65,16 @@
     <dependency>
       <groupId>reply</groupId>
       <artifactId>reply</artifactId>
-      <version>0.1.0-beta11</version>
     </dependency>
     
     <dependency>
       <groupId>jline</groupId>
       <artifactId>jline</artifactId>
-      <!-- <version>0.9.94</version> -->
-      <version>2.8</version>
     </dependency>
     
     <dependency>
-      <groupId>marginalia</groupId>
-      <artifactId>marginalia</artifactId>
-      <version>0.7.1</version>
+      <groupId>codox</groupId>
+      <artifactId>codox.core</artifactId>
     </dependency>
     
   </dependencies>
@@ -85,6 +82,34 @@
   <build>
 
     <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <id>codox script</id>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <phase>process-resources</phase>
+
+            <configuration>
+              <resources>
+                <resource>
+                  <filtering>true</filtering>
+                  <directory>src/main/scripts</directory>
+                  <includes>
+                    <include>run_codox.clj</include>
+                  </includes>
+                </resource>
+              </resources>
+              <outputDirectory>target</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
       <plugin>
 	<groupId>org.mortbay.jetty</groupId>
@@ -106,12 +131,6 @@
 	</configuration>
       </plugin>
 
-      <!-- 
-           WARNING: Generating marginalia docs causes maven NOT
-           to include all required dependencies in the war file.
-           Before enabling marginalia again test carefully the 
-           included dependencies!
-      --> 
       <plugin>
         <groupId>com.theoryinpractise</groupId>
         <artifactId>clojure-maven-plugin</artifactId>
@@ -150,6 +169,17 @@
                 <namespace>eu.stratuslab.cimi.main</namespace>
               </namespaces>
               <compileDeclaredNamespaceOnly>true</compileDeclaredNamespaceOnly>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>run-codox</id>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <phase>package</phase>
+            <configuration>
+              <script>${basedir}/target/run_codox.clj</script>
             </configuration>
           </execution>
 
