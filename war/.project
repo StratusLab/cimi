@@ -1,29 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>cimi-war</name>
-	<comment></comment>
-	<projects>
-	</projects>
-	<buildSpec>
-		<buildCommand>
-			<name>ccw.builder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
-		<buildCommand>
-			<name>org.eclipse.jdt.core.javabuilder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
-		<buildCommand>
-			<name>org.eclipse.m2e.core.maven2Builder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
-	</buildSpec>
-	<natures>
-		<nature>org.eclipse.jdt.core.javanature</nature>
-		<nature>org.eclipse.m2e.core.maven2Nature</nature>
-		<nature>ccw.nature</nature>
-	</natures>
+  <name>cimi-war</name>
+  <comment>This service provides a CIMI (Cloud Infrastructure Management
+Interface) to the StratusLab cloud.  It also acts as a service proxy,
+allowing for a flexible, uniform authentication process for all of the
+StratusLab services. NO_M2ECLIPSE_SUPPORT: Project files created with the maven-eclipse-plugin are not supported in M2Eclipse.</comment>
+  <projects/>
+  <buildSpec>
+    <buildCommand>
+      <name>ccw.builder</name>
+    </buildCommand>
+    <buildCommand>
+      <name>org.eclipse.jdt.core.javabuilder</name>
+    </buildCommand>
+    <buildCommand>
+      <name>org.eclipse.m2e.core.maven2Builder</name>
+    </buildCommand>
+  </buildSpec>
+  <natures>
+    <nature>org.eclipse.jdt.core.javanature</nature>
+    <nature>org.eclipse.m2e.core.maven2Nature</nature>
+    <nature>ccw.nature</nature>
+  </natures>
 </projectDescription>

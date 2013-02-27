@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>authn-jar</name>
-	<comment></comment>
+	<name>cimi-authn</name>
+	<comment>This service provides a CIMI (Cloud Infrastructure Management
+Interface) to the StratusLab cloud.  It also acts as a service proxy,
+allowing for a flexible, uniform authentication process for all of the
+StratusLab services. NO_M2ECLIPSE_SUPPORT: Project files created with the maven-eclipse-plugin are not supported in M2Eclipse.</comment>
 	<projects>
 	</projects>
 	<buildSpec>
@@ -33,6 +36,16 @@
 					<key>LaunchConfigHandle</key>
 					<value>&lt;project&gt;/.externalToolBuilders/org.eclipse.m2e.core.maven2Builder.launch</value>
 				</dictionary>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
+			<name>org.eclipse.jdt.core.javabuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
+			<name>org.eclipse.m2e.core.maven2Builder</name>
+			<arguments>
 			</arguments>
 		</buildCommand>
 	</buildSpec>
