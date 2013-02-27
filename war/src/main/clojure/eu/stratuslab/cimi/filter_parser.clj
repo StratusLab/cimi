@@ -8,43 +8,42 @@
     [blancas.kern.expr :refer :all]
     [blancas.kern.lexer.basic :refer :all]))
 
-;; TODO: Ensure that no trailing input is left at end of parsing
-;; TODO: Determine mechanism for signaling an exception to the parser for dates
+(declare OrExpr)
 
-(declare Filter)
+(def- dash
+  (sym \-))
+
+(def- digits
+  (many1 digit))
+
+(defn- create-datetime
+  "Create an instant (DateTime) from the given string in ISO 8601 format.
+  Will fail with a descriptive error message if the input is not a valid
+  Date or DateTime."
+  [s]
+  (try
+    (return (edn/read-string (str "#inst \"" s "\"")))
+    (catch Exception e
+      (fail (.getLocalizedMessage e)))))
 
 (def datetime-lit
   "A token that conforms to the XML Schema Date and DateTime format (ISO 8601).
    The default reader instant is returned for the value."
   (<?>
-    (>>= (<:> (lexeme
-                   (<+>
-                     (many1 digit)
-                     (sym \-)
-                     (many1 digit)
-                     (sym \-)
-                     (many1 digit)
-                     (optional 
-                       (<+>
-                         (sym \T)
-                         (many1 digit)
-                         colon
-                         (many1 digit)
-                         colon
-                         (many1 digit)
-                         (optional (<+>
-                                     (sym \.) 
-                                     (many1 digit)))
-                         (<|>
-                           (sym \Z)
-                           (<+>
-                             (one-of* "+-")
-                             (many1 digit)
-                             colon
-                             (many1 digit)))))
-                     )))
-         (fn [x] (return (edn/read-string (str "#inst \"" x "\"")))))
-    (i18n (fn [x] "expecting DateTime value"))))
+    (>>=
+      (<:>
+        (lexeme
+          (<+>
+            digits dash digits dash digits
+            (optional 
+              (<+>
+                (sym \T) digits colon digits colon digits
+                (optional (<+> (sym \.) digits))
+                (<|>
+                  (sym \Z)
+                  (<+> (one-of* "+-") digits colon digits)))))))
+      create-datetime)
+    (i18n (fn [x] "valid Date or DateTime value"))))
 
 (def sq-string-lit
   "Parses string literals delimited by single quotes. Note that this 
@@ -106,16 +105,21 @@
 
 (def ParenExpr
   "Filter inside of parentheses."
-  (parens Filter))
+  ;; anonymous function delays binding to OrExpr!
+  (parens (fn [x] (OrExpr x))))
 
 (def Comp
   "Parses a single filter component."
   (<|> PropExpr AttrExpr1 AttrExpr2 ParenExpr))
 
 (def AndExpr
-  "Allows filter components to be combined with a logical 'and'."
+  "Allows filter components to be combined with a logical 'and' operator."
   (chainl Comp And nil))
+
+(def OrExpr
+  "Filter components separated with logical 'or' operators."
+  (chainl AndExpr Or nil))
 
 (def Filter
   "A filter consists of expressions separated by logical 'or'."
-  (chainl AndExpr Or nil))
+  (<< OrExpr eof))
