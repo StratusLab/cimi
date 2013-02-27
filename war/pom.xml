@@ -63,6 +63,12 @@
     </dependency>
     
     <dependency>
+      <groupId>org.blancas</groupId>
+      <artifactId>kern</artifactId>
+      <version>0.5.0</version>
+    </dependency>
+    
+    <dependency>
       <groupId>reply</groupId>
       <artifactId>reply</artifactId>
     </dependency>
