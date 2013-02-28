@@ -5,7 +5,7 @@
 	<classpathentry kind="src" path="src/test/clojure"/>
 	<classpathentry kind="var" path="M2_REPO/javax/servlet/servlet-api/2.5/servlet-api-2.5.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="var" path="M2_REPO/org/clojure/clojure/1.5.0-RC16/clojure-1.5.0-RC16.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/clojure/clojure/1.5.0-RC17/clojure-1.5.0-RC17.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/clojure/tools.logging/0.2.4/tools.logging-0.2.4.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/clojure/data.json/0.2.1/data.json-0.2.1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/clj-http/clj-http/0.5.7/clj-http-0.5.7.jar"/>
@@ -98,6 +98,9 @@
 	<classpathentry kind="var" path="M2_REPO/aopalliance/aopalliance/1.0/aopalliance-1.0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/net/sourceforge/nekohtml/nekohtml/1.9.10/nekohtml-1.9.10.jar"/>
 	<classpathentry kind="var" path="M2_REPO/xerces/xercesImpl/2.8.1/xercesImpl-2.8.1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/ashafa/clutch/0.4.0-RC1/clutch-0.4.0-RC1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/cemerick/url/0.0.6/url-0.0.6.jar"/>
+	<classpathentry kind="var" path="M2_REPO/pathetic/pathetic/0.4.0/pathetic-0.4.0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/blancas/kern/0.5.0/kern-0.5.0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/reply/reply/0.1.0-beta11/reply-0.1.0-beta11.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/thnetos/cd-client/0.3.4/cd-client-0.3.4.jar"/>

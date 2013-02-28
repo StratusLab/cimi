@@ -76,7 +76,7 @@
 
 (defn set-db-id
   "Sets the database document identifier for the document."
-  [m id]
+  [id m]
   (assoc m :_id id))
 
 (defn property-key

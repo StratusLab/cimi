@@ -19,10 +19,9 @@
 
 (def ^:const resource-base-url "/")
 
-(def attributes
-  "These are the attributes allowed for a CloudEntryPoint."
-  (set/union common/attributes
-    #{:baseURI :resourceMetadata
+(def cep-attributes
+  "These are the attributes specific to a CloudEntryPoint."
+  #{:baseURI :resourceMetadata
     :systems :systemTemplates
     :machines :machineTemplates :machineConfigs :machineImages
     :credentials :credentialTemplates
@@ -33,12 +32,16 @@
     :forwardingGroups :forwardingGroupTemplates
     :jobs
     :meter :meterTemplates :meterConfigs
-    :eventLogs :eventLogTemplates}))
+    :eventLogs :eventLogTemplates})
+
+(def attributes
+  "These are the attributes allowed for a CloudEntryPoint."
+  (set/union common/attributes cep-attributes))
 
 (def immutable-attributes
   "These are the attributes for a CloudEntryPoint that cannot
    be modified."
-  (set/union common/immutable-attributes attributes))
+  (set/union common/immutable-attributes cep-attributes))
 
 (defn strip-unknown-attributes [m]
   (select-keys m attributes))
@@ -72,7 +75,7 @@
   (let [baseURI (:base-uri req)
         db-url (cfg/db-url req)
         doc (clutch/get-document db-url resource-base-url)]
-    (assoc :baseURI (:baseURI req))))
+    (assoc doc :baseURI (:baseURI req))))
 
 (defn update
   "Update the cloud entry point attributes.  Note that only the common

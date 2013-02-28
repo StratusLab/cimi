@@ -16,4 +16,7 @@
 (deftest check-strip-immutable-attributes
   (let [input {:a 1 :id "ok" :baseURI "ok"}
         correct {:a 1}]
+    (is (= correct (strip-immutable-attributes input))))
+  (let [input {:name 1 :id "ok" :baseURI "ok"}
+        correct {:name 1}]
     (is (= correct (strip-immutable-attributes input)))))
