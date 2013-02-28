@@ -19,7 +19,7 @@
     (is (= (:created m) (:updated m)))))
 
 (deftest check-set-db-id
-  (let [m (set-db-id {} "dummy")]
+  (let [m (set-db-id "dummy" {})]
     (is (= "dummy" (:_id m)))))
 
 (deftest check-property-key
