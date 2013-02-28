@@ -8,6 +8,10 @@
             [clj-hector.core :refer [put get-rows get-rows-cql-query delete-rows]]
             [clj-hector.serialize :as serial]))
 
+(def ^:const resource-root-uri "http://www.dmtf.org/cimi/")
+
+(def common-resource-attrs #{:id :name :description :created :updated})
+
 (def ^:const common-resource-attrs
      [{:name "id"
        :validator :utf-8

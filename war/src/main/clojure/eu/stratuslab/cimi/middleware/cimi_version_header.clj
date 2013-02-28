@@ -1,24 +1,25 @@
 (ns eu.stratuslab.cimi.middleware.cimi-version-header
   (:require [clojure.string :as str]))
 
-(def ^:const cimi-header "CIMI-Specification-Version")
+(def ^:const cimi-header
+  "CIMI-Specification-Version")
 
-(def ^{:const true
-       :doc "Regular expression for valid versions.  Major and minor
-             fields must be supplied; update field is optional."}
-     version-regex #"^\s*(\d+)\.(\d+)(?:\.(\d+))?\s*$")
+(def ^:const version-regex
+  "Regular expression for valid versions.  Major and minor
+   fields must be supplied; update field is optional."
+  #"^\s*(\d+)\.(\d+)(?:\.(\d+))?\s*$")
 
-(def ^{:const true
-       :doc "Versions of the CIMI standard implemented by the server.
-             Put the versions in descending order of preference.
-             Complete versions with major, minor, and update fields
-             are required."}
-     spec-versions [["1" "0" "0"]])
+(def ^:const spec-versions
+  "Versions of the CIMI standard implemented by the server.
+   Put the versions in descending order of preference.
+   Complete versions with major, minor, and update fields
+   are required."
+  [["1" "0" "1"]])
 
-(def ^{:doc "Map between exploded specification versions and the
-             string representation."}
-     spec-versions-map
-     (zipmap spec-versions (map #(str/join "." %) spec-versions)))
+(def spec-versions-map
+  "Map between exploded specification versions and the
+   string representation."
+  (zipmap spec-versions (map #(str/join "." %) spec-versions)))
 
 (defn version-match?
   "Returns true if the two given versions match.  The versions must be
@@ -34,10 +35,8 @@
   "Parse a version string into its major, minor, and update fields.
   The update field is optional.  Invalid input will return nil."
   [s]
-  (let [v (next (re-matches version-regex (or s "")))]
-    (if v
-      (remove nil? v)
-      nil)))
+  (if-let [v (next (re-matches version-regex (or s "")))]
+    (remove nil? v)))
 
 (defn requested-versions
   "Parses the string (value of CIMI Specification Version header) and
