@@ -10,7 +10,15 @@
 
 (def ^:const resource-root-uri "http://www.dmtf.org/cimi/")
 
-(def common-resource-attrs #{:id :name :description :created :updated})
+(def attributes
+  "Set of the attributes allowed for all CIMI resources except
+   resourceMetadata."
+  #{:id :name :description :created :updated :properties})
+
+(def immutable-attributes
+  "Set of the common attributes that cannot be modified when 
+   updating a resource."
+  #{:id :created :updated})
 
 (def ^:const common-resource-attrs
      [{:name "id"

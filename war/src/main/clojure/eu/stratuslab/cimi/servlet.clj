@@ -11,21 +11,28 @@
    :init initState
    :state state))
 
+(defn- servlet-params [this]
+  {:path "/cimi"
+   :db-url (.getInitParameter this "db-url")
+   :admin-user (.getInitParameter this "admin-user")
+   :admin-pswd (.getInitParameter this "admin-pswd")})
+
 (defn -initState [] [[] (atom {})])
 
 (defn -init-void [this]
-  (log/info "loading servlet implementation and initializing state")
   (let [n (symbol "eu.stratuslab.cimi.server")
         servlet-handler (symbol "servlet-handler")
         init-fn (symbol "init")]
+    (log/info "loading servlet implementation and initializing state")
     (require n)
     (swap!
-     (.state this)
-     merge
-     {:service-fn (ring/make-service-method (ns-resolve (the-ns n) servlet-handler))
-      :init-fn (ns-resolve (the-ns n) init-fn)})
-    (log/info "initializing the servlet"))
-  ((-> this .state deref :init-fn) "/cimi"))
+      (.state this)
+      merge
+      {:service-fn (ring/make-service-method (ns-resolve (the-ns n) servlet-handler))
+       :init-fn (ns-resolve (the-ns n) init-fn)}))
+
+  (log/info "initializing the servlet")
+  ((-> this .state deref :init-fn) (servlet-params this)))
 
 (defn -destroy-void
   [this]

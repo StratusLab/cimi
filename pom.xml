@@ -143,6 +143,12 @@ StratusLab services.
         <artifactId>joda-time</artifactId>
         <version>2.1</version>
       </dependency>
+      
+      <dependency>
+        <groupId>com.ashafa</groupId>
+        <artifactId>clutch</artifactId>
+        <version>0.4.0-RC1</version>
+      </dependency>
 
       <dependency>
         <groupId>kerodon</groupId>
@@ -249,5 +255,4 @@ StratusLab services.
       </plugins>
     </pluginManagement>
   </build>
-
 </project>

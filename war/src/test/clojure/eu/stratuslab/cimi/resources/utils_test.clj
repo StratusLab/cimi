@@ -4,6 +4,12 @@
             [clojure.pprint :refer [pprint]]))
 
 (deftest check-set-time-attributes
+  (let [m (set-time-attributes {})]
+    (is (:created m))
+    (is (:updated m)))
+  (let [m (set-time-attributes {:created "dummy"})]
+    (is (= "dummy" (:created m)))
+    (is (:updated m)))
   (let [m (set-time-attributes true {})]
     (is (nil? (:created m)))
     (is (:updated m)))
@@ -11,6 +17,10 @@
     (is (:created m))
     (is (:updated m))
     (is (= (:created m) (:updated m)))))
+
+(deftest check-set-db-id
+  (let [m (set-db-id {} "dummy")]
+    (is (= "dummy" (:_id m)))))
 
 (deftest check-property-key
   (are [input correct] (is (= correct (property-key input)))

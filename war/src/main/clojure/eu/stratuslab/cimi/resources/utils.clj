@@ -63,11 +63,21 @@
   "Sets the updated and created attributes in the request.  If the
   existing? is nil/false, then the created attribute it set;
   otherwise, it is removed from the request."
-  [existing? data]
+  ([data]
+    (let [now (Date.)
+          created (or (:created data) now)]
+      (assoc data :created created :updated now)))
+  ;; TODO: Remove this arity.
+  ([existing? data]
   (let [now (Date.)]
     (if existing?
       (dissoc (assoc data :updated now) :created)
-      (assoc data :updated now :created now))))
+      (assoc data :updated now :created now)))))
+
+(defn set-db-id
+  "Sets the database document identifier for the document."
+  [m id]
+  (assoc m :_id id))
 
 (defn property-key
   "Determines if the given keyword has the form :properties-pkey.  If
