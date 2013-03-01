@@ -101,6 +101,7 @@
 	<classpathentry kind="var" path="M2_REPO/com/ashafa/clutch/0.4.0-RC1/clutch-0.4.0-RC1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/cemerick/url/0.0.6/url-0.0.6.jar"/>
 	<classpathentry kind="var" path="M2_REPO/pathetic/pathetic/0.4.0/pathetic-0.4.0.jar"/>
+	<classpathentry kind="var" path="M2_REPO/couchbase/couchbase-client/couchbase-client/1.1.2/couchbase-client-1.1.2.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/blancas/kern/0.5.0/kern-0.5.0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/reply/reply/0.1.0-beta11/reply-0.1.0-beta11.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/thnetos/cd-client/0.3.4/cd-client-0.3.4.jar"/>

@@ -67,6 +67,18 @@ StratusLab services.
       <url>http://repo.stratuslab.eu:8081/content/repositories/snapshots</url>
     </repository>
 
+    <repository>
+      <releases>
+	<enabled>true</enabled>
+      </releases>
+      <snapshots>
+	<enabled>true</enabled>
+      </snapshots>
+      <id>couchbase</id>
+      <name>couchbase</name>
+      <url>http://files.couchbase.com/maven2/</url>
+    </repository>
+
   </repositories>
 
   <dependencyManagement>
@@ -148,6 +160,12 @@ StratusLab services.
         <groupId>com.ashafa</groupId>
         <artifactId>clutch</artifactId>
         <version>0.4.0-RC1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>couchbase.couchbase-client</groupId>
+        <artifactId>couchbase-client</artifactId>
+        <version>1.1.2</version>
       </dependency>
 
       <dependency>
