@@ -1,10 +1,7 @@
 (ns eu.stratuslab.cimi.resources.cloud-entry-point-test
   (:require
     [eu.stratuslab.cimi.resources.cloud-entry-point :refer :all]
-    [clojure.test :refer [deftest is are]])
-  (:import
-    [java.util UUID]
-    [clojure.lang ExceptionInfo]))
+    [clojure.test :refer [deftest is are]]))
 
 (def ^:const baseURI "https://localhost:cimi")
 
