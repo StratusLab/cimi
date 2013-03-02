@@ -68,15 +68,13 @@ StratusLab services.
     </repository>
 
     <repository>
-      <releases>
-	<enabled>true</enabled>
-      </releases>
-      <snapshots>
-	<enabled>true</enabled>
-      </snapshots>
       <id>couchbase</id>
-      <name>couchbase</name>
+      <name>Couchbase Repository</name>
+      <layout>default</layout>
       <url>http://files.couchbase.com/maven2/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
     </repository>
 
   </repositories>
@@ -86,7 +84,7 @@ StratusLab services.
       <dependency>
         <groupId>org.clojure</groupId>
         <artifactId>clojure</artifactId>
-        <version>1.5.0-RC17</version>
+        <version>1.5.0</version>
       </dependency>
       <dependency>
         <groupId>org.clojure</groupId>
@@ -163,9 +161,15 @@ StratusLab services.
       </dependency>
 
       <dependency>
-        <groupId>couchbase.couchbase-client</groupId>
+        <groupId>couchbase</groupId>
         <artifactId>couchbase-client</artifactId>
         <version>1.1.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>clojurewerkz</groupId>
+        <artifactId>spyglass</artifactId>
+        <version>1.0.2</version>
       </dependency>
 
       <dependency>

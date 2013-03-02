@@ -68,8 +68,13 @@
     </dependency>
 
     <dependency>
-      <groupId>couchbase.couchbase-client</groupId>
+      <groupId>couchbase</groupId>
       <artifactId>couchbase-client</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>clojurewerkz</groupId>
+      <artifactId>spyglass</artifactId>
     </dependency>
 
     <dependency>

@@ -2,35 +2,42 @@
   (:require
     [eu.stratuslab.cimi.resources.cloud-entry-point :refer :all]
     [clojure.test :refer :all]
-    [eu.stratuslab.cimi.utils :as utils]
-    [com.ashafa.clutch :as clutch]))
+    [eu.stratuslab.cimi.utils :as utils])
+  (:import [java.net URI]
+    [com.couchbase.client ClusterManager CouchbaseClient]
+    [com.couchbase.client.clustermanager BucketType]
+    [net.spy.memcached PersistTo ReplicateTo]
+    [java.util.concurrent TimeUnit]))
 
-(def ^:dynamic *db-url* nil)
+(def ^:dynamic *bucket* nil)
 
-(defn with-temp-bucket
-  "Creates a new CouchDB/Couchbase bucket within the server.  The
-   server must already be running on the local machine.  The bucket
-   is removed after the tests have been run."
+(defn temp-bucket-fixture
+  "Creates a new Couchbase bucket within the server.  The server must already
+   be running on the local machine and have a username/password of admin/ADMIN4.
+   The bucket is removed after the tests have been run."
   [f]
-  (let [bucket-name (utils/create-uuid)
-        bucket-name "default"
-        db-url (str "http://localhost:8092/" bucket-name)]
-    (binding [*db-url* db-url]
+  (let [bucket (utils/create-uuid)
+        mgr-uri (URI. "http://localhost:8091/")
+        mgr (ClusterManager. [mgr-uri] "admin" "ADMIN4")]
+    (binding [*bucket* bucket]
       (try
-        (clutch/create-database db-url)
+        (.createNamedBucket mgr BucketType/COUCHBASE bucket 512 0 "" false)
+        (Thread/sleep 3000) ;; ensure bucket is loaded before running tests
         (f)
-        (catch Exception e
-          (.printStackTrace e))
         (finally
-          true
-          #_(clutch/delete-database db-url))))))
+          (.deleteBucket mgr bucket))))))
 
-(use-fixtures :once with-temp-bucket)
+(use-fixtures :once temp-bucket-fixture)
 
-;; one of these will fail and print the database url
-(deftest check-db-url
-  (is (nil? *db-url*))
-  (is (not (nil? *db-url*))))
-
-(deftest check-put-document
-  (clutch/put-document *db-url* {:_id "my-test-doc" :hi "cal"}))
+(deftest put-and-get-document
+  (if-let [client (CouchbaseClient. [(URI. "http://localhost:8091/pools")] *bucket* "")]
+    (try
+      (let [input-text "hello"
+            key "mykey"]
+        (.set client key 0 input-text PersistTo/ONE ReplicateTo/ZERO)
+        (let [retrieved-text (.get client key)]
+          (is (= input-text retrieved-text)))
+        (.delete client key)
+        (is (nil? (.get client key))))
+      (finally
+        (.shutdown client 3 TimeUnit/SECONDS)))))
