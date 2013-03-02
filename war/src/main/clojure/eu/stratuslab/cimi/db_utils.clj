@@ -8,12 +8,10 @@
     [java.util.concurrent TimeUnit]))
 
 (defmacro defn-db
-  "This macro defines a function that wraps code accessing a cassandra
-  database. Two function signatures are defined: one as given in the
-  declaration and a second with an explicit keyspace prepended to the
-  parameters list.  The first declaration calls the second with the
-  default keyspace.  The body of the function is wrapped in a
-  try/catch that logs the error and re-throws the exception."
+  "This macro defines a function that wraps code accessing a couchbase
+  database. The CouchbaseClient is available within the macro body as
+  the 'client' local variable.  The macro adds a 'db-cfg' parameter as
+  the first parameter of the generated function."
   [name & decls]
   (let [[docs v] (split-with (complement vector?) decls)
         decl-params (first v)
@@ -32,52 +30,32 @@
              (finally
                (.shutdown ~client-sym 3 TimeUnit/SECONDS))))))))
 
-(defn create [db-cfg key doc]
-  (let [{:keys [nodes bucket bucket-pswd]} db-cfg]
-    (if-let [client (CouchbaseClient. nodes bucket bucket-pswd)]
-      (try
-        (let [json-data (json/write-str doc)]
-          (.add client key 0 json-data PersistTo/ONE ReplicateTo/ZERO))
-        (finally
-          (.shutdown client 3 TimeUnit/SECONDS))))))
-
-(defn-db create-x [key doc]
+(defn-db create
+  "Creates a new document in the database with the given key.  The 
+   document must be a clojure map, which will be transformed to JSON
+   then inserted into the database."
+  [key doc]
   (let [json-data (json/write-str doc)]
     (.add client key 0 json-data PersistTo/ONE ReplicateTo/ZERO)))
 
-(defn retrieve [db-cfg key]
-  (let [{:keys [nodes bucket bucket-pswd]} db-cfg]
-    (if-let [client (CouchbaseClient. nodes bucket bucket-pswd)]
-      (try
-        (if-let [doc (.get client key)]
-          (json/read-str doc :key-fn keyword))
-        (finally
-          (.shutdown client 3 TimeUnit/SECONDS))))))
-
-(defn-db retrieve-x [key]
+(defn-db retrieve
+  "Retrieve teh document associated with the given key from the 
+   database.  This returns nil if the document does not exist.  The
+   returned document is a map with keys transformed to keywords."
+  [key]
   (if-let [doc (.get client key)]
     (json/read-str doc :key-fn keyword)))
 
-(defn update [db-cfg key doc]
-  (let [{:keys [nodes bucket bucket-pswd]} db-cfg]
-    (if-let [client (CouchbaseClient. nodes bucket bucket-pswd)]
-      (try
-        (let [json-data (json/write-str doc)]
-          (.set client key 0 json-data PersistTo/ONE ReplicateTo/ZERO))
-        (finally
-          (.shutdown client 3 TimeUnit/SECONDS))))))
-
-(defn-db update-x [key doc]
+(defn-db update
+  "Updates the document associated with the given key with the 
+   given document.  The document must be a clojure map, which will
+   be transformed to JSON and inserted into the database."
+  [key doc]
   (let [json-data (json/write-str doc)]
     (.set client key 0 json-data PersistTo/ONE ReplicateTo/ZERO)))
 
-(defn delete [db-cfg key]
-  (let [{:keys [nodes bucket bucket-pswd]} db-cfg]
-    (if-let [client (CouchbaseClient. nodes bucket bucket-pswd)]
-      (try
-        (.delete client key)
-        (finally
-          (.shutdown client 3 TimeUnit/SECONDS))))))
-
-(defn-db delete-x [key]
+(defn-db delete
+  "Delete the document associated with the given key from the 
+   database."
+  [key]
   (.delete client key))
