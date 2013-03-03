@@ -34,10 +34,6 @@
       <artifactId>clj-http</artifactId>
     </dependency>    
     <dependency>
-      <groupId>org.apache.xmlrpc</groupId>
-      <artifactId>xmlrpc-client</artifactId>
-    </dependency>
-    <dependency>
       <groupId>ring</groupId>
       <artifactId>ring</artifactId>
     </dependency>
@@ -48,14 +44,6 @@
     <dependency>
       <groupId>ring-middleware-format</groupId>
       <artifactId>ring-middleware-format</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.clojars.paul</groupId>
-      <artifactId>clj-hector</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.cassandra</groupId>
-      <artifactId>cassandra-all</artifactId>
     </dependency>
     <dependency>
       <groupId>com.cemerick</groupId>

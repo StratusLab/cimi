@@ -1,5 +1,5 @@
 (ns eu.stratuslab.cimi.couchbase-test-utils
-  (:require [eu.stratuslab.cimi.utils :as utils])
+  (:require [eu.stratuslab.cimi.resources.utils :as utils])
   (:import [java.net URI]
     [com.couchbase.client ClusterManager CouchbaseClient]
     [com.couchbase.client.clustermanager BucketType]
