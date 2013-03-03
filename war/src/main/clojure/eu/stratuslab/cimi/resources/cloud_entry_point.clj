@@ -11,7 +11,7 @@
     [compojure.route :as route]
     [compojure.handler :as handler]
     [compojure.response :as response]
-    [com.ashafa.clutch :as clutch]))
+    [eu.stratuslab.cimi.db-utils :as db-utils]))
 
 (def ^:const resource-type "CloudEntryPoint")
 
@@ -62,9 +62,8 @@
                   :description "StratusLab Cloud"
                   :resource-type resource-type
                   :resourceURI resource-uri}
-                 (utils/set-time-attributes)
-                 (utils/set-db-id resource-base-url))]
-    (clutch/put-document db-cfg record)))
+                 (utils/set-time-attributes))]
+    (db-utils/create db-cfg resource-base-url record)))
 
 (defn retrieve
   "Returns the data associated with the CloudEntryPoint.  There is
@@ -74,7 +73,7 @@
   [req]
   (let [baseURI (:base-uri req)
         db-cfg (cfg/db-cfg req)
-        doc (clutch/get-document db-cfg resource-base-url)]
+        doc (db-utils/retrieve db-cfg resource-base-url)]
     (assoc doc :baseURI (:baseURI req))))
 
 (defn update
@@ -87,11 +86,10 @@
         update (->> req
                  (strip-unknown-attributes)
                  (strip-immutable-attributes)
-                 (utils/set-time-attributes)
-                 (utils/set-db-id resource-base-url))
-        current (clutch/get-document db-cfg resource-base-url)
+                 (utils/set-time-attributes))
+        current (db-utils/retrieve db-cfg resource-base-url)
         newdoc (merge current update)]
-    (clutch/put-document db-cfg newdoc)))
+    (db-utils/update db-cfg resource-base-url newdoc)))
 
 (defroutes resource-routes
   (GET "/" {:as req} {:body (retrieve req)})

@@ -63,18 +63,8 @@
     </dependency>
     
     <dependency>
-      <groupId>com.ashafa</groupId>
-      <artifactId>clutch</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>couchbase</groupId>
       <artifactId>couchbase-client</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>clojurewerkz</groupId>
-      <artifactId>spyglass</artifactId>
     </dependency>
 
     <dependency>
