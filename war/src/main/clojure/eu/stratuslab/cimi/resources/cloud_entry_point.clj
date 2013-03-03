@@ -54,7 +54,7 @@
   "Creates a new CloudEntryPoint from the given data.  This normally only occurs
    during the service bootstrap process when the database has not yet been 
    initialized."
-  [db-url]
+  [db-cfg]
   
   (let [record (->> 
                  {:id resource-base-url
@@ -64,7 +64,7 @@
                   :resourceURI resource-uri}
                  (utils/set-time-attributes)
                  (utils/set-db-id resource-base-url))]
-    (clutch/put-document db-url record)))
+    (clutch/put-document db-cfg record)))
 
 (defn retrieve
   "Returns the data associated with the CloudEntryPoint.  There is
@@ -73,8 +73,8 @@
   the ring request."
   [req]
   (let [baseURI (:base-uri req)
-        db-url (cfg/db-url req)
-        doc (clutch/get-document db-url resource-base-url)]
+        db-cfg (cfg/db-cfg req)
+        doc (clutch/get-document db-cfg resource-base-url)]
     (assoc doc :baseURI (:baseURI req))))
 
 (defn update
@@ -83,15 +83,15 @@
   cannot be changed.  For correct behavior, the cloud entry point must
   have been previously initialized.  Returns nil."
   [req]
-  (let [db-url (cfg/db-url req)
+  (let [db-cfg (cfg/db-cfg req)
         update (->> req
                  (strip-unknown-attributes)
                  (strip-immutable-attributes)
                  (utils/set-time-attributes)
                  (utils/set-db-id resource-base-url))
-        current (clutch/get-document db-url resource-base-url)
+        current (clutch/get-document db-cfg resource-base-url)
         newdoc (merge current update)]
-    (clutch/put-document db-url newdoc)))
+    (clutch/put-document db-cfg newdoc)))
 
 (defroutes resource-routes
   (GET "/" {:as req} {:body (retrieve req)})

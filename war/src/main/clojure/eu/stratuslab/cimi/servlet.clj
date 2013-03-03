@@ -5,17 +5,21 @@
    could be changed to read values from the ServletContext if more
    flexibility is needed."
   (:require [ring.util.servlet :as ring]
-            [clojure.tools.logging :as log])
+            [clojure.tools.logging :as log]
+            [clojure.edn :as edn])
   (:gen-class
    :extends javax.servlet.http.HttpServlet
    :init initState
    :state state))
 
 (defn- servlet-params [this]
-  {:path "/cimi"
-   :db-url (.getInitParameter this "db-url")
-   :admin-user (.getInitParameter this "admin-user")
-   :admin-pswd (.getInitParameter this "admin-pswd")})
+  (let [db-cfg-edn (.getInitParameter this "db-cfg")
+        db-cfg (if db-cfg-edn
+                 (edn/read-string db-cfg-edn))]
+    {:path "/cimi"
+     :db-cfg db-cfg
+     :admin-user (.getInitParameter this "admin-user")
+     :admin-pswd (.getInitParameter this "admin-pswd")}))
 
 (defn -initState [] [[] (atom {})])
 
