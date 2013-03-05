@@ -10,5 +10,4 @@
 (defroutes main-routes
   cep/resource-routes
   (GET "/debug" {:as req} {:body req})
-  (route/resources "/")
   (route/not-found "Page not found"))

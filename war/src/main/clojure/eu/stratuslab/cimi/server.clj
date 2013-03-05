@@ -4,10 +4,11 @@
     [clojure.tools.logging :as log]
     [compojure.handler :as handler]
     [ring.middleware.format-params :refer [wrap-restful-params]]
+    [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
     [eu.stratuslab.cimi.middleware.format-response :refer [wrap-restful-response]]
     [eu.stratuslab.cimi.middleware.cfg-params :refer [default-db-cfg wrap-cfg-params]]
     [eu.stratuslab.cimi.middleware.servlet-request :refer [wrap-servlet-paths
-                                                           wrap-base-url]]
+                                                           wrap-base-uri]]
     [eu.stratuslab.cimi.routes :as routes]
     [eu.stratuslab.cimi.friend-utils :as friend-utils]))
 
@@ -16,7 +17,7 @@
 ;;
 (def servlet-handler
   (-> (handler/site routes/main-routes)
-      (wrap-base-url)
+      (wrap-base-uri)
       (wrap-servlet-paths)
       (wrap-cfg-params)
       (wrap-restful-params)
@@ -41,8 +42,12 @@
     (log/info "server context path is: " path)
     
     (if db-cfg
-      (log/info "using database configuration: " db-cfg)
-      (log/warn "using default database configuration: " default-db-cfg))
+      (do 
+        (log/info "using database configuration: " db-cfg)
+        (cep/bootstrap db-cfg))
+      (do 
+        (log/warn "using default database configuration: " default-db-cfg)
+        (cep/bootstrap default-db-cfg)))
     
     (if (and admin-user admin-pswd)
       (log/warn "using recovery admin user and password"))))

@@ -2,6 +2,7 @@
   "Root resource for CIMI, providing information about the locations
   of other resources within the server."
   (:require 
+    [clojure.tools.logging :as log]
     [clojure.set :as set]
     [eu.stratuslab.cimi.resources.common :as common]
     [eu.stratuslab.cimi.resources.utils :as utils]
@@ -65,6 +66,14 @@
                  (utils/set-time-attributes))]
     (db-utils/create db-cfg resource-base-url record)))
 
+(defn bootstrap
+  "If the CloudEntryPoint document does not exist, then create it."
+  [db-cfg]
+  (if-not (db-utils/retrieve db-cfg resource-base-url)
+    (do
+      (log/info "creating CloudEntryPoint")
+      (create db-cfg))))
+
 (defn retrieve
   "Returns the data associated with the CloudEntryPoint.  There is
   exactly one such entry in the database.  The identifier is the root
@@ -74,7 +83,7 @@
   (let [baseURI (:base-uri req)
         db-cfg (cfg/db-cfg req)
         doc (db-utils/retrieve db-cfg resource-base-url)]
-    (assoc doc :baseURI (:baseURI req))))
+    (assoc doc :baseURI baseURI)))
 
 (defn update
   "Update the cloud entry point attributes.  Note that only the common

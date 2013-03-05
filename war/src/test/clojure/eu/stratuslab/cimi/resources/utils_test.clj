@@ -9,11 +9,4 @@
     (is (:updated m)))
   (let [m (set-time-attributes {:created "dummy"})]
     (is (= "dummy" (:created m)))
-    (is (:updated m)))
-  (let [m (set-time-attributes true {})]
-    (is (nil? (:created m)))
-    (is (:updated m)))
-  (let [m (set-time-attributes nil {})]
-    (is (:created m))
-    (is (:updated m))
-    (is (= (:created m) (:updated m)))))
+    (is (:updated m))))
