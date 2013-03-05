@@ -12,7 +12,9 @@
     [compojure.route :as route]
     [compojure.handler :as handler]
     [compojure.response :as response]
-    [eu.stratuslab.cimi.db-utils :as db-utils]))
+    [eu.stratuslab.cimi.db-utils :as db-utils]
+    [clojure.data.json :as json])
+  (:import [java.io InputStreamReader]))
 
 (def ^:const resource-type "CloudEntryPoint")
 
@@ -92,12 +94,17 @@
   have been previously initialized.  Returns nil."
   [req]
   (let [db-cfg (cfg/db-cfg req)
-        update (->> req
+        body (InputStreamReader. (:body req))
+        json (json/read body :key-fn keyword)
+        update (->> json
                  (strip-unknown-attributes)
                  (strip-immutable-attributes)
                  (utils/set-time-attributes))
         current (db-utils/retrieve db-cfg resource-base-url)
         newdoc (merge current update)]
+    (log/info "json: " json)
+    (log/info "update: " update)
+    (log/info "updating CloudEntryPoint: " newdoc)
     (db-utils/update db-cfg resource-base-url newdoc)))
 
 (defroutes resource-routes
