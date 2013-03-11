@@ -50,7 +50,7 @@
 (defn- start-ldap-server
   "Start up an embedded ldap server"
   [port ssl-port]
-  (let [work-dir (fs/temp-dir)
+  (let [work-dir (fs/temp-dir "ldap-")
         directory-service (doto (DefaultDirectoryService.)
                             (.setShutdownHookEnabled true)
                             (.setWorkingDirectory work-dir))

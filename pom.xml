@@ -31,6 +31,10 @@ StratusLab services.
     <module>authn</module>
   </modules>
 
+  <properties>
+    <jetty.version>9.0.0.v20130308</jetty.version>
+  </properties>
+
   <issueManagement>
     <system>GitHub Issues</system>
     <url>https://github.com/StratusLab/cimi/issues</url>
@@ -84,12 +88,12 @@ StratusLab services.
       <dependency>
         <groupId>org.clojure</groupId>
         <artifactId>clojure</artifactId>
-        <version>1.5.0</version>
+        <version>1.5.1</version>
       </dependency>
       <dependency>
         <groupId>org.clojure</groupId>
         <artifactId>tools.logging</artifactId>
-        <version>0.2.4</version>
+        <version>0.2.6</version>
       </dependency>
       <dependency>
         <groupId>org.clojure</groupId>
@@ -99,17 +103,17 @@ StratusLab services.
       <dependency>
         <groupId>ring</groupId>
         <artifactId>ring</artifactId>
-        <version>1.1.6</version>
+        <version>1.1.8</version>
       </dependency>
       <dependency>
         <groupId>compojure</groupId>
         <artifactId>compojure</artifactId>
-        <version>1.1.3</version>
+        <version>1.1.5</version>
       </dependency>
       <dependency>
         <groupId>ring-middleware-format</groupId>
         <artifactId>ring-middleware-format</artifactId>
-        <version>0.2.2</version>
+        <version>0.3.0</version>
       </dependency>
       <dependency>
         <groupId>com.cemerick</groupId>
@@ -125,7 +129,7 @@ StratusLab services.
       <dependency>
         <groupId>clj-http</groupId>
         <artifactId>clj-http</artifactId>
-        <version>0.5.7</version>
+        <version>0.6.5</version>
       </dependency>
 
       <dependency>
@@ -166,7 +170,7 @@ StratusLab services.
       <dependency>
         <groupId>fs</groupId>
         <artifactId>fs</artifactId>
-        <version>1.1.2</version>
+        <version>1.3.3</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -179,13 +183,13 @@ StratusLab services.
       <dependency>
         <groupId>reply</groupId>
         <artifactId>reply</artifactId>
-        <version>0.1.0-beta11</version>
+        <version>0.1.10</version>
       </dependency>
       
       <dependency>
         <groupId>jline</groupId>
         <artifactId>jline</artifactId>
-        <version>2.8</version>
+        <version>2.10</version>
       </dependency>
       
       <dependency>
