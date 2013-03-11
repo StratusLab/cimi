@@ -175,6 +175,7 @@
 		    <include>*.txt</include>
 		    <include>*.html</include>
 		    <include>start.jar</include>
+		    <include>start.d/**/*</include>
 		    <include>etc/**/*</include>
 		    <include>lib/**/*</include>
 		    <include>logs/**/*</include>
