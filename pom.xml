@@ -31,6 +31,20 @@ StratusLab services.
     <module>authn</module>
   </modules>
 
+  <profiles>
+    <profile>
+      <id>build-rpm</id>
+      <activation>
+        <file>
+          <exists>/usr/bin/rpmbuild</exists>
+        </file>
+      </activation>
+      <modules>
+        <module>rpm</module>
+      </modules>
+    </profile>
+  </profiles>
+
   <properties>
     <jetty.version>9.0.0.v20130308</jetty.version>
   </properties>
@@ -249,4 +263,5 @@ StratusLab services.
       </plugins>
     </pluginManagement>
   </build>
+
 </project>
