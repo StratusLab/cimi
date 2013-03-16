@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
@@ -24,6 +25,7 @@
     <dependency>
       <groupId>eu.stratuslab.authn</groupId>
       <artifactId>authn-ssl</artifactId>
+      <classifier>jar-with-dependencies</classifier>
     </dependency>
     <dependency>
       <groupId>eu.stratuslab.cimi</groupId>
@@ -129,6 +131,7 @@
 	    </goals>
 	    <configuration>
 	      <outputDirectory>${project.build.directory}/dependency/webapps</outputDirectory>
+	      <stripVersion>true</stripVersion>
 	      <artifactItems>
 		<artifactItem>
 		  <groupId>eu.stratuslab.cimi</groupId>
@@ -140,12 +143,19 @@
 	  </execution>
 
 	  <execution>
-	    <id>copy-ssl-deps</id>
+	    <id>copy-ssl</id>
 	    <goals>
-	      <goal>copy-dependencies</goal>
+	      <goal>copy</goal>
 	    </goals>
 	    <configuration>
 	      <outputDirectory>${project.build.directory}/dependency/ssl</outputDirectory>
+	      <artifactItems>
+		<artifactItem>
+		  <groupId>eu.stratuslab.authn</groupId>
+		  <artifactId>authn-ssl</artifactId>
+		  <classifier>jar-with-dependencies</classifier>
+		</artifactItem>
+	      </artifactItems>
 	    </configuration>
 	  </execution>
 
@@ -248,17 +258,15 @@
 	    </mapping>
 
 	    <mapping>
-	      <directory>${installation.dir}/stratuslab-webapps</directory>
+	      <directory>${installation.dir}/webapps</directory>
 	      <filemode>644</filemode>
 	      <username>root</username>
 	      <groupname>root</groupname>
 	      <directoryIncluded>false</directoryIncluded>
 	      <sources>
 		<source>
-		  <location>target/dependency/webapps/</location>
-		  <includes>
-		    <include>*.war</include>
-		  </includes>
+		  <location>target/dependency/webapps/cimi-war.war</location>
+		  <destination>root.war</destination>
 		</source>
 	      </sources>
 	    </mapping>

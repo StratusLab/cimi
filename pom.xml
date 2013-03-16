@@ -102,7 +102,8 @@ StratusLab services.
       <dependency>
 	<groupId>eu.stratuslab.authn</groupId>
 	<artifactId>authn-ssl</artifactId>
-	<version>2.8</version>
+	<version>2.9-SNAPSHOT</version>
+	<classifier>jar-with-dependencies</classifier>
       </dependency>
       <dependency>
         <groupId>org.clojure</groupId>
