@@ -22,6 +22,10 @@
 
   <dependencies>
     <dependency>
+      <groupId>eu.stratuslab.authn</groupId>
+      <artifactId>authn-ssl</artifactId>
+    </dependency>
+    <dependency>
       <groupId>eu.stratuslab.cimi</groupId>
       <artifactId>cimi-authn</artifactId>
       <version>${project.version}</version>
@@ -135,6 +139,16 @@
 	    </configuration>
 	  </execution>
 
+	  <execution>
+	    <id>copy-ssl-deps</id>
+	    <goals>
+	      <goal>copy-dependencies</goal>
+	    </goals>
+	    <configuration>
+	      <outputDirectory>${project.build.directory}/dependency/ssl</outputDirectory>
+	    </configuration>
+	  </execution>
+
 	</executions>
 
       </plugin>
@@ -175,12 +189,28 @@
 		    <include>*.txt</include>
 		    <include>*.html</include>
 		    <include>start.jar</include>
-		    <include>start.d/**/*</include>
+		    <include>start.d/</include>
 		    <include>etc/**/*</include>
 		    <include>lib/**/*</include>
 		    <include>logs/**/*</include>
 		    <include>contexts/README.txt</include>
 		  </includes>
+		  <excludes>
+		    <exclude>start.d/test-webapp.ini</exclude>
+		  </excludes>
+		</source>
+	      </sources>
+	    </mapping>
+
+	    <mapping>
+	      <directory>${installation.dir}/lib/ext</directory>
+	      <filemode>644</filemode>
+	      <username>root</username>
+	      <groupname>root</groupname>
+	      <directoryIncluded>false</directoryIncluded>
+	      <sources>
+		<source>
+		  <location>target/dependency/ssl/</location>
 		</source>
 	      </sources>
 	    </mapping>
