@@ -1,7 +1,8 @@
-<project 
-    xmlns="http://maven.apache.org/POM/4.0.0" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>cimi-authn</artifactId>
@@ -27,43 +28,52 @@
     <dependency>
       <groupId>clj-http</groupId>
       <artifactId>clj-http</artifactId>
-    </dependency>    
+    </dependency>
     <dependency>
       <groupId>ring</groupId>
-      <artifactId>ring</artifactId>
+      <artifactId>ring-core</artifactId>
     </dependency>
     <dependency>
       <groupId>compojure</groupId>
       <artifactId>compojure</artifactId>
     </dependency>
+
     <dependency>
       <groupId>com.cemerick</groupId>
       <artifactId>friend</artifactId>
     </dependency>
+
     <dependency>
-      <groupId>kerodon</groupId>
-      <artifactId>kerodon</artifactId>
+      <groupId>eu.eu-emi.security</groupId>
+      <artifactId>canl</artifactId>
     </dependency>
+
     <dependency>
       <groupId>org.clojars.pntblnk</groupId>
       <artifactId>clj-ldap</artifactId>
     </dependency>
 
     <dependency>
+      <groupId>kerodon</groupId>
+      <artifactId>kerodon</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>reply</groupId>
       <artifactId>reply</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>jline</groupId>
       <artifactId>jline</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>codox</groupId>
       <artifactId>codox.core</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.apache.directory.server</groupId>
       <artifactId>apacheds-all</artifactId>
@@ -119,9 +129,7 @@
         <artifactId>clojure-maven-plugin</artifactId>
 
         <configuration>
-          <!-- Uncomment and modify to run only some tests.
-          <testScript>src/main/scripts/test-runner.clj</testScript>
-          -->
+          <!-- Uncomment and modify to run only some tests. <testScript>src/main/scripts/test-runner.clj</testScript> -->
         </configuration>
 
         <executions>

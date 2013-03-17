@@ -1,7 +1,7 @@
-<project 
-    xmlns="http://maven.apache.org/POM/4.0.0" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>cimi-war</artifactId>
@@ -32,10 +32,10 @@
     <dependency>
       <groupId>clj-http</groupId>
       <artifactId>clj-http</artifactId>
-    </dependency>    
+    </dependency>
     <dependency>
       <groupId>ring</groupId>
-      <artifactId>ring</artifactId>
+      <artifactId>ring-core</artifactId>
     </dependency>
     <dependency>
       <groupId>compojure</groupId>
@@ -45,6 +45,7 @@
       <groupId>ring-middleware-format</groupId>
       <artifactId>ring-middleware-format</artifactId>
     </dependency>
+
     <dependency>
       <groupId>com.cemerick</groupId>
       <artifactId>friend</artifactId>
@@ -54,7 +55,7 @@
       <groupId>clj-time</groupId>
       <artifactId>clj-time</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>couchbase</groupId>
       <artifactId>couchbase-client</artifactId>
@@ -64,22 +65,19 @@
       <groupId>org.blancas</groupId>
       <artifactId>kern</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>reply</groupId>
       <artifactId>reply</artifactId>
+      <scope>provided</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>jline</groupId>
       <artifactId>jline</artifactId>
+      <scope>provided</scope>
     </dependency>
-    
-    <dependency>
-      <groupId>codox</groupId>
-      <artifactId>codox.core</artifactId>
-    </dependency>
-    
+
   </dependencies>
 
   <build>
@@ -115,23 +113,23 @@
       </plugin>
 
       <plugin>
-	<groupId>org.eclipse.jetty</groupId>
-	<artifactId>jetty-maven-plugin</artifactId>
-	<configuration>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-maven-plugin</artifactId>
+        <configuration>
           <useTestScope>true</useTestScope>
-	  <scanIntervalSeconds>5</scanIntervalSeconds>
-	  <scanTargetPatterns>
-	    <scanTargetPattern>
-	      <directory>src/main/clojure</directory>
-	      <includes>
-		<include>**/*.clj</include>
-	      </includes>
-	    </scanTargetPattern>
-	  </scanTargetPatterns>
-	  <webApp>
-	    <contextPath>/cimi</contextPath>
-	  </webApp>
-	</configuration>
+          <scanIntervalSeconds>5</scanIntervalSeconds>
+          <scanTargetPatterns>
+            <scanTargetPattern>
+              <directory>src/main/clojure</directory>
+              <includes>
+                <include>**/*.clj</include>
+              </includes>
+            </scanTargetPattern>
+          </scanTargetPatterns>
+          <webApp>
+            <contextPath>/cimi</contextPath>
+          </webApp>
+        </configuration>
       </plugin>
 
       <plugin>
@@ -139,9 +137,7 @@
         <artifactId>clojure-maven-plugin</artifactId>
 
         <configuration>
-          <!-- Uncomment and modify to run only some tests.
-          <testScript>src/main/scripts/test-runner.clj</testScript>
-          -->
+          <!-- Uncomment and modify to run only some tests. <testScript>src/main/scripts/test-runner.clj</testScript> -->
         </configuration>
 
         <executions>
@@ -182,6 +178,8 @@
             </goals>
             <phase>package</phase>
             <configuration>
+              <runWithTests>true</runWithTests>
+              <includePluginDependencies>true</includePluginDependencies>
               <script>${basedir}/target/run_codox.clj</script>
             </configuration>
           </execution>
@@ -199,33 +197,25 @@
 
         </executions>
 
-      </plugin>
+        <dependencies>
+          <dependency>
+            <groupId>codox</groupId>
+            <artifactId>codox.core</artifactId>
+            <version>0.6.4</version>
+          </dependency>
+        </dependencies>
 
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-	
-	<configuration>
-	  <mainClass>eu.stratuslab.cimi.main</mainClass>
-          <classpathScope>test</classpathScope>
-	</configuration>
-	
       </plugin>
 
       <plugin>
         <artifactId>maven-war-plugin</artifactId>
         <configuration>
-	  <!--
-               Remove the servlet-api jar files.  This is provided
-               by the servlet container and causes unnecessary 
-               warnings in the log files.
-	  -->
-          <packagingExcludes>**/servlet-api*.jar</packagingExcludes>
+          <!-- Remove the servlet-api jar files. This is provided by the 
+            servlet container and causes unnecessary warnings in the log files. -->
+          <packagingExcludes>**/servlet-api*.jar,**/javax.servlet*.jar</packagingExcludes>
 
-          <!-- 
-               REPLACE LOGGING PROPERTIES FILE WITH ONE SUITABLE
-               FOR A PRODUCTION ENVIRONMENT.
-          -->
+          <!-- REPLACE LOGGING PROPERTIES FILE WITH ONE SUITABLE FOR A PRODUCTION 
+            ENVIRONMENT. -->
           <webResources>
             <resource>
               <directory>${basedir}/src/main/war</directory>

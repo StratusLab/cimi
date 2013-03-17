@@ -9,8 +9,7 @@
     [eu.stratuslab.cimi.middleware.cfg-params :refer [default-db-cfg wrap-cfg-params]]
     [eu.stratuslab.cimi.middleware.servlet-request :refer [wrap-servlet-paths
                                                            wrap-base-uri]]
-    [eu.stratuslab.cimi.routes :as routes]
-    [eu.stratuslab.cimi.friend-utils :as friend-utils]))
+    [eu.stratuslab.cimi.routes :as routes]))
 
 ;;
 ;; Authentication needs to be configured.
