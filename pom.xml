@@ -202,6 +202,12 @@ StratusLab services.
       </dependency>
 
       <dependency>
+        <groupId>instaparse</groupId>
+        <artifactId>instaparse</artifactId>
+        <version>1.0.1</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.apache.directory.server</groupId>
         <artifactId>apacheds-all</artifactId>
         <version>1.5.5</version>
@@ -294,4 +300,11 @@ StratusLab services.
     </pluginManagement>
   </build>
 
+  <dependencies>
+    <dependency>
+      <groupId>instaparse</groupId>
+      <artifactId>instaparse</artifactId>
+      <version>1.0.1</version>
+    </dependency>
+  </dependencies>
 </project>

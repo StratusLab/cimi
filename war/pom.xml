@@ -67,6 +67,11 @@
     </dependency>
 
     <dependency>
+      <groupId>instaparse</groupId>
+      <artifactId>instaparse</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>reply</groupId>
       <artifactId>reply</artifactId>
       <scope>provided</scope>
