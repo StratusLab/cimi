@@ -26,6 +26,11 @@
       <artifactId>tools.logging</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>tools.namespace</artifactId>
+      <version>0.2.3</version>
+    </dependency>
+    <dependency>
       <groupId>clj-http</groupId>
       <artifactId>clj-http</artifactId>
     </dependency>
