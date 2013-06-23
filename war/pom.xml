@@ -194,6 +194,7 @@
             </configuration>
           </execution>
 
+<!--
           <execution>
             <id>run-tests</id>
             <goals>
@@ -204,6 +205,7 @@
               <temporaryOutputDirectory>true</temporaryOutputDirectory>
             </configuration>
           </execution>
+-->
 
         </executions>
 
