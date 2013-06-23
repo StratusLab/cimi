@@ -308,11 +308,4 @@ StratusLab services.
     </pluginManagement>
   </build>
 
-  <dependencies>
-    <dependency>
-      <groupId>instaparse</groupId>
-      <artifactId>instaparse</artifactId>
-      <version>1.0.1</version>
-    </dependency>
-  </dependencies>
 </project>
