@@ -283,10 +283,7 @@
 	      <directoryIncluded>false</directoryIncluded>
 	      <sources>
 		<source>
-		  <location>target/dependency/webapps/cimi-war.war</location>
-		  <includes>
-		    <include>root.war</include>
-		  </includes>
+		  <location>target/dependency/webapps</location>
 		</source>
 	      </sources>
 	    </mapping>
