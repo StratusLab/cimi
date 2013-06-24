@@ -181,10 +181,10 @@ fi
 ##################################################
 if [ -z "$JETTY_HOME" ] ; then
   STANDARD_LOCATIONS=(
-        "/opt/stratuslab"
+	"/opt/stratuslab"
         )
   JETTY_DIR_NAMES=(
-        "cimi"
+	"cimi"
         )
         
   for L in "${STANDARD_LOCATIONS[@]}"

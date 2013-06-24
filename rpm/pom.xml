@@ -204,6 +204,12 @@
 		    <include>logs/**/*</include>
 		    <include>contexts/README.txt</include>
 		  </includes>
+                  <!-- remove references to binary files -->
+                  <excludes>
+                    <exclude>lib/setuid/**/*</exclude>
+                    <exclude>etc/jetty-setuid.xml</exclude>
+		    <exclude>etc/jetty.conf</exclude>
+                  </excludes>
 		</source>
 	      </sources>
 	    </mapping>
@@ -218,7 +224,7 @@
 		<source>
 		  <location>target/dependency/jetty-distribution-${jetty.version}/start.d</location>
 		  <excludes>
-		    <exclude>test-webapp.ini</exclude>
+		    <exclude>*</exclude>
 		  </excludes>
 		</source>
 	      </sources>
@@ -270,7 +276,7 @@
 	    </mapping>
 
 	    <mapping>
-	      <directory>${installation.dir}/webapps</directory>
+	      <directory>${installation.dir}/stratuslab-webapps</directory>
 	      <filemode>644</filemode>
 	      <username>root</username>
 	      <groupname>root</groupname>
@@ -278,7 +284,9 @@
 	      <sources>
 		<source>
 		  <location>target/dependency/webapps/cimi-war.war</location>
-		  <destination>root.war</destination>
+		  <includes>
+		    <include>root.war</include>
+		  </includes>
 		</source>
 	      </sources>
 	    </mapping>

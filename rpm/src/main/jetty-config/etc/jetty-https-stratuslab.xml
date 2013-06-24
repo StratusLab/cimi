@@ -48,10 +48,10 @@
   <!-- proxies to be used.                                         -->
   <!-- =========================================================== -->
   <New id="sslContextFactory" class="eu.stratuslab.ssl.GridSslContextFactory">
-    <Arg></Arg> <!-- CA directory (/etc/grid-security/certificates) -->
-    <Arg></Arg> <!-- CA namespace validation (EUGRIDPMA_AND_GLOBUS) --> 
-    <Arg></Arg> <!-- update interval in ms (60000 = 10 min) -->
-    <Arg></Arg> <!-- CRL checking policy (REQUIRE) -->
+    <Arg></Arg><!-- CA directory (/etc/grid-security/certificates) -->
+    <Arg></Arg><!-- CA namespace validation (EUGRIDPMA_AND_GLOBUS) --> 
+    <Arg></Arg><!-- update interval in ms (60000 = 10 min) -->
+    <Arg></Arg><!-- CRL checking policy (REQUIRE) -->
   
     <Set name="KeyManagerPassword">jettycred</Set>
     
@@ -70,7 +70,6 @@
       </Array>
     </Set>
   </New>
-
 
   <!-- =========================================================== -->
   <!-- Create a TLS specific HttpConfiguration based on the        -->
@@ -117,7 +116,7 @@
             </Array>
           </Arg>
           <Set name="host"><Property name="jetty.host" /></Set>
-          <Set name="port"><Property name="jetty.tls.port" default="8443" /></Set>
+          <Set name="port"><Property name="jetty.tls.port" default="8082" /></Set>
           <Set name="idleTimeout">30000</Set>
         </New>
     </Arg>
