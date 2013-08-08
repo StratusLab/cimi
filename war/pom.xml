@@ -90,6 +90,37 @@
     
   </dependencies>
 
+  <profiles>
+    <profile>
+      <id>run-db-tests</id>
+      <activation>
+        <property>
+          <name>!NO_DB_TESTS</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.theoryinpractise</groupId>
+            <artifactId>clojure-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>run-tests</id>
+                <goals>
+                  <goal>test</goal>
+                </goals>
+                <phase>test</phase>
+                <configuration>
+                  <temporaryOutputDirectory>true</temporaryOutputDirectory>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
   <build>
 
     <plugins>
@@ -193,19 +224,6 @@
               <script>${basedir}/target/run_codox.clj</script>
             </configuration>
           </execution>
-
-<!--
-          <execution>
-            <id>run-tests</id>
-            <goals>
-              <goal>test</goal>
-            </goals>
-            <phase>test</phase>
-            <configuration>
-              <temporaryOutputDirectory>true</temporaryOutputDirectory>
-            </configuration>
-          </execution>
--->
 
         </executions>
 
