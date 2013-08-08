@@ -175,6 +175,13 @@ StratusLab services.
         <artifactId>kerodon</artifactId>
         <version>0.2.0</version>
       </dependency>
+
+      <dependency>
+        <groupId>peridot</groupId>
+        <artifactId>peridot</artifactId>
+        <version>0.2.2</version>
+      </dependency>
+
       <dependency>
         <groupId>org.clojars.pntblnk</groupId>
         <artifactId>clj-ldap</artifactId>

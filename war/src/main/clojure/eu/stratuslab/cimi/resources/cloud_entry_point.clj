@@ -6,13 +6,12 @@
     [clojure.set :as set]
     [eu.stratuslab.cimi.resources.common :as common]
     [eu.stratuslab.cimi.resources.utils :as utils]
-    [eu.stratuslab.cimi.middleware.cfg-params :as cfg]
     [clojure.tools.logging :refer [debug info warn]]
     [compojure.core :refer :all]
     [compojure.route :as route]
     [compojure.handler :as handler]
     [compojure.response :as response]
-    [eu.stratuslab.cimi.db-utils :as db-utils]
+    [eu.stratuslab.cimi.cb.utils :as cb-utils]
     [clojure.data.json :as json])
   (:import [java.io InputStreamReader]))
 
@@ -57,7 +56,7 @@
   "Creates a new CloudEntryPoint from the given data.  This normally only occurs
    during the service bootstrap process when the database has not yet been 
    initialized."
-  [db-cfg]
+  [cb-client]
   
   (let [record (->> 
                  {:id resource-base-url
@@ -66,15 +65,15 @@
                   :resource-type resource-type
                   :resourceURI resource-uri}
                  (utils/set-time-attributes))]
-    (db-utils/create db-cfg resource-base-url record)))
+    (cb-utils/create cb-client resource-base-url record)))
 
 (defn bootstrap
   "If the CloudEntryPoint document does not exist, then create it."
-  [db-cfg]
-  (if-not (db-utils/retrieve db-cfg resource-base-url)
+  [cb-client]
+  (if-not (cb-utils/retrieve cb-client resource-base-url)
     (do
       (log/info "creating CloudEntryPoint")
-      (create db-cfg))))
+      (create cb-client))))
 
 (defn retrieve
   "Returns the data associated with the CloudEntryPoint.  There is
@@ -83,8 +82,8 @@
   the ring request."
   [req]
   (let [baseURI (:base-uri req)
-        db-cfg (cfg/db-cfg req)
-        doc (db-utils/retrieve db-cfg resource-base-url)]
+        cb-client (:cb-client req)
+        doc (cb-utils/retrieve cb-client resource-base-url)]
     (assoc doc :baseURI baseURI)))
 
 (defn update
@@ -93,19 +92,19 @@
   cannot be changed.  For correct behavior, the cloud entry point must
   have been previously initialized.  Returns nil."
   [req]
-  (let [db-cfg (cfg/db-cfg req)
+  (let [cb-client (:cb-client req)
         body (InputStreamReader. (:body req))
         json (json/read body :key-fn keyword)
         update (->> json
                  (strip-unknown-attributes)
                  (strip-immutable-attributes)
                  (utils/set-time-attributes))
-        current (db-utils/retrieve db-cfg resource-base-url)
+        current (cb-utils/retrieve cb-client resource-base-url)
         newdoc (merge current update)]
     (log/info "json: " json)
     (log/info "update: " update)
     (log/info "updating CloudEntryPoint: " newdoc)
-    (db-utils/update db-cfg resource-base-url newdoc)))
+    (cb-utils/update cb-client resource-base-url newdoc)))
 
 (defroutes resource-routes
   (GET "/" {:as req} {:body (retrieve req)})

@@ -4,8 +4,7 @@
     [clojure.set :as set]
     [eu.stratuslab.cimi.resources.common :as common]
     [eu.stratuslab.cimi.resources.utils :as utils]
-    [eu.stratuslab.cimi.db-utils :as db-utils]
-    [eu.stratuslab.cimi.middleware.cfg-params :as cfg]
+    [eu.stratuslab.cimi.cb.utils :as cb-utils]
     [compojure.core :refer :all]
     [compojure.route :as route]
     [compojure.handler :as handler]
@@ -40,7 +39,7 @@
 
 (defn create
   "Creates a new MachineConfiguration from the given data."
-  [db-cfg]
+  [cb-client]
   
   (let [record (->> 
                  {:id resource-base-url
@@ -49,7 +48,7 @@
                   :resource-type resource-type
                   :resourceURI resource-uri}
                  (utils/set-time-attributes))]
-    (db-utils/create db-cfg resource-base-url record)))
+    (cb-utils/create cb-client resource-base-url record)))
 
 (defn retrieve
   "Returns the data associated with the CloudEntryPoint.  There is
@@ -58,8 +57,8 @@
   the ring request."
   [req]
   (let [baseURI (:base-uri req)
-        db-cfg (cfg/db-cfg req)
-        doc (db-utils/retrieve db-cfg resource-base-url)]
+        cb-client (:cb-client req)
+        doc (cb-utils/retrieve cb-client resource-base-url)]
     (assoc doc :baseURI (:baseURI req))))
 
 (defn update
@@ -68,22 +67,22 @@
   cannot be changed.  For correct behavior, the cloud entry point must
   have been previously initialized.  Returns nil."
   [req]
-  (let [db-cfg (cfg/db-cfg req)
+  (let [cb-client (:cb-client req)
         update (->> req
                  (strip-unknown-attributes)
                  (strip-immutable-attributes)
                  (utils/set-time-attributes))
-        current (db-utils/retrieve db-cfg resource-base-url)
+        current (cb-utils/retrieve cb-client resource-base-url)
         newdoc (merge current update)]
-    (db-utils/update db-cfg resource-base-url newdoc)))
+    (cb-utils/update cb-client resource-base-url newdoc)))
 
 (defn delete
   "Deletes the named machine configuration."
   [req]
   (let [id "dummy"
-        db-cfg (cfg/db-cfg req)
+        cb-client (:cb-client req)
         resource-uri (str resource-base-url "/" id)]
-    (db-utils/delete db-cfg resource-base-url)))
+    (cb-utils/delete cb-client resource-base-url)))
 
 (defroutes resource-routes
   (POST "/MachineConfiguration" {:as req} {:body (create req)})

@@ -72,6 +72,12 @@
     </dependency>
 
     <dependency>
+      <groupId>kerodon</groupId>
+      <artifactId>kerodon</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>reply</groupId>
       <artifactId>reply</artifactId>
       <scope>provided</scope>
