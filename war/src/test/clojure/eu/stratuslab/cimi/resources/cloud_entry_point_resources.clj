@@ -10,12 +10,12 @@
 
 (use-fixtures :once cb-utils/temp-bucket-fixture)
 
-(defn ring-app [db-cfg]
-  (bootstrap db-cfg)
-  (wrap-cb-client db-cfg resource-routes))
+(defn ring-app [cb-client]
+  (bootstrap cb-client)
+  (wrap-cb-client cb-client resource-routes))
 
 (deftest retrieve-cloud-entry-point
-  (let [results (-> (session (ring-app cb-utils/*test-db-cfg*))
+  (let [results (-> (session (ring-app cb-utils/*test-cb-client*))
                   (request "/"))
         response (:response results)
         body (:body response)
@@ -25,7 +25,7 @@
     (is (= (:resourceURI body) resource-uri))))
 
 (deftest update-cloud-entry-point
-  (let [results (-> (session (ring-app cb-utils/*test-db-cfg*))
+  (let [results (-> (session (ring-app cb-utils/*test-cb-client*))
                   (content-type "application/json")
                   (request "/"
                     :request-method :put
@@ -34,7 +34,7 @@
         body (:body response)
         request (:request results)]
     (is (empty? body)))
-  (let [results (-> (session (ring-app cb-utils/*test-db-cfg*))
+  (let [results (-> (session (ring-app cb-utils/*test-cb-client*))
                   (request "/"))
         response (:response results)
         body (:body response)
@@ -45,7 +45,7 @@
     (is (= (:name body) "dummy"))))
 
 (deftest delete-cloud-entry-point
-  (let [results (-> (session (ring-app cb-utils/*test-db-cfg*))
+  (let [results (-> (session (ring-app cb-utils/*test-cb-client*))
                   (request "/" :request-method :delete))
         response (:response results)]
     (is (nil? response))))
