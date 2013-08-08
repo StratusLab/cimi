@@ -132,18 +132,6 @@ StratusLab services.
         <groupId>ring-middleware-format</groupId>
         <artifactId>ring-middleware-format</artifactId>
         <version>0.3.0</version>
-        <!--
-        <exclusions>
-          <exclusion>
-            <groupId>ring</groupId>
-            <artifactId>ring-jetty-adapter</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>ring</groupId>
-            <artifactId>ring-devel</artifactId>
-          </exclusion>
-        </exclusions>
-        -->
       </dependency>
       <dependency>
         <groupId>com.cemerick</groupId>
@@ -171,13 +159,15 @@ StratusLab services.
       <dependency>
         <groupId>couchbase</groupId>
         <artifactId>couchbase-client</artifactId>
-        <version>1.1.2</version>
+        <version>1.1.9</version>
+<!--
         <exclusions>
           <exclusion>
             <groupId>stax</groupId>
             <artifactId>stax-api</artifactId>
           </exclusion>
         </exclusions>
+-->
       </dependency>
 
       <dependency>
