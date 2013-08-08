@@ -3,3 +3,4 @@ jdk:
   - oraclejdk7
   - openjdk7
   - openjdk6
+install: mvn install -DNO_DB_TESTS=true
