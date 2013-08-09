@@ -24,7 +24,8 @@
         mgr (ClusterManager. [(URI. mgr-uri)] "admin" "ADMIN4")]
     (try
       (.createNamedBucket mgr BucketType/COUCHBASE bucket 512 0 bucket-pswd false)
-      (Thread/sleep 3000) ;; ensure bucket is loaded before running tests      
+      (Thread/sleep 3000) ;; ensure bucket is loaded before running tests 
+      (println db-params)
       (binding [*test-cb-client* (cb-utils/create-client db-params)]
         (try
           (f)

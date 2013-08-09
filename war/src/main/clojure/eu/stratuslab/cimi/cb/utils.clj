@@ -1,5 +1,7 @@
 (ns eu.stratuslab.cimi.cb.utils
-  (:require [clojure.data.json :as json])
+  (:require
+    [clojure.data.json :as json]
+    [couchbase-clj.client :as cbc])
   (:import
     [java.net URI]
     [com.couchbase.client ClusterManager CouchbaseClient]
@@ -16,32 +18,30 @@
     :or {:nodes [(URI/create "http://localhost:8091/pools")]
          :bucket "default"
          :bucket-pswd ""}}]
-  (println nodes)
-  (println bucket)
-  (println bucket-pswd)
-  (CouchbaseClient. nodes bucket bucket-pswd))
+  (cbc/create-client {:uris nodes
+                      :bucket bucket
+                      :username bucket
+                      :password bucket-pswd}))
 
 (defn shutdown
-  "Shuts down the given client.  The default timeout is 3 seconds."
-  [client & [timeout]]
-  (let [timeout (or timeout 3)]
-    (.shutdown client timeout TimeUnit/SECONDS)))
+  "Shuts down the given client.  The default timeout is 3000 ms."
+  [client & [timeout-ms]]
+  (let [timeout-ms (or timeout-ms 3000)]
+    (cbc/shutdown client timeout-ms)))
 
 (defn create
   "Creates a new document in the database with the given key.  The 
    document must be a clojure map, which will be transformed to JSON
    then inserted into the database."
   [cb-client key doc]
-  (let [json-data (json/write-str doc)]
-    (.add cb-client key 0 json-data PersistTo/ONE ReplicateTo/ZERO)))
+  (cbc/add-json cb-client key doc))
 
 (defn retrieve
   "Retrieve the document associated with the given key from the 
    database.  This returns nil if the document does not exist.  The
    returned document is a map with keys transformed to keywords."
   [cb-client key]
-  (if-let [doc (.get cb-client key)]
-    (json/read-str doc :key-fn keyword)))
+  (cbc/get-json cb-client key))
 
 (defn list-all
   "Provide a list of all of the database entries with the given
@@ -55,11 +55,10 @@
    given document.  The document must be a clojure map, which will
    be transformed to JSON and inserted into the database."
   [cb-client key doc]
-  (let [json-data (json/write-str doc)]
-    (.set cb-client key 0 json-data PersistTo/ONE ReplicateTo/ZERO)))
+  (cbc/set-json cb-client key doc))
 
 (defn delete
   "Delete the document associated with the given key from the 
    database."
   [cb-client key]
-  (.delete cb-client key))
+  (cbc/delete cb-client key))
