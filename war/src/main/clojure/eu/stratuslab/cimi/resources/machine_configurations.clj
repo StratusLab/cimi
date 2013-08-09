@@ -13,9 +13,9 @@
 
 (def ^:const resource-type "MachineConfiguration")
 
-(def resource-uri (str common/cimi-uri resource-type))
+(def ^:const resource-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type))
 
-(def ^:const resource-base-url "/")
+(def ^:const resource-base-url (str "/" resource-type))
 
 (def mc-attributes
   "These are the attributes specific to a MachineConfiguration."

@@ -17,7 +17,7 @@
 
 (def ^:const resource-type "CloudEntryPoint")
 
-(def resource-uri (str common/cimi-uri resource-type))
+(def ^:const resource-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type))
 
 (def ^:const resource-base-url "/")
 

@@ -4,7 +4,39 @@
    service."
   (:require 
     [clojure.tools.logging :as log]
-    [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]))
+    [eu.stratuslab.cimi.resources.cloud-entry-point :as cep])
+  (:import
+    [com.couchbase.client CouchbaseClient]
+    [com.couchbase.client.protocol.views DesignDocument ViewDesign]))
+
+(def ^:const design-doc-name "cimi.0")
+
+(def ^:const doc-id-view "
+function(doc, meta) {
+  emit(meta.id, null);
+}")
+
+(def ^:const resource-uri-view "
+function(doc, meta) {
+  if (meta.type==\"json\" && doc.resourceURI) {
+    emit(doc.resourceURI,null);
+  }
+}")
+
+(defn create-design-doc [cb-client]
+  (let [views [(ViewDesign. "doc-id" doc-id-view)
+               (ViewDesign. "resource-uri" resource-uri-view)]]
+    (DesignDocument. design-doc-name views nil)))
+
+(defn create-views
+  "Ensure that the views necessary for searching the database
+   are available."
+  [cb-client]
+  (let [design-doc (create-design-doc)
+        added? (.createDesignDocument design-doc)]
+    (if added?
+      (log/info "design document " design-doc-name " added to database")
+      (log/info "design document " design-doc-name " NOT added to database"))))
 
 (defn create-cep
   "Checks to see if the CloudEntryPoint exists in the database;
@@ -21,12 +53,6 @@
         (log/info "CloudEntryPoint exists")
         (catch Exception e
           (log/error "problem retrieving CloudEntryPoint: " (.getMessage e)))))))
-
-(defn create-views
-  "Ensure that the views necessary for searching the database
-   are available."
-  [cb-client]
-  nil)
 
 (defn bootstrap [cb-client]
   (create-cep cb-client)
