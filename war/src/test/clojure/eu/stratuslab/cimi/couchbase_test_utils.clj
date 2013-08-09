@@ -1,7 +1,7 @@
 (ns eu.stratuslab.cimi.couchbase-test-utils
   (:require 
-    [eu.stratuslab.cimi.resources.utils :as utils]
-    [eu.stratuslab.cimi.cb.utils :as cb-utils])
+    [couchbase-clj.client :as cbc]
+    [eu.stratuslab.cimi.resources.utils :as utils])
   (:import [java.net URI]
     [com.couchbase.client ClusterManager CouchbaseClient]
     [com.couchbase.client.clustermanager BucketType]
@@ -17,19 +17,20 @@
   [f]
   (let [mgr-uri "http://localhost:8091/"
         node-uri (str mgr-uri "pools")
-        db-params {:nodes [(URI. node-uri)]
-                   :bucket (utils/create-uuid)
-                   :bucket-pswd "pswd"}
-        {:keys [nodes bucket bucket-pswd]} db-params
+        bucket (utils/create-uuid)
+        password "pswd"
+        db-params {:uris [(URI. node-uri)]
+                   :bucket bucket
+                   :username bucket
+                   :password password}
         mgr (ClusterManager. [(URI. mgr-uri)] "admin" "ADMIN4")]
     (try
-      (.createNamedBucket mgr BucketType/COUCHBASE bucket 512 0 bucket-pswd false)
+      (.createNamedBucket mgr BucketType/COUCHBASE bucket 512 0 password false)
       (Thread/sleep 3000) ;; ensure bucket is loaded before running tests 
-      (println db-params)
-      (binding [*test-cb-client* (cb-utils/create-client db-params)]
+      (binding [*test-cb-client* (cbc/create-client db-params)]
         (try
           (f)
           (finally
-            (cb-utils/shutdown *test-cb-client*))))
+            (cbc/shutdown *test-cb-client* 3000))))
       (finally
         (.deleteBucket mgr bucket)))))

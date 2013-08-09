@@ -2,9 +2,9 @@
   "Utilities for managing the CRUD features for machine configurations."
   (:require 
     [clojure.set :as set]
+    [couchbase-clj.client :as cbc]
     [eu.stratuslab.cimi.resources.common :as common]
     [eu.stratuslab.cimi.resources.utils :as utils]
-    [eu.stratuslab.cimi.cb.utils :as cb-utils]
     [compojure.core :refer :all]
     [compojure.route :as route]
     [compojure.handler :as handler]
@@ -47,7 +47,7 @@
                   :description "StratusLab Cloud"
                   :resourceURI resource-uri}
                  (utils/set-time-attributes))]
-    (cb-utils/create cb-client resource-base-url record)))
+    (cbc/add-json cb-client resource-base-url record)))
 
 (defn retrieve
   "Returns the data associated with the CloudEntryPoint.  There is
@@ -57,7 +57,7 @@
   [req]
   (let [baseURI (:base-uri req)
         cb-client (:cb-client req)
-        doc (cb-utils/retrieve cb-client resource-base-url)]
+        doc (cbc/get-json cb-client resource-base-url)]
     (assoc doc :baseURI (:baseURI req))))
 
 (defn update
@@ -71,9 +71,9 @@
                  (strip-unknown-attributes)
                  (strip-immutable-attributes)
                  (utils/set-time-attributes))
-        current (cb-utils/retrieve cb-client resource-base-url)
+        current (cbc/get-json cb-client resource-base-url)
         newdoc (merge current update)]
-    (cb-utils/update cb-client resource-base-url newdoc)))
+    (cbc/set-json cb-client resource-base-url newdoc)))
 
 (defn delete
   "Deletes the named machine configuration."
@@ -81,7 +81,7 @@
   (let [id "dummy"
         cb-client (:cb-client req)
         resource-uri (str resource-base-url "/" id)]
-    (cb-utils/delete cb-client resource-base-url)))
+    (cbc/delete cb-client resource-base-url)))
 
 (defroutes resource-routes
   (POST resource-base-url {:as req} {:body (create req)})

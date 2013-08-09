@@ -4,15 +4,22 @@
   (:require
     [clojure.tools.logging :as log]
     [clojure.edn :as edn]
+    [couchbase-clj.client :as cbc]
     [compojure.handler :as handler]
     [ring.middleware.format-params :refer [wrap-restful-params]]
-    [eu.stratuslab.cimi.cb.utils :as cb-utils]
     [eu.stratuslab.cimi.cb.bootstrap :refer [bootstrap]]
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
     [eu.stratuslab.cimi.middleware.format-response :refer [wrap-restful-response]]
     [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
     [eu.stratuslab.cimi.middleware.servlet-request :refer [wrap-servlet-paths wrap-base-uri]]
-    [eu.stratuslab.cimi.routes :as routes]))
+    [eu.stratuslab.cimi.routes :as routes])
+  (:import
+    [java.net URI]))
+
+(def cb-client-defaults {:uris [(URI/create "http://localhost:8091/pools")]
+                         :bucket "default"
+                         :username ""
+                         :password ""})
 
 (defn- create-cb-client
   "Creates a Couchbase client instance from the given configuration.
@@ -20,10 +27,10 @@
    ('default' bucket on local Couchbase) are used."
   [couchbase]
   (try
-    (cb-utils/create-client (edn/read-string couchbase))
+    (cbc/create-client (edn/read-string couchbase))
     (catch Exception e
       (log/error "error creating couchbase client from configuration: " e)
-      (cb-utils/create-client {}))))
+      (cbc/create-client cb-client-defaults))))
 
 (defn create-ring-handler
   "Creates a ring handler that wraps all of the service routes
@@ -59,4 +66,4 @@
   [{:keys [cb-client]}]
   (log/info "releasing servlet implementation resources")
   (if cb-client
-    (cb-utils/shutdown cb-client)))
+    (cbc/shutdown cb-client 3000)))

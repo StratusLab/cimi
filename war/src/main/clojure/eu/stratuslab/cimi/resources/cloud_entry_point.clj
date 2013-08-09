@@ -4,6 +4,7 @@
   (:require 
     [clojure.tools.logging :as log]
     [clojure.set :as set]
+    [couchbase-clj.client :as cbc]
     [eu.stratuslab.cimi.resources.common :as common]
     [eu.stratuslab.cimi.resources.utils :as utils]
     [clojure.tools.logging :refer [debug info warn]]
@@ -11,7 +12,6 @@
     [compojure.route :as route]
     [compojure.handler :as handler]
     [compojure.response :as response]
-    [eu.stratuslab.cimi.cb.utils :as cb-utils]
     [clojure.data.json :as json])
   (:import [java.io InputStreamReader]))
 
@@ -64,12 +64,12 @@
                   :description "StratusLab Cloud"
                   :resourceURI resource-uri}
                  (utils/set-time-attributes))]
-    (cb-utils/create cb-client resource-base-url record)))
+    (cbc/add-json cb-client resource-base-url record)))
 
 (defn bootstrap
   "If the CloudEntryPoint document does not exist, then create it."
   [cb-client]
-  (if-not (cb-utils/retrieve cb-client resource-base-url)
+  (if-not (cbc/get-json cb-client resource-base-url)
     (do
       (log/info "creating CloudEntryPoint")
       (create cb-client))))
@@ -82,14 +82,14 @@
   [req]
   (let [baseURI (:base-uri req)
         cb-client (:cb-client req)
-        doc (cb-utils/retrieve cb-client resource-base-url)]
+        doc (cbc/get-json cb-client resource-base-url)]
     (assoc doc :baseURI baseURI)))
 
 (defn list-all
   "Returns the raw list of CloudEntryPoint entries.  There should
    only ever be one of these."
   [{:keys [cb-client]}]
-  (cb-utils/list-all cb-client resource-uri))
+  (println resource-uri))
 
 (defn update
   "Update the cloud entry point attributes.  Note that only the common
@@ -104,12 +104,12 @@
                  (strip-unknown-attributes)
                  (strip-immutable-attributes)
                  (utils/set-time-attributes))
-        current (cb-utils/retrieve cb-client resource-base-url)
+        current (cbc/get-json cb-client resource-base-url)
         newdoc (merge current update)]
     (log/info "json: " json)
     (log/info "update: " update)
     (log/info "updating CloudEntryPoint: " newdoc)
-    (cb-utils/update cb-client resource-base-url newdoc)))
+    (cbc/set-json cb-client resource-base-url newdoc)))
 
 (defroutes resource-routes
   (GET resource-base-url {:as req} {:body (retrieve req)})
