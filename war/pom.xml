@@ -57,8 +57,8 @@
     </dependency>
 
     <dependency>
-      <groupId>couchbase</groupId>
-      <artifactId>couchbase-client</artifactId>
+      <groupId>couchbase-clj</groupId>
+      <artifactId>couchbase-clj</artifactId>
     </dependency>
 
     <dependency>
