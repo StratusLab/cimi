@@ -4,6 +4,7 @@
    service."
   (:require 
     [clojure.tools.logging :as log]
+    [couchbase-clj.client :as cbc]
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep])
   (:import
     [com.couchbase.client CouchbaseClient]
@@ -32,8 +33,9 @@ function(doc, meta) {
   "Ensure that the views necessary for searching the database
    are available."
   [cb-client]
-  (let [design-doc (create-design-doc)
-        added? (.createDesignDocument design-doc)]
+  (let [design-doc (create-design-doc cb-client)
+        ;; FIXME: This is NOT working with the synchronous method!
+        added? (.asyncCreateDesignDoc (cbc/get-client cb-client) design-doc)]
     (if added?
       (log/info "design document " design-doc-name " added to database")
       (log/info "design document " design-doc-name " NOT added to database"))))
