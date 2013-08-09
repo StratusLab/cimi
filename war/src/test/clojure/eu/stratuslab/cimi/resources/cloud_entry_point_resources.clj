@@ -21,7 +21,6 @@
         body (:body response)
         request (:request results)]
     (is (= (:status response) 200))
-    (is (= (:resource-type body) resource-type))
     (is (= (:resourceURI body) resource-uri))))
 
 (deftest update-cloud-entry-point
@@ -40,7 +39,6 @@
         body (:body response)
         request (:request results)]
     (is (= (:status response) 200))
-    (is (= (:resource-type body) resource-type))
     (is (= (:resourceURI body) resource-uri))
     (is (= (:name body) "dummy"))))
 

@@ -36,12 +36,19 @@
     (.add cb-client key 0 json-data PersistTo/ONE ReplicateTo/ZERO)))
 
 (defn retrieve
-  "Retrieve teh document associated with the given key from the 
+  "Retrieve the document associated with the given key from the 
    database.  This returns nil if the document does not exist.  The
    returned document is a map with keys transformed to keywords."
   [cb-client key]
   (if-let [doc (.get cb-client key)]
     (json/read-str doc :key-fn keyword)))
+
+(defn list-all
+  "Provide a list of all of the database entries with the given
+   resource URI."
+  [cb-client resource-uri]
+  ;; TODO: Provide real implementation!
+  nil)
 
 (defn update
   "Updates the document associated with the given key with the 

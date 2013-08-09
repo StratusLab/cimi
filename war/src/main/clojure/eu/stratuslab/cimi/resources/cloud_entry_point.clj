@@ -62,7 +62,6 @@
                  {:id resource-base-url
                   :name resource-type
                   :description "StratusLab Cloud"
-                  :resource-type resource-type
                   :resourceURI resource-uri}
                  (utils/set-time-attributes))]
     (cb-utils/create cb-client resource-base-url record)))
@@ -86,6 +85,12 @@
         doc (cb-utils/retrieve cb-client resource-base-url)]
     (assoc doc :baseURI baseURI)))
 
+(defn list-all
+  "Returns the raw list of CloudEntryPoint entries.  There should
+   only ever be one of these."
+  [{:keys [cb-client]}]
+  (cb-utils/list-all cb-client resource-uri))
+
 (defn update
   "Update the cloud entry point attributes.  Note that only the common
   resource attributes can be updated.  The active resource collections
@@ -107,5 +112,5 @@
     (cb-utils/update cb-client resource-base-url newdoc)))
 
 (defroutes resource-routes
-  (GET "/" {:as req} {:body (retrieve req)})
-  (PUT "/" {:as req} (update req) {}))
+  (GET resource-base-url {:as req} {:body (retrieve req)})
+  (PUT resource-base-url {:as req} (update req) {}))

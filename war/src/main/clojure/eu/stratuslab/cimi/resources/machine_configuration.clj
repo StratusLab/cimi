@@ -1,4 +1,4 @@
-(ns eu.stratuslab.cimi.resources.machine-configurations
+(ns eu.stratuslab.cimi.resources.machine-configuration
   "Utilities for managing the CRUD features for machine configurations."
   (:require 
     [clojure.set :as set]
@@ -45,7 +45,6 @@
                  {:id resource-base-url
                   :name resource-type
                   :description "StratusLab Cloud"
-                  :resource-type resource-type
                   :resourceURI resource-uri}
                  (utils/set-time-attributes))]
     (cb-utils/create cb-client resource-base-url record)))
@@ -85,8 +84,8 @@
     (cb-utils/delete cb-client resource-base-url)))
 
 (defroutes resource-routes
-  (POST "/MachineConfiguration" {:as req} {:body (create req)})
-  (GET "/MachineConfiguration" {:as req} {:body (list req)})
-  (GET "/MachineConfiguration/:id" {:as req} {:body (retrieve req)})
-  (PUT "/MachineConfiguration/:id" {:as req} (update req) {})
-  (DELETE "/MachineConfiguration/:id" {:as req} (delete req) {}))
+  (POST resource-base-url {:as req} {:body (create req)})
+  (GET resource-base-url {:as req} {:body (list req)})
+  (GET (str resource-base-url "/:id") {:as req} {:body (retrieve req)})
+  (PUT (str resource-base-url "/:id") {:as req} (update req) {})
+  (DELETE (str resource-base-url "/:id") {:as req} (delete req) {}))
