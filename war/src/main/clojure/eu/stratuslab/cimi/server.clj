@@ -1,16 +1,17 @@
 (ns eu.stratuslab.cimi.server
-  "Entry point for running the StratusLab CIMI interface."
+  "Implementation of the ring application used to create the 
+   servlet instance for a web application container."
   (:require
     [clojure.tools.logging :as log]
     [clojure.edn :as edn]
     [compojure.handler :as handler]
     [ring.middleware.format-params :refer [wrap-restful-params]]
     [eu.stratuslab.cimi.cb.utils :as cb-utils]
+    [eu.stratuslab.cimi.cb.bootstrap :refer [bootstrap]]
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
     [eu.stratuslab.cimi.middleware.format-response :refer [wrap-restful-response]]
     [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
-    [eu.stratuslab.cimi.middleware.servlet-request :refer [wrap-servlet-paths
-                                                           wrap-base-uri]]
+    [eu.stratuslab.cimi.middleware.servlet-request :refer [wrap-servlet-paths wrap-base-uri]]
     [eu.stratuslab.cimi.routes :as routes]))
 
 (defn- create-cb-client
@@ -39,34 +40,23 @@
       (wrap-restful-response)))
 
 (defn init
-  "Bootstraps the database if necessary and warns if the service
-   is configured to use a hardcoded administrator username and 
-   password.
-
-   The db-cfg parameter must be a clojure-formatted (i.e. EDN)
-   map of the Couchbase configuration parameters.  Defaults will
-   be used if the information is absent or invalid.
-
-   Both the admin username and password must be given to have
-   any effect; these should only be used for system recovery.
-
-   The method returns a map of configuration parameters that 
-   must be passed to the handler creation method.
-
-   NOTE: The caller is responsible for shutting down the Couchbase 
-   client that is created by this method!"
+  "Creates a shared Couchbase client for the application and
+   bootstraps the database.  It returns a map containing the
+   service state.  This map must be saved and then provided
+   to the destroy function when tearing down the service."
   [{:keys [couchbase]}]
   
   (log/info "initializing servlet implementation")
 
   (let [cb-client (create-cb-client couchbase)]
-    (cep/bootstrap cb-client)    
+    (bootstrap cb-client)    
     {:cb-client cb-client}))
 
 (defn destroy
-  "Cleans up resources before shutting down the service. Notably
-   terminates the Couchbase client cleanly."
+  "Cleans up resources before shutting down the service. The argument
+   must be the state map returned from the init function.  This
+   allows, for example, the Couchbase client to be cleanly shutdown."
   [{:keys [cb-client]}]
-  (log/info "releasing resources and destroying servlet implementation")
+  (log/info "releasing servlet implementation resources")
   (if cb-client
     (cb-utils/shutdown cb-client)))
