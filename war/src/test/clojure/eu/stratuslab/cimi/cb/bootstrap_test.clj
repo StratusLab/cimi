@@ -25,12 +25,17 @@
     (is (not (nil? resource-uri-view))))
 
   ;; check that queries work
-  (let [by-doc-id-q (cbq/create-query {:key cep/resource-base-url :include-docs false})
-        by-doc-id (cbc/query t/*test-cb-client* design-doc-name "doc-id" by-doc-id-q)
-     	by-resource-uri-q (cbq/create-query {:key cep/resource-uri :include-docs false})
-        by-resource-uri (cbc/query t/*test-cb-client* design-doc-name "resource-uri" by-resource-uri-q)]
-    (println by-doc-id)
-    (println by-resource-uri)
+  (let [by-doc-id-q (cbq/create-query {:key cep/resource-base-url
+       		    		       :include-docs false
+				       :stale false})
+        by-doc-id-view (cbc/get-view t/*test-cb-client* design-doc-name "doc-id")
+        by-doc-id (cbc/query t/*test-cb-client* by-doc-id-view by-doc-id-q)
+
+     	by-resource-uri-q (cbq/create-query {:key cep/resource-uri
+			  		     :include-docs false
+					     :stale false})
+	by-resource-uri-view (cbc/get-view t/*test-cb-client* design-doc-name "resource-uri")
+        by-resource-uri (cbc/query t/*test-cb-client* by-resource-uri-view by-resource-uri-q)]
     (is (= 1 (count by-doc-id)))
     (is (= 1 (count by-resource-uri)))))
 

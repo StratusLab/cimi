@@ -64,7 +64,9 @@
                   :description "StratusLab Cloud"
                   :resourceURI resource-uri}
                  (utils/set-time-attributes))]
-    (cbc/add-json cb-client resource-base-url record)))
+    (cbc/add-json cb-client resource-base-url record {:observe true
+    		  	    		      	      :persist :master
+						      :replicate :zero})))
 
 (defn bootstrap
   "If the CloudEntryPoint document does not exist, then create it."
