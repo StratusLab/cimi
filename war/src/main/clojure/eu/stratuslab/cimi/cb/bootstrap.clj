@@ -1,7 +1,18 @@
 (ns eu.stratuslab.cimi.cb.bootstrap
   "Provides the utility to provide the necessary views and objects
    in the Couchbase database for minimal operation of the CIMI 
-   service."
+   service.
+
+   NOTE: The view methods may not work when using a local network
+   configured with 10.0.x.x addresses.  The symptom is that the 
+   connection to the database will timeout.  Information about this
+   problem can be found here:
+
+   http://www.couchbase.com/issues/browse/JCBC-151
+
+   The workarounds in the given ticket may or may not work to 
+   resolve the problem."
+
   (:require 
     [clojure.tools.logging :as log]
     [couchbase-clj.client :as cbc]
@@ -34,46 +45,12 @@ function(doc, meta) {
 
 (defn create-views
   "Ensure that the views necessary for searching the database
-   are available.
-
-   NOTE: This method does NOT work because of problems with the 
-   Java Couchbase client on Java 1.7 (and possibly other versions).
-   The issue is known to the Couchbase developers and is tracked:
-
-   http://www.couchbase.com/issues/browse/JCBC-151
-
-   Use the create-views-rest function which works around this
-   problem until the above problem is fixed."
+   are available."
   [cb-client]
   (let [design-doc (create-design-doc)
         added? (.createDesignDoc (cbc/get-client cb-client) design-doc)]
     (log/info "design document" design-doc-name "added to database")
     (log/info "design document" design-doc-name "NOT added to database")))
-
-(defn create-design-doc-json []
-  (.toJson (create-design-doc)))
-
-(defn create-views-rest
-  "Works around a problem with the Java API to upload the views. 
-   See the documentation string for the create-views function."
-  [{:keys [uris bucket username password]}]
-  (let [design-doc (create-design-doc-json)
-        uri (first uris)
-        scheme (.getScheme uri)
-        host (.getHost uri)
-        path (str "/" bucket "/_design/" design-doc-name)
-        url (URI. scheme nil host 8092 path nil nil)
-        response (http/put (.toString url)
-                   {:basic-auth [username password]
-                    :body design-doc
-                    :content-type :json
-                    :socket-timeout 2000  ;; in milliseconds
-                    :conn-timeout 2000    ;; in milliseconds
-                    :accept :json})]
-    (println response)
-    (if (= 201 (:status response))
-      (log/info "design document" design-doc-name "added to database")
-      (log/info "design document" design-doc-name "NOT added to database"))))
 
 (defn create-cep
   "Checks to see if the CloudEntryPoint exists in the database;
@@ -93,12 +70,8 @@ function(doc, meta) {
 
 (defn bootstrap
   "Bootstraps the Couchbase database by creating the CloudEntryPoint
-   and inserting the design document with views, as necessary.
-
-   NOTE: The second parameter is to allow a workaround for a problem
-   with the Couchbase java API.  See the create-views function for
-   more information."
-  [cb-client cb-cfg]
+   and inserting the design document with views, as necessary."
+  [cb-client]
   (create-cep cb-client)
-  (create-views-rest cb-cfg))
+  (create-views cb-client))
 
