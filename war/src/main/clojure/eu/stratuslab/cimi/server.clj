@@ -25,9 +25,9 @@
   "Creates a Couchbase client instance from the given configuration.
    If the argument is nil, then the default connection parameters 
    ('default' bucket on local Couchbase) are used."
-  [couchbase]
+  [cb-cfg]
   (try
-    (cbc/create-client (edn/read-string couchbase))
+    (cbc/create-client (edn/read-string cb-cfg))
     (catch Exception e
       (log/error "error creating couchbase client from configuration: " e)
       (cbc/create-client cb-client-defaults))))
@@ -51,12 +51,12 @@
    bootstraps the database.  It returns a map containing the
    service state.  This map must be saved and then provided
    to the destroy function when tearing down the service."
-  [{:keys [couchbase]}]
+  [{:keys [cb-cfg]}]
   
   (log/info "initializing servlet implementation")
 
-  (let [cb-client (create-cb-client couchbase)]
-    (bootstrap cb-client)    
+  (let [cb-client (create-cb-client cb-cfg)]
+    (bootstrap cb-client cb-cfg)    
     {:cb-client cb-client}))
 
 (defn destroy

@@ -11,7 +11,7 @@
    :state state))
 
 (defn- servlet-params [this]
-  {:couchbase (.getInitParameter this "couchbase")})
+  {:cb-cfg (.getInitParameter this "cb-cfg")})
 
 (defn -update-state [this params]
   (swap! (.state this) merge params))

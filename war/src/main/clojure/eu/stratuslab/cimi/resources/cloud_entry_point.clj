@@ -106,9 +106,9 @@
                  (utils/set-time-attributes))
         current (cbc/get-json cb-client resource-base-url)
         newdoc (merge current update)]
-    (log/info "json: " json)
-    (log/info "update: " update)
-    (log/info "updating CloudEntryPoint: " newdoc)
+    (log/info "json:" json)
+    (log/info "update:" update)
+    (log/info "updating CloudEntryPoint:" newdoc)
     (cbc/set-json cb-client resource-base-url newdoc)))
 
 (defroutes resource-routes

@@ -157,6 +157,12 @@ StratusLab services.
       </dependency>
 
       <dependency>
+        <groupId>couchbase</groupId>
+        <artifactId>couchbase-client</artifactId>
+        <version>1.1.9</version>
+      </dependency>
+
+      <dependency>
         <groupId>couchbase-clj</groupId>
         <artifactId>couchbase-clj</artifactId>
         <version>0.1.2</version>
