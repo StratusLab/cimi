@@ -13,6 +13,9 @@
     [compojure.handler :as handler]
     [compojure.response :as response]
     [ring.util.response :as rresp]
+    [clj-schema.schema :refer :all]
+    [clj-schema.simple-schemas :refer :all]
+    [clj-schema.validation :refer :all]
     [clojure.tools.logging :refer [debug info error]]))
 
 (def ^:const resource-type "MachineConfiguration")
@@ -20,6 +23,18 @@
 (def ^:const type-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type))
 
 (def ^:const base-uri (str "/" resource-type))
+
+(def-map-schema Disk
+  [[:capacity] PosIntegral
+   [:format] NonEmptyString
+   [:initialLocation] NonEmptyString])
+
+(def-map-schema MachineConfiguration
+  [[:cpu] PosIntegral
+   [:memory] PosIntegral
+   [:cpuArch] #{"68000" "Alpha" "ARM" "Itanium" "MIPS" "PA_RISC"
+                "POWER" "PowerPC" "x86" "x86_64" "zArchitecture", "SPARC"}
+   (optional-path [:disks]) (sequence-of Disk)])
 
 (defn uuid->uri
   "Convert a uuid into the URI for a MachineConfiguration resource."
