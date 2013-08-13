@@ -169,6 +169,12 @@ StratusLab services.
       </dependency>
 
       <dependency>
+        <groupId>org.clojars.runa</groupId>
+        <artifactId>clj-schema</artifactId>
+        <version>0.9.4</version>
+      </dependency>
+
+      <dependency>
         <groupId>kerodon</groupId>
         <artifactId>kerodon</artifactId>
         <version>0.2.0</version>
