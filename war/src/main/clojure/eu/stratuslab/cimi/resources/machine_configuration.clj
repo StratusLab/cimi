@@ -64,19 +64,21 @@
   [m]
   (dissoc m :id :created :updated :resourceURI))
 
+;; FIXME: Implementation should use CAS functions to avoid update conflicts.
 (defn edit
   "Updates the given resource with the new information.  This will 
    validate the new entry before updating it."
   [cb-client uuid entry]
-  (let [uri (uuid->uri uuid)
-        current (cbc/get-json cb-client uri)
-        updated (->> entry
-                  (strip-service-attrs)
-                  (merge current)
-                  (utils/set-time-attributes)
-                  (validate))]
-    (if (cbc/set-json cb-client uri updated)
-      (rresp/response updated)
+  (let [uri (uuid->uri uuid)]
+    (if-let [current (cbc/get-json cb-client uri)]
+      (let [updated (->> entry
+                      (strip-service-attrs)
+                      (merge current)
+                      (utils/set-time-attributes)
+                      (validate))]
+        (if (cbc/set-json cb-client uri updated)
+          (rresp/response updated)
+          (rresp/status (rresp/response nil) 409))) ;; conflict
       (rresp/not-found nil))))
 
 (defn delete
@@ -105,8 +107,6 @@
     (retrieve cb-client uuid))
   (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
     (let [json (body->json body)]
-      (println uuid)
-      (println json)
       (edit cb-client uuid json)))
   (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
     (delete cb-client uuid)))

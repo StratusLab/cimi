@@ -1,6 +1,7 @@
 (ns eu.stratuslab.cimi.resources.machine-configuration-test
   (:require
    [eu.stratuslab.cimi.resources.machine-configuration :refer :all]
+   [eu.stratuslab.cimi.resources.utils :as utils]
    [eu.stratuslab.cimi.cb.bootstrap :refer [bootstrap]]
    [eu.stratuslab.cimi.couchbase-test-utils :as t]
    [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
@@ -21,7 +22,6 @@
                   (request base-uri :request-method :post))
         response (:response results)
         resource-uri (get-in response [:headers "Location"])]
-    (println response)
     (is (= 201 (:status response)))
     (is (empty? (:body response)))
     (is (not (empty? resource-uri)))
@@ -30,8 +30,6 @@
     (let [results (-> (session (ring-app t/*test-cb-client*))
                     (request resource-uri))
           response (:response results)]
-      (println resource-uri)
-      (println response)
       (is (= 200 (:status response)))
       (is (= resource-uri (get-in response [:body :id]))))
     
@@ -39,8 +37,6 @@
     (let [results (-> (session (ring-app t/*test-cb-client*))
                     (request resource-uri :request-method :put :body (json/write-str {:name "OK"})))
           response (:response results)]
-      (println resource-uri)
-      (println response)
       (is (= 200 (:status response)))
       (is (= "OK" (:name (:body response)))))
     
@@ -48,8 +44,6 @@
     (let [results (-> (session (ring-app t/*test-cb-client*))
                     (request resource-uri))
           response (:response results)]
-      (println resource-uri)
-      (println response)
       (is (= 200 (:status response)))
       (is (= resource-uri (get-in response [:body :id])))
       (is (= "OK" (get-in response [:body :name]))))
@@ -58,7 +52,6 @@
     (let [results (-> (session (ring-app t/*test-cb-client*))
                     (request resource-uri :request-method :delete))
           response (:response results)]
-      (println response)
       (is (= 200 (:status response)))
       (is (empty? (:body response))))
     
@@ -66,7 +59,6 @@
     (let [results (-> (session (ring-app t/*test-cb-client*))
                     (request resource-uri))
           response (:response results)]
-      (println response)
       (is (= 404 (:status response)))
       (is (empty? (:body response))))
     
@@ -74,6 +66,15 @@
     (let [results (-> (session (ring-app t/*test-cb-client*))
                     (request resource-uri :request-method :delete))
           response (:response results)]
-      (println response)
       (is (= 404 (:status response)))
       (is (empty? (:body response)))) ))
+
+(deftest update-non-existing-resource-fails
+  (let [resource-uri (str base-uri "/" (utils/create-uuid))
+        results (-> (session (ring-app t/*test-cb-client*))
+                  (request resource-uri :request-method :put :body (json/write-str {:name "OK"})))
+        response (:response results)]
+    (is (= 404 (:status response)))
+    (is (empty? (:body response)))) )
+    
+
