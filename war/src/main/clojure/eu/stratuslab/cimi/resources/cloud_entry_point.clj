@@ -68,14 +68,6 @@
     		  	    		      	      :persist :master
 						      :replicate :zero})))
 
-(defn bootstrap
-  "If the CloudEntryPoint document does not exist, then create it."
-  [cb-client]
-  (if-not (cbc/get-json cb-client resource-base-url)
-    (do
-      (log/info "creating CloudEntryPoint")
-      (create cb-client))))
-
 (defn retrieve
   "Returns the data associated with the CloudEntryPoint.  There is
   exactly one such entry in the database.  The identifier is the root

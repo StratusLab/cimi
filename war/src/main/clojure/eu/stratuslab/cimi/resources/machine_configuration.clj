@@ -1,7 +1,8 @@
 (ns eu.stratuslab.cimi.resources.machine-configuration
   "Utilities for managing the CRUD features for machine configurations."
   (:require 
-    [clojure.set :as set]
+    [clojure.data.json :as json]
+    [clojure.java.io :as io]
     [couchbase-clj.client :as cbc]
     [eu.stratuslab.cimi.resources.common :as common]
     [eu.stratuslab.cimi.resources.utils :as utils]
@@ -9,83 +10,103 @@
     [compojure.route :as route]
     [compojure.handler :as handler]
     [compojure.response :as response]
+    [ring.util.response :as rresp]
     [clojure.tools.logging :refer [debug info error]]))
 
 (def ^:const resource-type "MachineConfiguration")
 
-(def ^:const resource-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type))
+(def ^:const type-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type))
 
-(def ^:const resource-base-url (str "/" resource-type))
+(def ^:const base-uri (str "/" resource-type))
 
-(def mc-attributes
-  "These are the attributes specific to a MachineConfiguration."
-  #{:cpu :memory :disks :cpuArch})
+(defn uuid->uri
+  "Convert a uuid into the URI for a MachineConfiguration resource."
+  [uuid]
+  (str base-uri "/" uuid))
 
-(def attributes
-  "These are the attributes allowed for a MachineConfiguration."
-  (set/union common/attributes mc-attributes))
+;; TODO: This function must actually validate the entry!
+(defn validate 
+  "Validates the MachineConfiguration entry against the defined schema.
+   This method will return the entry itself if valid; it will raise an
+   exception otherwise."
+  [entry] entry)
 
-(def immutable-attributes
-  "These are the attributes for a MachineConfiguration that cannot
-   be modified."
-  (set/union common/immutable-attributes mc-attributes))
+(defn add
+  "Add a new MachineConfiguration to the database.  The entry contains
+   the fields for the new MachineConfiguration.  The :id, :resourceURI,
+   :created, and :updated fields will be provided automatically.  The
+   entry will be validated before being added to the database."
+  ([cb-client] (add cb-client {}))
 
-(defn strip-unknown-attributes [m]
-  (select-keys m attributes))
-
-(defn strip-immutable-attributes [m]
-  (let [ks (set/difference (set (keys m)) immutable-attributes)]
-    (select-keys m ks)))
-
-(defn create
-  "Creates a new MachineConfiguration from the given data."
-  [cb-client]
-  
-  (let [record (->> 
-                 {:id resource-base-url
-                  :name resource-type
-                  :description "StratusLab Cloud"
-                  :resourceURI resource-uri}
-                 (utils/set-time-attributes))]
-    (cbc/add-json cb-client resource-base-url record)))
+  ([cb-client entry]
+    (let [uri (uuid->uri (utils/create-uuid))
+          entry (-> entry
+                  (assoc :id uri)
+                  (assoc :resourceURI type-uri)
+                  (dissoc :created)  ;; ensure not set by user
+                  (utils/set-time-attributes)
+                  (validate))]
+      (if (cbc/add-json cb-client uri entry)
+        (rresp/created uri)
+        (rresp/status (rresp/response (str "cannot create " uri)) 400)))))
 
 (defn retrieve
-  "Returns the data associated with the CloudEntryPoint.  There is
-  exactly one such entry in the database.  The identifier is the root
-  resource name '/'.  The baseURI must be passed as this is taken from 
-  the ring request."
-  [req]
-  (let [baseURI (:base-uri req)
-        cb-client (:cb-client req)
-        doc (cbc/get-json cb-client resource-base-url)]
-    (assoc doc :baseURI (:baseURI req))))
+  "Returns the data associated with the requested MachineConfiguration
+   entry (identified by the uuid)."
+  [cb-client uuid]
+  (if-let [json (cbc/get-json cb-client (uuid->uri uuid))]
+    (rresp/response json)
+    (rresp/not-found nil)))
 
-(defn update
-  "Update the cloud entry point attributes.  Note that only the common
-  resource attributes can be updated.  The active resource collections
-  cannot be changed.  For correct behavior, the cloud entry point must
-  have been previously initialized.  Returns nil."
-  [req]
-  (let [cb-client (:cb-client req)
-        update (->> req
-                 (strip-unknown-attributes)
-                 (strip-immutable-attributes)
-                 (utils/set-time-attributes))
-        current (cbc/get-json cb-client resource-base-url)
-        newdoc (merge current update)]
-    (cbc/set-json cb-client resource-base-url newdoc)))
+(defn strip-service-attrs
+  "Strips keys from the map that are controlled by the service itself.
+   For example, the :created and :updated keys."
+  [m]
+  (dissoc m :id :created :updated :resourceURI))
+
+(defn edit
+  "Updates the given resource with the new information.  This will 
+   validate the new entry before updating it."
+  [cb-client uuid entry]
+  (let [uri (uuid->uri uuid)
+        current (cbc/get-json cb-client uri)
+        updated (->> entry
+                  (strip-service-attrs)
+                  (merge current)
+                  (utils/set-time-attributes)
+                  (validate))]
+    (if (cbc/set-json cb-client uri updated)
+      (rresp/response updated)
+      (rresp/not-found nil))))
 
 (defn delete
   "Deletes the named machine configuration."
-  [req]
-  (let [id "dummy"
-        cb-client (:cb-client req)
-        resource-uri (str resource-base-url "/" id)]
-    (cbc/delete cb-client resource-base-url)))
+  [cb-client uuid]
+  (if (cbc/delete cb-client (uuid->uri uuid))
+    (rresp/response nil)
+    (rresp/not-found nil)))
+
+;; TODO: Create a real implementation!
+(defn query
+  "Searches the database for resources of this type, taking into
+   account the given options."
+  [cb-client & options]
+  {})
+
+(defn body->json [body]
+  (json/read (io/reader body) :key-fn keyword))
 
 (defroutes resource-routes
-  (POST resource-base-url {:as req} {:body (create req)})
-  (GET resource-base-url {:as req} {:body (list req)})
-  (GET (str resource-base-url "/:id") {:as req} {:body (retrieve req)})
-  (PUT (str resource-base-url "/:id") {:as req} (update req) {})
-  (DELETE (str resource-base-url "/:id") {:as req} (delete req) {}))
+  (POST base-uri {:keys [cb-client body]}
+    (add cb-client body))
+  (GET base-uri {:keys [cb-client body]}
+    (query cb-client body))
+  (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
+    (retrieve cb-client uuid))
+  (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
+    (let [json (body->json body)]
+      (println uuid)
+      (println json)
+      (edit cb-client uuid json)))
+  (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
+    (delete cb-client uuid)))

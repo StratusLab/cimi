@@ -1,6 +1,7 @@
 (ns eu.stratuslab.cimi.resources.cloud-entry-point-test
   (:require
     [eu.stratuslab.cimi.resources.cloud-entry-point :refer :all]
+    [eu.stratuslab.cimi.cb.bootstrap :refer [bootstrap]]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
     [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
     [clojure.test :refer :all]

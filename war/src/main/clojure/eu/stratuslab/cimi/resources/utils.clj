@@ -6,7 +6,7 @@
   (:import [java.util UUID Date]))
 
 (defn create-uuid
-  "Provides a randomized UUID as a string."
+  "Provides the string representation of a pseudo-random UUID."
   []
   (str (UUID/randomUUID)))
 
@@ -15,6 +15,6 @@
   existing? is nil/false, then the created attribute it set;
   otherwise, it is removed from the request."
   [data]
-  (let [now (time-fmt/unparse (:date-time time-fmt/formatters) (time/now))
-        created (or (:created data) now)]
-    (assoc data :created created :updated now)))
+  (let [updated (time-fmt/unparse (:date-time time-fmt/formatters) (time/now))
+        created (or (:created data) updated)]
+    (assoc data :created created :updated updated)))
