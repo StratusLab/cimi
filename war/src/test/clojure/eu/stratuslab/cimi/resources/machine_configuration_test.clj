@@ -60,21 +60,28 @@
                     (request resource-uri))
           response (:response results)]
       (is (= 404 (:status response)))
-      (is (empty? (:body response))))
-    
-    ;; delete non-existent resource returns not found status
-    (let [results (-> (session (ring-app t/*test-cb-client*))
-                    (request resource-uri :request-method :delete))
-          response (:response results)]
-      (is (= 404 (:status response)))
       (is (empty? (:body response)))) ))
 
+(deftest read-non-existing-resource-fails
+  (let [resource-uri (str base-uri "/" (utils/create-uuid))
+        results (-> (session (ring-app t/*test-cb-client*))
+                  (request resource-uri))
+        response (:response results)]
+    (is (= 404 (:status response)))
+    (is (empty? (:body response)))))
+
+(deftest delete-non-existing-resource-fails
+  (let [resource-uri (str base-uri "/" (utils/create-uuid))
+        results (-> (session (ring-app t/*test-cb-client*))
+                  (request resource-uri :request-method :delete))
+        response (:response results)]
+    (is (= 404 (:status response)))
+    (is (empty? (:body response)))))
+    
 (deftest update-non-existing-resource-fails
   (let [resource-uri (str base-uri "/" (utils/create-uuid))
         results (-> (session (ring-app t/*test-cb-client*))
                   (request resource-uri :request-method :put :body (json/write-str {:name "OK"})))
         response (:response results)]
     (is (= 404 (:status response)))
-    (is (empty? (:body response)))) )
-    
-
+    (is (empty? (:body response)))))
