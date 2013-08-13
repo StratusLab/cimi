@@ -1,17 +1,14 @@
 (ns eu.stratuslab.cimi.resources.cloud-entry-point-test
   (:require
     [eu.stratuslab.cimi.resources.cloud-entry-point :refer :all]
-    [eu.stratuslab.cimi.cb.bootstrap :refer [bootstrap]]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
-    [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
     [clojure.test :refer :all]
     [peridot.core :refer :all]))
 
 (use-fixtures :once t/temp-bucket-fixture)
 
-(defn ring-app [cb-client]
-  (bootstrap cb-client)
-  (wrap-cb-client cb-client resource-routes))
+(defn ring-app []
+  (t/make-ring-app resource-routes))
 
 (deftest check-strip-unknown-attributes
   (let [input {:a 1 :b 2 :id "ok"}
@@ -27,7 +24,7 @@
     (is (= correct (strip-immutable-attributes input)))))
 
 (deftest retrieve-cloud-entry-point
-  (let [results (-> (session (ring-app t/*test-cb-client*))
+  (let [results (-> (session (ring-app))
                   (request "/"))
         response (:response results)
         body (:body response)
@@ -36,7 +33,7 @@
     (is (= (:resourceURI body) resource-uri))))
 
 (deftest update-cloud-entry-point
-  (let [results (-> (session (ring-app t/*test-cb-client*))
+  (let [results (-> (session (ring-app))
                   (content-type "application/json")
                   (request "/"
                     :request-method :put
@@ -45,7 +42,7 @@
         body (:body response)
         request (:request results)]
     (is (empty? body)))
-  (let [results (-> (session (ring-app t/*test-cb-client*))
+  (let [results (-> (session (ring-app))
                   (request "/"))
         response (:response results)
         body (:body response)
@@ -55,7 +52,7 @@
     (is (= (:name body) "dummy"))))
 
 (deftest delete-cloud-entry-point
-  (let [results (-> (session (ring-app t/*test-cb-client*))
+  (let [results (-> (session (ring-app))
                   (request "/" :request-method :delete))
         response (:response results)]
     (is (nil? response))))

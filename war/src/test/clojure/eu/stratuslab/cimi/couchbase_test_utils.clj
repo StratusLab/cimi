@@ -1,6 +1,8 @@
 (ns eu.stratuslab.cimi.couchbase-test-utils
   (:require 
     [couchbase-clj.client :as cbc]
+    [eu.stratuslab.cimi.cb.bootstrap :refer [bootstrap]]
+    [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
     [eu.stratuslab.cimi.resources.utils :as utils])
   (:import [java.net URI]
     [com.couchbase.client ClusterManager CouchbaseClient]
@@ -9,6 +11,9 @@
     [java.util.concurrent TimeUnit]))
 
 (def ^:dynamic *test-cb-client* nil)
+
+(defn make-ring-app [resource-routes]
+  (wrap-cb-client *test-cb-client* resource-routes))
 
 (defn temp-bucket-fixture
   "Creates a new Couchbase bucket within the server.  The server must already
@@ -29,6 +34,7 @@
       (Thread/sleep 3000) ;; ensure bucket is loaded before running tests 
       (binding [*test-cb-client* (cbc/create-client cb-cfg)]
         (try
+          (bootstrap *test-cb-client*)
           (f)
           (finally
             (cbc/shutdown *test-cb-client* 3000))))
