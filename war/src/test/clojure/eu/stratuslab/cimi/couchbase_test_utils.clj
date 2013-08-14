@@ -3,6 +3,7 @@
     [couchbase-clj.client :as cbc]
     [eu.stratuslab.cimi.cb.bootstrap :refer [bootstrap]]
     [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
+    [eu.stratuslab.cimi.middleware.servlet-request :refer [wrap-base-uri]]
     [eu.stratuslab.cimi.resources.utils :as utils])
   (:import [java.net URI]
     [com.couchbase.client ClusterManager CouchbaseClient]
@@ -13,7 +14,9 @@
 (def ^:dynamic *test-cb-client* nil)
 
 (defn make-ring-app [resource-routes]
-  (wrap-cb-client *test-cb-client* resource-routes))
+  (->> resource-routes
+    (wrap-cb-client *test-cb-client*)
+    (wrap-base-uri)))
 
 (defn temp-bucket-fixture
   "Creates a new Couchbase bucket within the server.  The server must already

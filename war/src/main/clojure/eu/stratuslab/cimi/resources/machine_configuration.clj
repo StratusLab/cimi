@@ -45,16 +45,7 @@
   [uuid]
   (str base-uri "/" uuid))
 
-(defn validate 
-  "Validates the MachineConfiguration entry against the defined schema.
-   This method will return the entry itself if valid; it will raise an
-   exception otherwise."
-  [entry]
-  (let [errors (validation-errors MachineConfiguration entry)]
-    (if (empty? errors)
-      entry
-      (throw (Exception. (str "resource does not satisfy defined schema\n"
-                           (str/join "\n" errors)))))))
+(def validate (utils/create-validation-fn MachineConfiguration))
 
 (defn add
   "Add a new MachineConfiguration to the database.  The entry contains

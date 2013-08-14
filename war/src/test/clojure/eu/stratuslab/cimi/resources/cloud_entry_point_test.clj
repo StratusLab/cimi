@@ -29,6 +29,8 @@
     (is (= (:resourceURI body) type-uri))))
 
 (deftest update-cloud-entry-point
+
+  ;; update the entry, verify updated doc is returned
   (let [results (-> (session (ring-app))
                   (content-type "application/json")
                   (request "/"
@@ -37,7 +39,11 @@
         response (:response results)
         body (:body response)
         request (:request results)]
-    (is (empty? body)))
+    (is (= (:status response) 200))
+    (is (= (:resourceURI body) type-uri))
+    (is (= (:name body) "dummy")))
+
+  ;; verify that subsequent reads find the right data
   (let [results (-> (session (ring-app))
                   (request "/"))
         response (:response results)

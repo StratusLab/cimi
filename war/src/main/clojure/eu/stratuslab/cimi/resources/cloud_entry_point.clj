@@ -12,6 +12,7 @@
     [compojure.route :as route]
     [compojure.handler :as handler]
     [compojure.response :as response]
+    [ring.util.response :as rresp]
     [clj-schema.schema :refer :all]
     [clj-schema.simple-schemas :refer :all]
     [clj-schema.validation :refer :all]
@@ -60,6 +61,8 @@
    (optional-path [:eventLogs]) ResourceLink
    (optional-path [:eventLogTemplates]) ResourceLink])
 
+(def validate (utils/create-validation-fn CloudEntryPoint))
+
 (defn add
   "Creates a new CloudEntryPoint from the given data.  This normally only occurs
    during the service bootstrap process when the database has not yet been 
@@ -72,39 +75,43 @@
                      :resourceURI type-uri}
                  (utils/set-time-attributes))]
     (cbc/add-json cb-client base-uri record {:observe true
-                                                      :persist :master
-                                                      :replicate :zero})))
+                                             :persist :master
+                                             :replicate :zero})))
 
 (defn retrieve
   "Returns the data associated with the CloudEntryPoint.  There is
   exactly one such entry in the database.  The identifier is the root
   resource name '/'.  The baseURI must be passed as this is taken from 
   the ring request."
-  [req]
-  (let [baseURI (:base-uri req)
-        cb-client (:cb-client req)
-        doc (cbc/get-json cb-client base-uri)]
-    (assoc doc :baseURI baseURI)))
+  [cb-client baseURI]
+  (if-let [json (cbc/get-json cb-client base-uri)]
+    (rresp/response (assoc json :baseURI baseURI))
+    (rresp/not-found nil)))
 
+;; FIXME: Implementation should use CAS functions to avoid update conflicts.
 (defn edit
   "Update the cloud entry point attributes.  Note that only the common
   resource attributes can be updated.  The active resource collections
   cannot be changed.  For correct behavior, the cloud entry point must
   have been previously initialized.  Returns nil."
-  [req]
-  (let [cb-client (:cb-client req)
-        body (InputStreamReader. (:body req))
-        json (json/read body :key-fn keyword)
-        update (->> json
-                 (utils/strip-service-attrs)
-                 (utils/set-time-attributes))
-        current (cbc/get-json cb-client base-uri)
-        newdoc (merge current update)]
-    (log/info "json:" json)
-    (log/info "update:" update)
-    (log/info "updating CloudEntryPoint:" newdoc)
-    (cbc/set-json cb-client base-uri newdoc)))
+  [cb-client baseURI entry]
+  (if-let [current (cbc/get-json cb-client base-uri)]
+    (let [updated (->> entry
+                   (utils/strip-service-attrs)
+                   (merge current)
+                   (utils/set-time-attributes))
+          updated (-> updated
+                    (assoc :baseURI baseURI)
+                    ;; (validate) ;; FIXME: This should be enabled!
+                    )]
+      (if (cbc/set-json cb-client base-uri updated)
+        (rresp/response updated)
+        (rresp/status (rresp/response nil) 409)))
+    (rresp/not-found nil)))
 
 (defroutes resource-routes
-  (GET base-uri {:as req} {:body (retrieve req)})
-  (PUT base-uri {:as req} (edit req) {}))
+  (GET base-uri {:keys [cb-client base-uri]}
+    (retrieve cb-client base-uri))
+  (PUT base-uri {:keys [cb-client base-uri body]}
+    (let [json (utils/body->json body)]
+      (edit cb-client base-uri json))))

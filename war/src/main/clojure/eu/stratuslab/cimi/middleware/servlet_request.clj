@@ -18,8 +18,7 @@ these to create the base URL of the application."
           req (assoc req
                 :path-info path-info
                 :context context)]
-      ;; TODO: This should be debug.
-      (log/info (format "path-info=%s; context=%s" path-info context))
+      (log/debug (format "path-info=%s; context=%s" path-info context))
       (handler req))))
 
 (defn wrap-base-uri
@@ -33,6 +32,5 @@ these to create the base URL of the application."
           context (or context "")
           base-uri (format "%s://%s:%d%s/" (name scheme) server-name server-port context)
           req (assoc req :base-uri base-uri)]
-      ;; TODO: This should be debug.
-      (log/info (format "base-uri=%s" base-uri))
+      (log/debug (format "base-uri=%s" base-uri))
       (handler req))))

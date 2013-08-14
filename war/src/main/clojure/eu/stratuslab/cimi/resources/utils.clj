@@ -3,8 +3,10 @@
   (:require
     [clojure.data.json :as json]
     [clojure.java.io :as io]
+    [clojure.string :as str]
     [clj-time.core :as time]
-    [clj-time.format :as time-fmt])
+    [clj-time.format :as time-fmt]
+    [clj-schema.validation :refer [validation-errors]])
   (:import [java.util UUID Date]))
 
 (defn create-uuid
@@ -36,3 +38,15 @@
   (if body
     (json/read (io/reader body) :key-fn keyword)
     {}))
+
+(defn create-validation-fn
+  "Creates a validation function that compares a resource against the
+   given schema.  The generated function raises an exception with the 
+   violations of the schema or the resource itself if everything's OK."
+  [schema]
+  (fn [resource]
+    (let [errors (validation-errors schema resource)]
+      (if (empty? errors)
+        resource
+        (throw (Exception. (str "resource does not satisfy defined schema\n"
+                             (str/join "\n" errors))))))))
