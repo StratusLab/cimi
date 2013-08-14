@@ -26,7 +26,7 @@
         body (:body response)
         request (:request results)]
     (is (= (:status response) 200))
-    (is (= (:resourceURI body) resource-uri))))
+    (is (= (:resourceURI body) type-uri))))
 
 (deftest update-cloud-entry-point
   (let [results (-> (session (ring-app))
@@ -44,7 +44,7 @@
         body (:body response)
         request (:request results)]
     (is (= (:status response) 200))
-    (is (= (:resourceURI body) resource-uri))
+    (is (= (:resourceURI body) type-uri))
     (is (= (:name body) "dummy"))))
 
 (deftest delete-cloud-entry-point

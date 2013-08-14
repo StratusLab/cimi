@@ -20,9 +20,9 @@
 
 (def ^:const resource-type "CloudEntryPoint")
 
-(def ^:const resource-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type))
+(def ^:const type-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type))
 
-(def ^:const resource-base-url "/")
+(def ^:const base-uri "/")
 
 (def-map-schema ResourceLink
   [[:href] NonEmptyString])
@@ -66,12 +66,12 @@
    initialized."
   [cb-client]
   
-  (let [record (->> {:id resource-base-url
+  (let [record (->> {:id base-uri
                      :name resource-type
                      :description "StratusLab Cloud"
-                     :resourceURI resource-uri}
+                     :resourceURI type-uri}
                  (utils/set-time-attributes))]
-    (cbc/add-json cb-client resource-base-url record {:observe true
+    (cbc/add-json cb-client base-uri record {:observe true
                                                       :persist :master
                                                       :replicate :zero})))
 
@@ -83,7 +83,7 @@
   [req]
   (let [baseURI (:base-uri req)
         cb-client (:cb-client req)
-        doc (cbc/get-json cb-client resource-base-url)]
+        doc (cbc/get-json cb-client base-uri)]
     (assoc doc :baseURI baseURI)))
 
 (defn edit
@@ -98,13 +98,13 @@
         update (->> json
                  (utils/strip-service-attrs)
                  (utils/set-time-attributes))
-        current (cbc/get-json cb-client resource-base-url)
+        current (cbc/get-json cb-client base-uri)
         newdoc (merge current update)]
     (log/info "json:" json)
     (log/info "update:" update)
     (log/info "updating CloudEntryPoint:" newdoc)
-    (cbc/set-json cb-client resource-base-url newdoc)))
+    (cbc/set-json cb-client base-uri newdoc)))
 
 (defroutes resource-routes
-  (GET resource-base-url {:as req} {:body (retrieve req)})
-  (PUT resource-base-url {:as req} (edit req) {}))
+  (GET base-uri {:as req} {:body (retrieve req)})
+  (PUT base-uri {:as req} (edit req) {}))
