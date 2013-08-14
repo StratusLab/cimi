@@ -19,7 +19,11 @@
 
 (def ^:const resource-type "MachineConfiguration")
 
+(def ^:const collection-resource-type "MachineConfigurationCollection")
+
 (def ^:const type-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type))
+
+(def ^:const collection-type-uri (str "http://schemas.dmtf.org/cimi/1/" collection-resource-type))
 
 (def ^:const base-uri (str "/" resource-type))
 
@@ -98,7 +102,7 @@
     (rresp/response nil)
     (rresp/not-found nil)))
 
-(defn query
+(comment (defn query
   "Searches the database for resources of this type, taking into
    account the given options."
   [cb-client & [opts]]
@@ -110,7 +114,28 @@
                               opts))
         v (cbc/get-view cb-client bootstrap/design-doc-name "resource-uri")
         results (cbc/query cb-client v q)]
-    (doall (map cbc/view-doc-json results))))
+    (doall (map cbc/view-doc-json results)))))
+
+(defn query
+  "Searches the database for resources of this type, taking into
+   account the given options."
+  [cb-client & [opts]]
+  (let [q (cbq/create-query (merge {:include-docs true
+                                    :key type-uri
+                                    :limit 100
+                                    :stale false
+                                    :on-error :continue}
+                              opts))
+        v (cbc/get-view cb-client bootstrap/design-doc-name "resource-uri")
+        results (cbc/query cb-client v q)
+        n (count results)
+        docs (map cbc/view-doc-json results)
+        shell {:resourceURI collection-type-uri
+               :id base-uri
+               :count n}]
+    (if (pos? n)
+      (assoc shell :machineConfigurations docs)
+      shell)))
 
 (defroutes resource-routes
   (POST base-uri {:keys [cb-client body]}

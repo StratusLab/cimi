@@ -159,15 +159,20 @@
     (let [results (-> (session (ring-app))
                     (request base-uri))
         response (:response results)
-        body (:body response)]
-      (is (= (count keys) (count body)))
-      (is (= (set keys) (set (map :name body)))))
+        docs (:machineConfigurations response)]
+      (is (= collection-type-uri (:resourceURI response)))
+      (is (= base-uri (:id response)))
+      (is (= (count keys) (:count response)))
+      (is (= (count keys) (count docs)))
+      (is (= (set keys) (set (map :name docs)))))
 
     ;; limit to half the entries and make sure only a subset is returned
     (let [limit 5
           results (-> (session (ring-app))
                     (request base-uri :body (json/write-str {:limit limit})))
         response (:response results)
-        body (:body response)]
-      (is (= limit (count body))))
-    ))
+        docs (:machineConfigurations response)]
+      (is (= collection-type-uri (:resourceURI response)))
+      (is (= base-uri (:id response)))
+      (is (= limit (:count response)))
+      (is (= limit (count docs))))))
