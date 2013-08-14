@@ -102,8 +102,7 @@
                    (utils/set-time-attributes))
           updated (-> updated
                     (assoc :baseURI baseURI)
-                    ;; (validate) ;; FIXME: This should be enabled!
-                    )]
+                    (validate))]
       (if (cbc/set-json cb-client base-uri updated)
         (rresp/response updated)
         (rresp/status (rresp/response nil) 409)))
