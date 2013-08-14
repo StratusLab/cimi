@@ -12,6 +12,9 @@
     [compojure.route :as route]
     [compojure.handler :as handler]
     [compojure.response :as response]
+    [clj-schema.schema :refer :all]
+    [clj-schema.simple-schemas :refer :all]
+    [clj-schema.validation :refer :all]
     [clojure.data.json :as json])
   (:import [java.io InputStreamReader]))
 
@@ -21,20 +24,41 @@
 
 (def ^:const resource-base-url "/")
 
-(def cep-attributes
-  "These are the attributes specific to a CloudEntryPoint."
-  #{:baseURI :resourceMetadata
-    :systems :systemTemplates
-    :machines :machineTemplates :machineConfigs :machineImages
-    :credentials :credentialTemplates
-    :volumes :volumeTemplates :volumeConfigs :volumeImages
-    :networks :networkTemplates :networkConfigs
-    :networkPorts :networkPortTemplates :networkPortConfigs
-    :addresses :addressTemplates
-    :forwardingGroups :forwardingGroupTemplates
-    :jobs
-    :meter :meterTemplates :meterConfigs
-    :eventLogs :eventLogTemplates})
+(def-map-schema ResourceLink
+  [[:href] NonEmptyString])
+
+(def-map-schema CloudEntryPoint
+  common/CommonAttrs
+  [[:baseURI] NonEmptyString
+   (optional-path [:resourceMetadata]) ResourceLink
+   (optional-path [:systems]) ResourceLink
+   (optional-path [:systemTemplates]) ResourceLink
+   (optional-path [:machines]) ResourceLink
+   (optional-path [:machineTemplates]) ResourceLink
+   (optional-path [:machineConfigs]) ResourceLink
+   (optional-path [:machineImages]) ResourceLink
+   (optional-path [:credentials]) ResourceLink
+   (optional-path [:credentialTemplates]) ResourceLink
+   (optional-path [:volumes]) ResourceLink
+   (optional-path [:volumeTemplates]) ResourceLink
+   (optional-path [:volumeConfigs]) ResourceLink
+   (optional-path [:volumeImages]) ResourceLink
+   (optional-path [:networks]) ResourceLink
+   (optional-path [:networkTemplates]) ResourceLink
+   (optional-path [:networkConfigs]) ResourceLink
+   (optional-path [:networkPorts]) ResourceLink
+   (optional-path [:networkPortTemplates]) ResourceLink
+   (optional-path [:networkPortConfigs]) ResourceLink
+   (optional-path [:addresses]) ResourceLink
+   (optional-path [:addressTemplates]) ResourceLink
+   (optional-path [:forwardingGroups]) ResourceLink
+   (optional-path [:forwardingGroupTemplates]) ResourceLink
+   (optional-path [:jobs]) ResourceLink
+   (optional-path [:meters]) ResourceLink
+   (optional-path [:meterTemplates]) ResourceLink
+   (optional-path [:meterConfigs]) ResourceLink
+   (optional-path [:eventLogs]) ResourceLink
+   (optional-path [:eventLogTemplates]) ResourceLink])
 
 (defn add
   "Creates a new CloudEntryPoint from the given data.  This normally only occurs
