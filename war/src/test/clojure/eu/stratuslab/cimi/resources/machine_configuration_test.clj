@@ -3,6 +3,7 @@
    [eu.stratuslab.cimi.resources.machine-configuration :refer :all]
    [eu.stratuslab.cimi.resources.utils :as utils]
    [eu.stratuslab.cimi.couchbase-test-utils :as t]
+   [clj-schema.validation :refer [validation-errors]]
    [clojure.test :refer :all]
    [clojure.data.json :as json]
    [peridot.core :refer :all]))
@@ -12,12 +13,53 @@
 (defn ring-app []
   (t/make-ring-app resource-routes))
 
+(def valid-entry
+  {:name "valid"
+   :description "valid machine configuration"
+   :cpu 1
+   :memory 512000
+   :cpuArch "x86_64"
+   :disks [{:capacity 1024
+            :format "ext4"
+            :initialLocation "/dev/hda"}]} )
+
+(deftest test-disk-schema
+  (let [disk {:capacity 1024 :format "ext4" :initialLocation "/dev/hda"}]
+    (is (empty? (validation-errors Disk disk)))
+    (is (empty? (validation-errors Disk (dissoc disk :initialLocation))))
+    (is (not (empty? (validation-errors Disk (dissoc disk :capacity)))))
+    (is (not (empty? (validation-errors Disk (dissoc disk :format)))))
+    (is (not (empty? (validation-errors Disk {})))))
+)
+
+(deftest test-disks-schema
+  (let [disks [{:capacity 1024 :format "ext4" :initialLocation "/dev/hda"}
+               {:capacity 2048 :format "swap" :initialLocation "/dev/hdb"}]]
+    (is (empty? (validation-errors Disks disks)))
+    (is (empty? (validation-errors Disks (rest disks))))
+    (is (not (empty? (validation-errors Disks []))))))
+
+(deftest test-machine-configuration-schema
+  (let [mc (assoc valid-entry
+             :id "/MachineConfiguration/10"
+             :resourceURI type-uri
+             :created "1964-08-25T10:00:00.0Z"
+             :updated "1964-08-25T10:00:00.0Z"
+             :disks [{:capacity 1024
+                      :format "ext4"}])]
+        (is (empty? (validation-errors MachineConfiguration mc)))
+        (is (empty? (validation-errors MachineConfiguration (dissoc mc :disks))))
+        (is (not (empty? (validation-errors MachineConfiguration (dissoc mc :cpu)))))
+        (is (not (empty? (validation-errors MachineConfiguration (dissoc mc :memory)))))
+        (is (not (empty? (validation-errors MachineConfiguration (dissoc mc :cpuArch)))))
+        (is (not (empty? (validation-errors MachineConfiguration (dissoc mc :cpu)))))))
 
 (deftest test-crud-workflow
 
   ;; create
   (let [results (-> (session (ring-app))
-                  (request base-uri :request-method :post))
+                  (request base-uri :request-method :post
+                    :body (json/write-str valid-entry)))
         response (:response results)
         resource-uri (get-in response [:headers "Location"])]
     (is (= 201 (:status response)))
@@ -33,7 +75,8 @@
     
     ;; update    
     (let [results (-> (session (ring-app))
-                    (request resource-uri :request-method :put :body (json/write-str {:name "OK"})))
+                    (request resource-uri :request-method :put
+                      :body (json/write-str {:name "OK"})))
           response (:response results)]
       (is (= 200 (:status response)))
       (is (= "OK" (:name (:body response)))))
@@ -82,34 +125,17 @@
 (deftest update-non-existing-resource-fails
   (let [resource-uri (str base-uri "/" (utils/create-uuid))
         results (-> (session (ring-app))
-                  (request resource-uri :request-method :put :body (json/write-str {:name "OK"})))
+                  (request resource-uri :request-method :put
+                    :body (json/write-str {:name "OK"})))
         response (:response results)]
     (is (= 404 (:status response)))
     (is (empty? (:body response)))))
 
 
-(deftest test-create-with-body
-
-  ;; create
-  (let [results (-> (session (ring-app))
-                  (request base-uri :request-method :post :body (json/write-str {:name "OK"})))
-        response (:response results)
-        resource-uri (get-in response [:headers "Location"])]
-    (is (= 201 (:status response)))
-    (is (empty? (:body response)))
-    (is (not (empty? resource-uri)))
-
-    ;; read    
-    (let [results (-> (session (ring-app))
-                    (request resource-uri))
-          response (:response results)]
-      (is (= 200 (:status response)))
-      (is (= "OK" (get-in response [:body :name])))
-      (is (= resource-uri (get-in response [:body :id]))))))
-
 (defn create-with-rest [name]
   (let [results (-> (session (ring-app))
-                  (request base-uri :request-method :post :body (json/write-str {:name name})))
+                  (request base-uri :request-method :post
+                    :body (json/write-str (assoc valid-entry :name name))))
         response (:response results)]
     (get-in response [:headers "Location"])))
 

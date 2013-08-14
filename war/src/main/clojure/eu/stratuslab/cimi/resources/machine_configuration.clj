@@ -1,8 +1,7 @@
 (ns eu.stratuslab.cimi.resources.machine-configuration
   "Utilities for managing the CRUD features for machine configurations."
   (:require 
-    [clojure.data.json :as json]
-    [clojure.java.io :as io]
+    [clojure.string :as str]
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.common :as common]
@@ -27,41 +26,35 @@
 (def-map-schema Disk
   [[:capacity] PosIntegral
    [:format] NonEmptyString
-   [:initialLocation] NonEmptyString])
+   (optional-path [:initialLocation]) NonEmptyString])
+
+(def-seq-schema Disks
+  (constraints (fn [s] (pos? (count s))))
+  [Disk])
 
 (def-map-schema MachineConfiguration
+  common/CommonAttrs
   [[:cpu] PosIntegral
    [:memory] PosIntegral
    [:cpuArch] #{"68000" "Alpha" "ARM" "Itanium" "MIPS" "PA_RISC"
                 "POWER" "PowerPC" "x86" "x86_64" "zArchitecture", "SPARC"}
-   (optional-path [:disks]) (sequence-of Disk)])
+   (optional-path [:disks]) Disks])
 
 (defn uuid->uri
   "Convert a uuid into the URI for a MachineConfiguration resource."
   [uuid]
   (str base-uri "/" uuid))
 
-(defn body->json
-  "Converts the contents of body (that must be something readable) into
-   a clojure datastructure.  If the body is empty, then an empty map is
-   returned."
-  [body]
-  (if body
-    (json/read (io/reader body) :key-fn keyword)
-    {}))
-
-(defn strip-service-attrs
-  "Strips keys from the map that are controlled by the service itself.
-   For example, the :created and :updated keys."
-  [m]
-  (dissoc m :id :created :updated :resourceURI))
-
-;; TODO: This function must actually validate the entry!
 (defn validate 
   "Validates the MachineConfiguration entry against the defined schema.
    This method will return the entry itself if valid; it will raise an
    exception otherwise."
-  [entry] entry)
+  [entry]
+  (let [errors (validation-errors MachineConfiguration entry)]
+    (if (empty? errors)
+      entry
+      (throw (Exception. (str "resource does not satisfy defined schema\n"
+                           (str/join "\n" errors)))))))
 
 (defn add
   "Add a new MachineConfiguration to the database.  The entry contains
@@ -73,7 +66,7 @@
   ([cb-client entry]
     (let [uri (uuid->uri (utils/create-uuid))
           entry (-> entry
-                  (strip-service-attrs)
+                  (utils/strip-service-attrs)
                   (assoc :id uri)
                   (assoc :resourceURI type-uri)
                   (utils/set-time-attributes)
@@ -98,7 +91,7 @@
   (let [uri (uuid->uri uuid)]
     (if-let [current (cbc/get-json cb-client uri)]
       (let [updated (->> entry
-                      (strip-service-attrs)
+                      (utils/strip-service-attrs)
                       (merge current)
                       (utils/set-time-attributes)
                       (validate))]
@@ -130,15 +123,15 @@
 
 (defroutes resource-routes
   (POST base-uri {:keys [cb-client body]}
-    (let [json (body->json body)]
+    (let [json (utils/body->json body)]
       (add cb-client json)))
   (GET base-uri {:keys [cb-client body]}
-    (let [json (body->json body)]
+    (let [json (utils/body->json body)]
       (query cb-client json)))
   (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
     (retrieve cb-client uuid))
   (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
-    (let [json (body->json body)]
+    (let [json (utils/body->json body)]
       (edit cb-client uuid json)))
   (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
     (delete cb-client uuid)))

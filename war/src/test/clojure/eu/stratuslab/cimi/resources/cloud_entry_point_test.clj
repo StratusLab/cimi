@@ -10,19 +10,6 @@
 (defn ring-app []
   (t/make-ring-app resource-routes))
 
-(deftest check-strip-unknown-attributes
-  (let [input {:a 1 :b 2 :id "ok"}
-        correct {:id "ok"}]
-    (is (= correct (strip-unknown-attributes input)))))
-
-(deftest check-strip-immutable-attributes
-  (let [input {:a 1 :id "ok" :baseURI "ok"}
-        correct {:a 1}]
-    (is (= correct (strip-immutable-attributes input))))
-  (let [input {:name 1 :id "ok" :baseURI "ok"}
-        correct {:name 1}]
-    (is (= correct (strip-immutable-attributes input)))))
-
 (deftest retrieve-cloud-entry-point
   (let [results (-> (session (ring-app))
                   (request "/"))

@@ -36,22 +36,6 @@
     :meter :meterTemplates :meterConfigs
     :eventLogs :eventLogTemplates})
 
-(def attributes
-  "These are the attributes allowed for a CloudEntryPoint."
-  (set/union common/attributes cep-attributes))
-
-(def immutable-attributes
-  "These are the attributes for a CloudEntryPoint that cannot
-   be modified."
-  (set/union common/immutable-attributes cep-attributes))
-
-(defn strip-unknown-attributes [m]
-  (select-keys m attributes))
-
-(defn strip-immutable-attributes [m]
-  (let [ks (set/difference (set (keys m)) immutable-attributes)]
-    (select-keys m ks)))
-
 (defn create
   "Creates a new CloudEntryPoint from the given data.  This normally only occurs
    during the service bootstrap process when the database has not yet been 
@@ -95,8 +79,7 @@
         body (InputStreamReader. (:body req))
         json (json/read body :key-fn keyword)
         update (->> json
-                 (strip-unknown-attributes)
-                 (strip-immutable-attributes)
+                 (utils/strip-service-attrs)
                  (utils/set-time-attributes))
         current (cbc/get-json cb-client resource-base-url)
         newdoc (merge current update)]

@@ -1,6 +1,8 @@
 (ns eu.stratuslab.cimi.resources.utils
   "General utilities for dealing with resources."
   (:require
+    [clojure.data.json :as json]
+    [clojure.java.io :as io]
     [clj-time.core :as time]
     [clj-time.format :as time-fmt])
   (:import [java.util UUID Date]))
@@ -10,6 +12,13 @@
   []
   (str (UUID/randomUUID)))
 
+(defn strip-service-attrs
+  "Strips common attributes from the map whose values are controlled
+   entirely by the service.  These include :id, :created, :updated, 
+   :resourceURI, and :operations."
+  [m]
+  (dissoc m :id :created :updated :resourceURI :operations))
+
 (defn set-time-attributes
   "Sets the updated and created attributes in the request.  If the
   existing? is nil/false, then the created attribute it set;
@@ -18,3 +27,12 @@
   (let [updated (time-fmt/unparse (:date-time time-fmt/formatters) (time/now))
         created (or (:created data) updated)]
     (assoc data :created created :updated updated)))
+
+(defn body->json
+  "Converts the contents of body (that must be something readable) into
+   a clojure datastructure.  If the body is empty, then an empty map is
+   returned."
+  [body]
+  (if body
+    (json/read (io/reader body) :key-fn keyword)
+    {}))
