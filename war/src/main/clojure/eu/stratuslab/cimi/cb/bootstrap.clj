@@ -58,7 +58,7 @@ function(doc, meta) {
    resource of the service and must exist."
   [cb-client]
   (try 
-    (cep/create cb-client)
+    (cep/add cb-client)
     (log/info "created CloudEntryPoint")
     (catch Exception e
       (log/warn "could not create CloudEntryPoint:" (.getMessage e))

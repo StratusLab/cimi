@@ -36,21 +36,20 @@
     :meter :meterTemplates :meterConfigs
     :eventLogs :eventLogTemplates})
 
-(defn create
+(defn add
   "Creates a new CloudEntryPoint from the given data.  This normally only occurs
    during the service bootstrap process when the database has not yet been 
    initialized."
   [cb-client]
   
-  (let [record (->> 
-                 {:id resource-base-url
-                  :name resource-type
-                  :description "StratusLab Cloud"
-                  :resourceURI resource-uri}
+  (let [record (->> {:id resource-base-url
+                     :name resource-type
+                     :description "StratusLab Cloud"
+                     :resourceURI resource-uri}
                  (utils/set-time-attributes))]
     (cbc/add-json cb-client resource-base-url record {:observe true
-    		  	    		      	      :persist :master
-						      :replicate :zero})))
+                                                      :persist :master
+                                                      :replicate :zero})))
 
 (defn retrieve
   "Returns the data associated with the CloudEntryPoint.  There is
@@ -63,13 +62,7 @@
         doc (cbc/get-json cb-client resource-base-url)]
     (assoc doc :baseURI baseURI)))
 
-(defn list-all
-  "Returns the raw list of CloudEntryPoint entries.  There should
-   only ever be one of these."
-  [{:keys [cb-client]}]
-  (println resource-uri))
-
-(defn update
+(defn edit
   "Update the cloud entry point attributes.  Note that only the common
   resource attributes can be updated.  The active resource collections
   cannot be changed.  For correct behavior, the cloud entry point must
@@ -90,4 +83,4 @@
 
 (defroutes resource-routes
   (GET resource-base-url {:as req} {:body (retrieve req)})
-  (PUT resource-base-url {:as req} (update req) {}))
+  (PUT resource-base-url {:as req} (edit req) {}))
