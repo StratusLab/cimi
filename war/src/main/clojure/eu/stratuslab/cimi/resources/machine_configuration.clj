@@ -15,7 +15,7 @@
     [clj-schema.schema :refer :all]
     [clj-schema.simple-schemas :refer :all]
     [clj-schema.validation :refer :all]
-    [clojure.tools.logging :refer [debug info error]]))
+    [clojure.tools.logging :as log]))
 
 (def ^:const resource-type "MachineConfiguration")
 
@@ -44,12 +44,25 @@
                 "POWER" "PowerPC" "x86" "x86_64" "zArchitecture", "SPARC"}
    (optional-path [:disks]) Disks])
 
+(def validate (utils/create-validation-fn MachineConfiguration))
+
 (defn uuid->uri
   "Convert a uuid into the URI for a MachineConfiguration resource."
   [uuid]
   (str base-uri "/" uuid))
 
-(def validate (utils/create-validation-fn MachineConfiguration))
+(defn add-cops
+  "Adds the collection operations to the given resource."
+  [resource]
+  (let [ops [{:rel (:add common/action-uri) :href base-uri}]]
+    (assoc resource :operations ops)))
+
+(defn add-rops
+  "Adds the resource operations to the given resource."
+  [resource]
+  (let [ops [{:rel (:edit common/action-uri) :href base-uri}
+             {:rel (:delete common/action-uri) :href base-uri}]]
+    (assoc resource :operations ops)))
 
 (defn add
   "Add a new MachineConfiguration to the database.  The entry contains
@@ -75,7 +88,7 @@
    entry (identified by the uuid)."
   [cb-client uuid]
   (if-let [json (cbc/get-json cb-client (uuid->uri uuid))]
-    (rresp/response json)
+    (rresp/response (add-rops json))
     (rresp/not-found nil)))
 
 ;; FIXME: Implementation should use CAS functions to avoid update conflicts.
@@ -89,6 +102,7 @@
                       (utils/strip-service-attrs)
                       (merge current)
                       (utils/set-time-attributes)
+                      (add-rops)
                       (validate))]
         (if (cbc/set-json cb-client uri updated)
           (rresp/response updated)
@@ -102,20 +116,6 @@
     (rresp/response nil)
     (rresp/not-found nil)))
 
-(comment (defn query
-  "Searches the database for resources of this type, taking into
-   account the given options."
-  [cb-client & [opts]]
-  (let [q (cbq/create-query (merge {:include-docs true
-                                    :key type-uri
-                                    :limit 100
-                                    :stale false
-                                    :on-error :continue}
-                              opts))
-        v (cbc/get-view cb-client bootstrap/design-doc-name "resource-uri")
-        results (cbc/query cb-client v q)]
-    (doall (map cbc/view-doc-json results)))))
-
 (defn query
   "Searches the database for resources of this type, taking into
    account the given options."
@@ -127,15 +127,16 @@
                                     :on-error :continue}
                               opts))
         v (cbc/get-view cb-client bootstrap/design-doc-name "resource-uri")
-        results (cbc/query cb-client v q)
-        n (count results)
-        docs (map cbc/view-doc-json results)
-        shell {:resourceURI collection-type-uri
-               :id base-uri
-               :count n}]
-    (if (pos? n)
-      (assoc shell :machineConfigurations docs)
-      shell)))
+
+        configs (->> (cbc/query cb-client v q)
+                  (map cbc/view-doc-json)
+                  (map add-rops))
+        collection (add-cops {:resourceURI collection-type-uri
+                              :id base-uri
+                              :count (count configs)})]
+    (if (empty? configs)
+      collection
+      (assoc collection :machineConfigurations configs))))
 
 (defroutes resource-routes
   (POST base-uri {:keys [cb-client body]}

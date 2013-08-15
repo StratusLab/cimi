@@ -63,6 +63,12 @@
 
 (def validate (utils/create-validation-fn CloudEntryPoint))
 
+(defn add-rops
+  "Adds the resource operations to the given resource."
+  [resource]
+  (let [ops [{:rel (:edit common/action-uri) :href base-uri}]]
+    (assoc resource :operations ops)))
+
 (defn add
   "Creates a new CloudEntryPoint from the given data.  This normally only occurs
    during the service bootstrap process when the database has not yet been 
@@ -85,7 +91,7 @@
   the ring request."
   [cb-client baseURI]
   (if-let [json (cbc/get-json cb-client base-uri)]
-    (rresp/response (assoc json :baseURI baseURI))
+    (rresp/response (add-rops (assoc json :baseURI baseURI)))
     (rresp/not-found nil)))
 
 ;; FIXME: Implementation should use CAS functions to avoid update conflicts.
@@ -102,6 +108,7 @@
                    (utils/set-time-attributes))
           updated (-> updated
                     (assoc :baseURI baseURI)
+                    (add-rops)
                     (validate))]
       (if (cbc/set-json cb-client base-uri updated)
         (rresp/response updated)
