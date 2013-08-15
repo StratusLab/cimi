@@ -14,7 +14,7 @@
 (def ^:dynamic *test-cb-client* nil)
 
 (defn make-ring-app [resource-routes]
-  (->> resource-routes
+  (-> resource-routes
     (wrap-cb-client *test-cb-client*)
     (wrap-base-uri)))
 

@@ -7,4 +7,4 @@
   (let [correct-value "OK"
         tfunc (fn [req]
                 (is (= correct-value (:cb-client req))))]
-    ((wrap-cb-client correct-value tfunc) {})))
+    ((wrap-cb-client tfunc correct-value) {})))

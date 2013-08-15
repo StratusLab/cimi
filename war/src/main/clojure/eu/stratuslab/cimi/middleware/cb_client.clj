@@ -6,6 +6,6 @@
   "Middleware that inserts the configured Couchbase client into the 
    request.  The client can be retrieved from the request with the
    :cb-client key."
-  ([cb-client handler]
+  ([handler cb-client]
     (fn [req]
       (handler (assoc req :cb-client cb-client)))))
