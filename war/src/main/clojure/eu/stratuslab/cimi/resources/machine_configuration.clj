@@ -25,7 +25,7 @@
 
 (def ^:const collection-type-uri (str "http://schemas.dmtf.org/cimi/1/" collection-resource-type))
 
-(def ^:const base-uri resource-type)
+(def ^:const base-uri (str "/" resource-type))
 
 (def-map-schema Disk
   [[:capacity] PosIntegral

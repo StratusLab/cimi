@@ -92,7 +92,10 @@
   the ring request."
   [cb-client baseURI]
   (if-let [json (cbc/get-json cb-client base-uri)]
-    (rresp/response (add-rops (assoc json :baseURI baseURI)))
+    (rresp/response (-> json
+                      (assoc :baseURI baseURI)
+                      (assoc :machineConfigs {:href "MachineConfiguration"})
+                      (add-rops)))
     (rresp/not-found nil)))
 
 ;; FIXME: Implementation should use CAS functions to avoid update conflicts.
