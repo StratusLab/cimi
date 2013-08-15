@@ -36,7 +36,7 @@
    returned."
   [body]
   (if body
-    (json/read (io/reader body) :key-fn keyword :eof-error false :eof-value {})
+    (json/read (io/reader body) :key-fn keyword :eof-error? false :eof-value {})
     {}))
 
 (defn create-validation-fn
