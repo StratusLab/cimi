@@ -56,7 +56,7 @@
   (log/info "initializing servlet implementation")
 
   (let [cb-client (create-cb-client cb-cfg)]
-    (bootstrap cb-client cb-cfg)    
+    (bootstrap cb-client)    
     {:cb-client cb-client}))
 
 (defn destroy
