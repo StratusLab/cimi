@@ -75,11 +75,12 @@
    initialized."
   [cb-client]
   
-  (let [record (->> {:id base-uri
-                     :name resource-type
-                     :description "StratusLab Cloud"
-                     :resourceURI type-uri}
-                 (utils/set-time-attributes))]
+  (let [record (-> {:id base-uri
+                    :name resource-type
+                    :description "StratusLab Cloud"
+                    :resourceURI type-uri}
+                 (utils/set-time-attributes)
+                 (assoc :machineConfigs {:href "MachineConfiguration"}))] ;; FIXME: remove hardcoded value
     (cbc/add-json cb-client base-uri record {:observe true
                                              :persist :master
                                              :replicate :zero})))
@@ -108,6 +109,7 @@
                    (utils/set-time-attributes))
           updated (-> updated
                     (assoc :baseURI baseURI)
+                    (assoc :machineConfigs {:href "MachineConfiguration"}) ;; FIXME: remove hardcoded value
                     (add-rops)
                     (validate))]
       (if (cbc/set-json cb-client base-uri updated)
