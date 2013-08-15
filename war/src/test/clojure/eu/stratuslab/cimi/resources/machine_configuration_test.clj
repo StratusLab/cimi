@@ -61,21 +61,22 @@
                   (request base-uri :request-method :post
                     :body (json/write-str valid-entry)))
         response (:response results)
-        resource-uri (get-in response [:headers "Location"])]
+        resource-uri (get-in response [:headers "Location"])
+        resource-url (str "/" resource-uri)]
     (is (= 201 (:status response)))
     (is (empty? (:body response)))
     (is (not (empty? resource-uri)))
 
     ;; read    
     (let [results (-> (session (ring-app))
-                    (request resource-uri))
+                    (request resource-url))
           response (:response results)]
       (is (= 200 (:status response)))
       (is (= resource-uri (get-in response [:body :id]))))
     
     ;; update    
     (let [results (-> (session (ring-app))
-                    (request resource-uri :request-method :put
+                    (request resource-url :request-method :put
                       :body (json/write-str {:name "OK"})))
           response (:response results)]
       (is (= 200 (:status response)))
@@ -83,7 +84,7 @@
     
     ;; re-read for updated entry    
     (let [results (-> (session (ring-app))
-                    (request resource-uri))
+                    (request resource-url))
           response (:response results)]
       (is (= 200 (:status response)))
       (is (= resource-uri (get-in response [:body :id])))
@@ -91,14 +92,14 @@
     
     ;; delete
     (let [results (-> (session (ring-app))
-                    (request resource-uri :request-method :delete))
+                    (request resource-url :request-method :delete))
           response (:response results)]
       (is (= 200 (:status response)))
       (is (empty? (:body response))))
     
     ;; re-read to ensure entry is gone
     (let [results (-> (session (ring-app))
-                    (request resource-uri))
+                    (request resource-url))
           response (:response results)]
       (is (= 404 (:status response)))
       (is (empty? (:body response)))) ))
@@ -141,7 +142,7 @@
 
 (defn get-with-rest [resource-uri]
   (let [results (-> (session (ring-app))
-                  (request resource-uri))
+                  (request (str "/" resource-uri)))
         response (:response results)]
     (:body response)))
 
@@ -159,10 +160,11 @@
     (let [results (-> (session (ring-app))
                     (request base-uri))
         response (:response results)
-        docs (:machineConfigurations response)]
-      (is (= collection-type-uri (:resourceURI response)))
-      (is (= base-uri (:id response)))
-      (is (= (count keys) (:count response)))
+        body (:body response)
+        docs (:machineConfigurations body)]
+      (is (= collection-type-uri (:resourceURI body)))
+      (is (= base-uri (:id body)))
+      (is (= (count keys) (:count body)))
       (is (= (count keys) (count docs)))
       (is (= (set keys) (set (map :name docs)))))
 
@@ -171,8 +173,9 @@
           results (-> (session (ring-app))
                     (request base-uri :body (json/write-str {:limit limit})))
         response (:response results)
-        docs (:machineConfigurations response)]
-      (is (= collection-type-uri (:resourceURI response)))
-      (is (= base-uri (:id response)))
-      (is (= limit (:count response)))
+        body (:body response)
+        docs (:machineConfigurations body)]
+      (is (= collection-type-uri (:resourceURI body)))
+      (is (= base-uri (:id body)))
+      (is (= limit (:count body)))
       (is (= limit (count docs))))))

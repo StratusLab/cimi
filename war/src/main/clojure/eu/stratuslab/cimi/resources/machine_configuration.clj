@@ -47,9 +47,10 @@
 (def validate (utils/create-validation-fn MachineConfiguration))
 
 (defn uuid->uri
-  "Convert a uuid into the URI for a MachineConfiguration resource."
+  "Convert a uuid into the URI for a MachineConfiguration resource.
+   The URI must not have a leading slash."
   [uuid]
-  (str base-uri "/" uuid))
+  (str resource-type "/" uuid))
 
 (defn add-cops
   "Adds the collection operations to the given resource."
@@ -60,8 +61,9 @@
 (defn add-rops
   "Adds the resource operations to the given resource."
   [resource]
-  (let [ops [{:rel (:edit common/action-uri) :href base-uri}
-             {:rel (:delete common/action-uri) :href base-uri}]]
+  (let [href (:id resource)
+        ops [{:rel (:edit common/action-uri) :href href}
+             {:rel (:delete common/action-uri) :href href}]]
     (assoc resource :operations ops)))
 
 (defn add
@@ -134,9 +136,9 @@
         collection (add-cops {:resourceURI collection-type-uri
                               :id base-uri
                               :count (count configs)})]
-    (if (empty? configs)
-      collection
-      (assoc collection :machineConfigurations configs))))
+    (rresp/response (if (empty? configs)
+                      collection
+                      (assoc collection :machineConfigurations configs)))))
 
 (defroutes resource-routes
   (POST base-uri {:keys [cb-client body]}

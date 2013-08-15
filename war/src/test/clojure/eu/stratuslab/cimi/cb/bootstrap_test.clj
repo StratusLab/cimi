@@ -13,7 +13,7 @@
   (bootstrap t/*test-cb-client*)
   
   ;; verify that the CloudEntryPoint exists
-  (let [cep (cbc/get-json t/*test-cb-client* cep/base-uri)]
+  (let [cep (cbc/get-json t/*test-cb-client* cep/resource-type)]
     (is (not (nil? cep)))
     (is (not (empty? cep)))
     (is (= cep/type-uri (:resourceURI cep))))
@@ -25,7 +25,7 @@
     (is (not (nil? resource-uri-view))))
 
   ;; check that queries work
-  (let [by-doc-id-q (cbq/create-query {:key cep/base-uri
+  (let [by-doc-id-q (cbq/create-query {:key cep/resource-type
                                        :include-docs false
                                        :stale false})
         by-doc-id-view (cbc/get-view t/*test-cb-client* design-doc-name "doc-id")

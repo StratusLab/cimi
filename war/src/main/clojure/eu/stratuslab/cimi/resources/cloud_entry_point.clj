@@ -25,6 +25,10 @@
 
 (def ^:const base-uri "/")
 
+;; FIXME: Generate these automatically.
+(def resource-links 
+  {:machineConfigs {:href "MachineConfiguration"}})
+
 (def-map-schema ResourceLink
   [[:href] NonEmptyString])
 
@@ -70,31 +74,30 @@
     (assoc resource :operations ops)))
 
 (defn add
-  "Creates a new CloudEntryPoint from the given data.  This normally only occurs
-   during the service bootstrap process when the database has not yet been 
-   initialized."
+  "Creates a minimal CloudEntryPoint in the database.  Note that
+   only the common attributes are saved in the database; links to
+   resource types are generated when the service starts.
+
+   NOTE: Unlike other resources, the :id is 'CloudEntryPoint'
+   rather than the relative URI for the resource."
   [cb-client]
   
-  (let [record (-> {:id base-uri
-                    :name resource-type
-                    :description "StratusLab Cloud"
+  (let [record (-> {:id resource-type
                     :resourceURI type-uri}
-                 (utils/set-time-attributes)
-                 (assoc :machineConfigs {:href "MachineConfiguration"}))] ;; FIXME: remove hardcoded value
-    (cbc/add-json cb-client base-uri record {:observe true
+                 (utils/set-time-attributes))]
+    (cbc/add-json cb-client resource-type record {:observe true
                                              :persist :master
                                              :replicate :zero})))
 
 (defn retrieve
-  "Returns the data associated with the CloudEntryPoint.  There is
-  exactly one such entry in the database.  The identifier is the root
-  resource name '/'.  The baseURI must be passed as this is taken from 
-  the ring request."
+  "Returns the data associated with the CloudEntryPoint.  This combines
+   the values of the common attributes in the database with the baseURI
+   from the web container and the generated resource links."
   [cb-client baseURI]
-  (if-let [json (cbc/get-json cb-client base-uri)]
-    (rresp/response (-> json
+  (if-let [cep (cbc/get-json cb-client resource-type)]
+    (rresp/response (-> cep
                       (assoc :baseURI baseURI)
-                      (assoc :machineConfigs {:href "MachineConfiguration"})
+                      (merge resource-links)
                       (add-rops)))
     (rresp/not-found nil)))
 
@@ -105,18 +108,18 @@
   cannot be changed.  For correct behavior, the cloud entry point must
   have been previously initialized.  Returns nil."
   [cb-client baseURI entry]
-  (if-let [current (cbc/get-json cb-client base-uri)]
-    (let [updated (->> entry
-                   (utils/strip-service-attrs)
+  (if-let [current (cbc/get-json cb-client resource-type)]
+    (let [db-doc (-> entry
+                   (select-keys [:name :description :properties])
                    (merge current)
                    (utils/set-time-attributes))
-          updated (-> updated
-                    (assoc :baseURI baseURI)
-                    (assoc :machineConfigs {:href "MachineConfiguration"}) ;; FIXME: remove hardcoded value
-                    (add-rops)
-                    (validate))]
-      (if (cbc/set-json cb-client base-uri updated)
-        (rresp/response updated)
+          doc (-> db-doc
+                (assoc :baseURI baseURI)
+                (merge resource-links)
+                (add-rops)
+                (validate))]
+      (if (cbc/set-json cb-client resource-type db-doc)
+        (rresp/response doc)
         (rresp/status (rresp/response nil) 409)))
     (rresp/not-found nil)))
 
