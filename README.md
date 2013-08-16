@@ -36,6 +36,16 @@ installed, configured, and running.  The CIMI server will use the
   found in the [bug report][cb-bug].  
 
 
+Feedback and Bug Reports
+------------------------
+
+This code is in an alpha state and quickly evolving.  Nonetheless,
+feedback on the code and its functionality is appreciated; please send
+this feedback to the [support mailing
+list](mailto:support@stratuslab.eu).  Specific bug reports can be
+provided via the GitHub issues for this project.
+
+
 License
 -------
 
