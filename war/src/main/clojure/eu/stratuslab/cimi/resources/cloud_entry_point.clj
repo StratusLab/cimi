@@ -7,6 +7,7 @@
     [couchbase-clj.client :as cbc]
     [eu.stratuslab.cimi.resources.common :as common]
     [eu.stratuslab.cimi.resources.utils :as utils]
+    [eu.stratuslab.cimi.resources.machine-configuration :as mc]
     [clojure.tools.logging :refer [debug info warn]]
     [compojure.core :refer :all]
     [compojure.route :as route]
@@ -27,7 +28,7 @@
 
 ;; FIXME: Generate these automatically.
 (def resource-links 
-  {:machineConfigs {:href "MachineConfiguration"}})
+  {:machineConfigs {:href mc/resource-type}})
 
 (def-map-schema ResourceLink
   [[:href] NonEmptyString])

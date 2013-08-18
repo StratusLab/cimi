@@ -3,6 +3,7 @@
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.cb.bootstrap :refer :all]
+    [eu.stratuslab.cimi.cb.views :as views]
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
     [clojure.test :refer :all]))
@@ -19,8 +20,8 @@
     (is (= cep/type-uri (:resourceURI cep))))
  
   ;; verify that views exist
-  (let [doc-id-view (cbc/get-view t/*test-cb-client* design-doc-name "doc-id")
-        resource-uri-view (cbc/get-view t/*test-cb-client* design-doc-name "resource-uri")]
+  (let [doc-id-view (views/get-view t/*test-cb-client* :doc-id)
+        resource-uri-view (views/get-view t/*test-cb-client* :resource-uri)]
     (is (not (nil? doc-id-view)))
     (is (not (nil? resource-uri-view))))
 
@@ -28,13 +29,13 @@
   (let [by-doc-id-q (cbq/create-query {:key cep/resource-type
                                        :include-docs false
                                        :stale false})
-        by-doc-id-view (cbc/get-view t/*test-cb-client* design-doc-name "doc-id")
+        by-doc-id-view (views/get-view t/*test-cb-client* :doc-id)
         by-doc-id (cbc/query t/*test-cb-client* by-doc-id-view by-doc-id-q)
         
         by-resource-uri-q (cbq/create-query {:key cep/type-uri
                                              :include-docs false
                                              :stale false})
-        by-resource-uri-view (cbc/get-view t/*test-cb-client* design-doc-name "resource-uri")
+        by-resource-uri-view (views/get-view t/*test-cb-client* :resource-uri)
         by-resource-uri (cbc/query t/*test-cb-client* by-resource-uri-view by-resource-uri-q)]
     (is (= 1 (count by-doc-id)))
     (is (= 1 (count by-resource-uri)))))

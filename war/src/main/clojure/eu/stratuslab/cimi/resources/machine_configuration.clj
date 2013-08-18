@@ -6,7 +6,7 @@
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.common :as common]
     [eu.stratuslab.cimi.resources.utils :as utils]
-    [eu.stratuslab.cimi.cb.bootstrap :as bootstrap]
+    [eu.stratuslab.cimi.cb.views :as views]
     [compojure.core :refer :all]
     [compojure.route :as route]
     [compojure.handler :as handler]
@@ -128,7 +128,7 @@
                                     :stale false
                                     :on-error :continue}
                               opts))
-        v (cbc/get-view cb-client bootstrap/design-doc-name "resource-uri")
+        v (views/get-view cb-client :resource-uri)
 
         configs (->> (cbc/query cb-client v q)
                   (map cbc/view-doc-json)
