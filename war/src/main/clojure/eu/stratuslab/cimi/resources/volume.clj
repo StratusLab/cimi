@@ -1,7 +1,6 @@
-(ns eu.stratuslab.cimi.resources.job
-  "Utilities for managing the CRUD features for jobs."
+(ns eu.stratuslab.cimi.resources.volume
+  "Utilities for managing the CRUD features for volumes."
   (:require 
-    [clojure.string :as str]
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.common :as common]
@@ -17,9 +16,9 @@
     [clj-schema.validation :refer :all]
     [clojure.tools.logging :as log]))
 
-(def ^:const resource-type "Job")
+(def ^:const resource-type "Volume")
 
-(def ^:const collection-resource-type "JobCollection")
+(def ^:const collection-resource-type "VolumeCollection")
 
 (def ^:const type-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type))
 
@@ -27,20 +26,15 @@
 
 (def ^:const base-uri (str "/" resource-type))
 
-(def-map-schema Job
+(def-map-schema Volume
   common/CommonAttrs
-  [(optional-path [:state]) #{"QUEUED" "RUNNING" "FAILED" "SUCCESS" "STOPPING" "STOPPED"}
-   [:targetResource] NonEmptyString
-   (optional-path [:affectedResources]) (sequence-of NonEmptyString)
-   [:action] NonEmptyString
-   (optional-path [:returnCode]) Integral
-   (optional-path [:progress]) NonNegIntegral
-   (optional-path [:statusMessage]) NonEmptyString
-   (optional-path [:timeOfStatusChange]) NonEmptyString
-   (optional-path [:parentJob]) NonEmptyString
-   (optional-path [:nestedJobs]) (sequence-of NonEmptyString)])
+  [(optional-path [:state]) #{"CREATING" "AVAILABLE" "CAPTURING" "DELETING" "ERROR"}
+   [:type] NonEmptyString
+   [:capacity] NonNegIntegral
+   (optional-path [:bootable]) Boolean
+   (optional-path [:eventLog]) NonEmptyString])
 
-(def validate (utils/create-validation-fn Job))
+(def validate (utils/create-validation-fn Volume))
 
 (defn uuid->uri
   "Convert a uuid into the URI for a MachineConfiguration resource.
@@ -59,12 +53,11 @@
   [resource]
   (let [href (:id resource)
         ops [{:rel (:edit common/action-uri) :href href}
-             {:rel (:delete common/action-uri) :href href}
-             {:rel (:stop common/action-uri) :href (str href "/stop")}]]
+             {:rel (:delete common/action-uri) :href href}]]
     (assoc resource :operations ops)))
 
 (defn add
-  "Add a new Job to the database."
+  "Add a new Volume to the database."
   [cb-client entry]
   (let [uri (uuid->uri (utils/create-uuid))
         entry (-> entry
@@ -78,7 +71,7 @@
       (rresp/status (rresp/response (str "cannot create " uri)) 400))))
 
 (defn retrieve
-  "Returns the data associated with the requested Job
+  "Returns the data associated with the requested Volume
    entry (identified by the uuid)."
   [cb-client uuid]
   (if-let [json (cbc/get-json cb-client (uuid->uri uuid))]
@@ -110,11 +103,6 @@
     (rresp/response nil)
     (rresp/not-found nil)))
 
-(defn action
-  "Perform an action on the given resource."
-  [cb-client uuid action params]
-  (rresp/created (uuid->uri uuid)))
-
 (defn query
   "Searches the database for resources of this type, taking into
    account the given options."
@@ -135,7 +123,7 @@
                               :count (count configs)})]
     (rresp/response (if (empty? configs)
                       collection
-                      (assoc collection :jobs configs)))))
+                      (assoc collection :volumes configs)))))
 
 (defroutes resource-routes
   (POST base-uri {:keys [cb-client body]}
@@ -146,9 +134,6 @@
       (query cb-client json)))
   (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
     (retrieve cb-client uuid))
-  (POST (str base-uri "/:uuid/:action") [uuid action :as {:keys [cb-client body]}]
-    (let [json (utils/body->json body)]
-      (action cb-client uuid action json)))
   (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
     (let [json (utils/body->json body)]
       (edit cb-client uuid json)))
