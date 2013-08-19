@@ -8,6 +8,8 @@
     [eu.stratuslab.cimi.resources.common :as common]
     [eu.stratuslab.cimi.resources.utils :as utils]
     [eu.stratuslab.cimi.resources.machine-configuration :as mc]
+    [eu.stratuslab.cimi.resources.job :as job]
+    [eu.stratuslab.cimi.resources.volume :as volume]
     [clojure.tools.logging :refer [debug info warn]]
     [compojure.core :refer :all]
     [compojure.route :as route]
@@ -28,7 +30,9 @@
 
 ;; FIXME: Generate these automatically.
 (def resource-links 
-  {:machineConfigs {:href mc/resource-type}})
+  {:machineConfigs {:href mc/resource-type}
+   :jobs {:href job/resource-type}
+   :volumes {:href volume/resource-type}})
 
 (def-map-schema ResourceLink
   [[:href] NonEmptyString])
