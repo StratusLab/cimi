@@ -69,8 +69,10 @@
   (let [uri (uuid->uri (utils/create-uuid))
         entry (-> entry
                 (utils/strip-service-attrs)
-                (assoc :id uri)
-                (assoc :resourceURI type-uri)
+                (merge {:id uri
+                        :resourceURI type-uri
+                        :state "QUEUED"
+                        :progress 0})
                 (utils/set-time-attributes)
                 (validate))]
     (if (cbc/add-json cb-client uri entry)

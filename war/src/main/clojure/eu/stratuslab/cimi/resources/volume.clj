@@ -5,6 +5,7 @@
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.common :as common]
     [eu.stratuslab.cimi.resources.utils :as utils]
+    [eu.stratuslab.cimi.resources.job :as job]
     [eu.stratuslab.cimi.cb.views :as views]
     [compojure.core :refer :all]
     [compojure.route :as route]
@@ -67,7 +68,10 @@
                 (utils/set-time-attributes)
                 (validate))]
     (if (cbc/add-json cb-client uri entry)
-      (rresp/created uri)
+      (do 
+        (job/add {:targetResource uri
+                  :action "create"})
+        (rresp/created uri))
       (rresp/status (rresp/response (str "cannot create " uri)) 400))))
 
 (defn retrieve
@@ -99,9 +103,13 @@
 (defn delete
   "Deletes the named machine configuration."
   [cb-client uuid]
-  (if (cbc/delete cb-client (uuid->uri uuid))
-    (rresp/response nil)
-    (rresp/not-found nil)))
+  (let [uri (uuid->uri uuid)]
+    (if (cbc/delete cb-client uri)
+      (do
+        (job/add {:targetResource uri
+                  :action "delete"})
+        (rresp/response nil))
+      (rresp/not-found nil))))
 
 (defn query
   "Searches the database for resources of this type, taking into
