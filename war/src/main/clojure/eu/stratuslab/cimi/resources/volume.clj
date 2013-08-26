@@ -69,8 +69,8 @@
                 (validate))]
     (if (cbc/add-json cb-client uri entry)
       (do 
-        (job/add {:targetResource uri
-                  :action "create"})
+        (job/add cb-client {:targetResource uri
+                            :action "create"})
         (rresp/created uri))
       (rresp/status (rresp/response (str "cannot create " uri)) 400))))
 

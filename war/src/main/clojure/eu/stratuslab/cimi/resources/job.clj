@@ -48,6 +48,11 @@
   [uuid]
   (str resource-type "/" uuid))
 
+(defn set-timestamp
+  "Copies the updated timestamp to the timeOfStatusChange field."
+  [{:keys [updated] :as entry}]
+  (assoc entry :timeOfStatusChange updated))
+
 (defn add-cops
   "Adds the collection operations to the given resource."
   [resource]
@@ -74,6 +79,7 @@
                         :state "QUEUED"
                         :progress 0})
                 (utils/set-time-attributes)
+                (set-timestamp)
                 (validate))]
     (if (cbc/add-json cb-client uri entry)
       (rresp/created uri)
