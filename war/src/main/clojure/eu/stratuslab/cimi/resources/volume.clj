@@ -68,10 +68,9 @@
                 (utils/set-time-attributes)
                 (validate))]
     (if (cbc/add-json cb-client uri entry)
-      (do 
-        (job/add cb-client {:targetResource uri
-                            :action "create"})
-        (rresp/created uri))
+      (let [job-uri (job/add cb-client {:targetResource uri
+                                           :action "create"})]
+        (rresp/header (rresp/created uri) "CIMI-Job-URI" job-uri))
       (rresp/status (rresp/response (str "cannot create " uri)) 400))))
 
 (defn retrieve

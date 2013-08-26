@@ -68,8 +68,10 @@
              {:rel (:stop common/action-uri) :href (str href "/stop")}]]
     (assoc resource :operations ops)))
 
-(defn add
-  "Add a new Job to the database."
+(defn create
+  "Creates a new job and adds it to the database.  Unlike the add function
+   this returns just the job URI (or nil if there is an error).  This is 
+   useful when creating jobs in the process of manipulating other resources."  
   [cb-client entry]
   (let [uri (uuid->uri (utils/create-uuid))
         entry (-> entry
@@ -82,8 +84,14 @@
                 (set-timestamp)
                 (validate))]
     (if (cbc/add-json cb-client uri entry)
-      (rresp/created uri)
-      (rresp/status (rresp/response (str "cannot create " uri)) 400))))
+      uri)))
+
+(defn add
+  "Add a new Job to the database."
+  [cb-client entry]
+  (if-let [uri (create cb-client entry)]
+    (rresp/created uri)
+    (rresp/status (rresp/response (str "cannot create job")) 400)))
 
 (defn retrieve
   "Returns the data associated with the requested Job
