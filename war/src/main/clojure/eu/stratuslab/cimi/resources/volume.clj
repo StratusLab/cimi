@@ -69,7 +69,7 @@
                 (validate))]
     (if (cbc/add-json cb-client uri entry)
       (let [job-uri (job/add cb-client {:targetResource uri
-                                           :action "create"})]
+                                        :action "create"})]
         (rresp/header (rresp/created uri) "CIMI-Job-URI" job-uri))
       (rresp/status (rresp/response (str "cannot create " uri)) 400))))
 
@@ -106,8 +106,8 @@
    always return an accepted (202) code."
   [cb-client uuid]
   (let [uri (uuid->uri uuid)]
-    (job/add {:targetResource uri
-              :action "delete"})
+    (job/add cb-client {:targetResource uri
+                        :action "delete"})
     (rresp/status (rresp/response nil) 202)))
 
 (defn query
