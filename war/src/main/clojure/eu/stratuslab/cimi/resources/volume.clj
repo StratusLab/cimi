@@ -66,6 +66,7 @@
                 (assoc :id uri)
                 (assoc :resourceURI type-uri)
                 (utils/set-time-attributes)
+                (assoc :state "CREATING")
                 (validate))]
     (if (cbc/add-json cb-client uri entry)
       (let [job-uri (job/add cb-client {:targetResource uri
