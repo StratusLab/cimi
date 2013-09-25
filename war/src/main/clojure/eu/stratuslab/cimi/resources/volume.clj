@@ -100,15 +100,15 @@
       (rresp/not-found nil))))
 
 (defn delete
-  "Deletes the named machine configuration."
+  "Submits an asynchronous request to delete the volume.
+   The job is responsible for deleting the Volume resource
+   if the delete request is successful.  The response will
+   always return an accepted (202) code."
   [cb-client uuid]
   (let [uri (uuid->uri uuid)]
-    (if (cbc/delete cb-client uri)
-      (do
-        (job/add {:targetResource uri
-                  :action "delete"})
-        (rresp/response nil))
-      (rresp/not-found nil))))
+    (job/add {:targetResource uri
+              :action "delete"})
+    (rresp/status (rresp/response nil) 202)))
 
 (defn query
   "Searches the database for resources of this type, taking into
