@@ -20,7 +20,7 @@
    :bootable true
    :eventLog "EventLog/uuid"} )
 
-(deftest test-machine-configuration-schema
+(deftest test-volume-schema
   (let [volume (assoc valid-entry
              :id "Volume/10"
              :resourceURI type-uri
