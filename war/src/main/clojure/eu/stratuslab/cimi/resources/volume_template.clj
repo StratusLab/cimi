@@ -150,7 +150,7 @@
                               :count (count volume-templates)})]
     (rresp/response (if (empty? volume-templates)
                       collection
-                      (assoc collection :volumeTemplateCollection volume-templates)))))
+                      (assoc collection :volumeTemplates volume-templates)))))
 
 (defroutes resource-routes
   (POST base-uri {:keys [cb-client body]}

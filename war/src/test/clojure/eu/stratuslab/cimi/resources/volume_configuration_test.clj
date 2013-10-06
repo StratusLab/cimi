@@ -37,18 +37,18 @@
     (is (rresp/response? resp))
     (is (= 201 (:status resp)))
     (let [headers (:headers resp)]
-      (is (not (nil? headers)))
+      (is headers)
       (let [uri (get headers "Location")]
-        (is (not (nil? uri)))
+        (is uri)
         
         ;; get uri and retrieve resource
         (let [uuid (second (re-matches #"VolumeConfiguration/(.*)" uri))]
-          (is (not (nil? uuid)))
+          (is uuid)
           (let [resp (retrieve t/*test-cb-client* uuid)]
             (is (rresp/response? resp))
             (is (= 200 (:status resp)))
             (let [body (:body resp)]
-              (is (not (nil? body)))
+              (is body)
               (is (= body (merge body valid-entry))))
             
             ;; ensure resource is found by query

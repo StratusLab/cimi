@@ -130,10 +130,14 @@
    if the delete request is successful.  The response will
    always return an accepted (202) code."
   [cb-client uuid]
-  (let [uri (uuid->uri uuid)]
-    (job/add cb-client {:targetResource uri
-                        :action "delete"})
-    (rresp/status (rresp/response nil) 202)))
+  (let [uri (uuid->uri uuid)
+        job-resp (job/add cb-client {:targetResource uri
+                                     :action "delete"})
+        job-uri (get-in job-resp [:headers "Location"])]
+    (-> nil
+      (rresp/response)
+      (rresp/status 202)
+      (rresp/header "CIMI-Job-URI" job-uri))))
 
 (defn query
   "Searches the database for resources of this type, taking into
