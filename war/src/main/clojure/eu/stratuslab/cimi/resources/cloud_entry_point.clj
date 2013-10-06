@@ -9,7 +9,12 @@
     [eu.stratuslab.cimi.resources.utils :as utils]
     [eu.stratuslab.cimi.resources.machine-configuration :as mc]
     [eu.stratuslab.cimi.resources.job :as job]
+
     [eu.stratuslab.cimi.resources.volume :as volume]
+    [eu.stratuslab.cimi.resources.volume-template :as volume-template]
+    [eu.stratuslab.cimi.resources.volume-configuration :as volume-configuration]
+    [eu.stratuslab.cimi.resources.volume-image :as volume-image]
+
     [clojure.tools.logging :refer [debug info warn]]
     [compojure.core :refer :all]
     [compojure.route :as route]
@@ -32,43 +37,43 @@
 (def resource-links 
   {:machineConfigs {:href mc/resource-type}
    :jobs {:href job/resource-type}
-   :volumes {:href volume/resource-type}})
-
-(def-map-schema ResourceLink
-  [[:href] NonEmptyString])
+   :volumes {:href volume/resource-type}
+   :volumeTemplates {:href volume-template/resource-type}
+   :volumeConfigs {:href volume-configuration/resource-type}
+   :volumeImages {:href volume-image/resource-type}})
 
 (def-map-schema CloudEntryPoint
   common/CommonAttrs
   [[:baseURI] NonEmptyString
-   (optional-path [:resourceMetadata]) ResourceLink
-   (optional-path [:systems]) ResourceLink
-   (optional-path [:systemTemplates]) ResourceLink
-   (optional-path [:machines]) ResourceLink
-   (optional-path [:machineTemplates]) ResourceLink
-   (optional-path [:machineConfigs]) ResourceLink
-   (optional-path [:machineImages]) ResourceLink
-   (optional-path [:credentials]) ResourceLink
-   (optional-path [:credentialTemplates]) ResourceLink
-   (optional-path [:volumes]) ResourceLink
-   (optional-path [:volumeTemplates]) ResourceLink
-   (optional-path [:volumeConfigs]) ResourceLink
-   (optional-path [:volumeImages]) ResourceLink
-   (optional-path [:networks]) ResourceLink
-   (optional-path [:networkTemplates]) ResourceLink
-   (optional-path [:networkConfigs]) ResourceLink
-   (optional-path [:networkPorts]) ResourceLink
-   (optional-path [:networkPortTemplates]) ResourceLink
-   (optional-path [:networkPortConfigs]) ResourceLink
-   (optional-path [:addresses]) ResourceLink
-   (optional-path [:addressTemplates]) ResourceLink
-   (optional-path [:forwardingGroups]) ResourceLink
-   (optional-path [:forwardingGroupTemplates]) ResourceLink
-   (optional-path [:jobs]) ResourceLink
-   (optional-path [:meters]) ResourceLink
-   (optional-path [:meterTemplates]) ResourceLink
-   (optional-path [:meterConfigs]) ResourceLink
-   (optional-path [:eventLogs]) ResourceLink
-   (optional-path [:eventLogTemplates]) ResourceLink])
+   (optional-path [:resourceMetadata]) common/ResourceLink
+   (optional-path [:systems]) common/ResourceLink
+   (optional-path [:systemTemplates]) common/ResourceLink
+   (optional-path [:machines]) common/ResourceLink
+   (optional-path [:machineTemplates]) common/ResourceLink
+   (optional-path [:machineConfigs]) common/ResourceLink
+   (optional-path [:machineImages]) common/ResourceLink
+   (optional-path [:credentials]) common/ResourceLink
+   (optional-path [:credentialTemplates]) common/ResourceLink
+   (optional-path [:volumes]) common/ResourceLink
+   (optional-path [:volumeTemplates]) common/ResourceLink
+   (optional-path [:volumeConfigs]) common/ResourceLink
+   (optional-path [:volumeImages]) common/ResourceLink
+   (optional-path [:networks]) common/ResourceLink
+   (optional-path [:networkTemplates]) common/ResourceLink
+   (optional-path [:networkConfigs]) common/ResourceLink
+   (optional-path [:networkPorts]) common/ResourceLink
+   (optional-path [:networkPortTemplates]) common/ResourceLink
+   (optional-path [:networkPortConfigs]) common/ResourceLink
+   (optional-path [:addresses]) common/ResourceLink
+   (optional-path [:addressTemplates]) common/ResourceLink
+   (optional-path [:forwardingGroups]) common/ResourceLink
+   (optional-path [:forwardingGroupTemplates]) common/ResourceLink
+   (optional-path [:jobs]) common/ResourceLink
+   (optional-path [:meters]) common/ResourceLink
+   (optional-path [:meterTemplates]) common/ResourceLink
+   (optional-path [:meterConfigs]) common/ResourceLink
+   (optional-path [:eventLogs]) common/ResourceLink
+   (optional-path [:eventLogTemplates]) common/ResourceLink])
 
 (def validate (utils/create-validation-fn CloudEntryPoint))
 

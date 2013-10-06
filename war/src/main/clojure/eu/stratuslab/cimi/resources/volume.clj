@@ -27,9 +27,11 @@
 
 (def ^:const base-uri (str "/" resource-type))
 
-(def-map-schema Volume
+(def volume-states #{"CREATING" "AVAILABLE" "CAPTURING" "DELETING" "ERROR"})
+
+(def-map-schema Volume 
   common/CommonAttrs
-  [(optional-path [:state]) #{"CREATING" "AVAILABLE" "CAPTURING" "DELETING" "ERROR"}
+  [(optional-path [:state]) volume-states
    [:type] NonEmptyString
    [:capacity] NonNegIntegral
    (optional-path [:bootable]) Boolean

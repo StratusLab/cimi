@@ -5,6 +5,12 @@
    [clj-schema.validation :refer [validation-errors]]
    [clojure.test :refer :all]))
 
+(deftest test-resource-link-schema
+  (let [ref {:href "https://example.org/resource"}]
+    (is (empty? (validation-errors ResourceLink ref)))
+    (is (not (empty? (validation-errors ResourceLink (dissoc ref :href)))))
+    (is (not (empty? (validation-errors ResourceLink (assoc ref :bad "BAD")))))))
+
 (deftest test-operation-schema
   (is (empty? (validation-errors Operation {:rel "add" :href "/add"})))
   (is (not (empty? (validation-errors Operation {:rel "add"}))))

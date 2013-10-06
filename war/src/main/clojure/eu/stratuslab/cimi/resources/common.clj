@@ -18,6 +18,9 @@
         m (into {} (map (fn [k] [k (str root (name k))]) valid-actions))]
     (assoc m :add "add" :edit "edit" :delete "delete")))
 
+(def-map-schema ResourceLink
+  [[:href] NonEmptyString])
+
 (def-map-schema Operation
   [[:rel] (set (vals action-uri))
    [:href] NonEmptyString])

@@ -13,12 +13,6 @@
 (defn ring-app []
   (t/make-ring-app resource-routes))
 
-(deftest test-resource-link
-  (let [ref {:href "https://example.org/resource"}]
-    (is (empty? (validation-errors ResourceLink ref)))
-    (is (not (empty? (validation-errors ResourceLink (dissoc ref :href)))))
-    (is (not (empty? (validation-errors ResourceLink (assoc ref :bad "BAD")))))))
-
 (deftest retrieve-cloud-entry-point
   (let [results (-> (session (ring-app))
                   (request "/"))
