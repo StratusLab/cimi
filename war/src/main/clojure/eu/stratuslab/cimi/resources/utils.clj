@@ -1,6 +1,8 @@
 (ns eu.stratuslab.cimi.resources.utils
   "General utilities for dealing with resources."
   (:require
+    [clojure.walk :as w]
+    [couchbase-clj.client :as cbc]
     [clojure.data.json :as json]
     [clojure.java.io :as io]
     [clojure.string :as str]
@@ -14,6 +16,11 @@
   []
   (str (UUID/randomUUID)))
 
+(defn strip-common-attrs
+  "Strips all common resource attributes from the map."
+  [m]
+  (dissoc m :id :name :description :created :updated :properties))
+
 (defn strip-service-attrs
   "Strips common attributes from the map whose values are controlled
    entirely by the service.  These include :id, :created, :updated, 
@@ -22,9 +29,9 @@
   (dissoc m :id :created :updated :resourceURI :operations))
 
 (defn set-time-attributes
-  "Sets the updated and created attributes in the request.  If the
-  existing? is nil/false, then the created attribute it set;
-  otherwise, it is removed from the request."
+  "Sets the updated attribute and optionally the created attribute
+   in the request.  The created attribute is only set if the existing value
+   is missing or evaluates to false."
   [data]
   (let [updated (time-fmt/unparse (:date-time time-fmt/formatters) (time/now))
         created (or (:created data) updated)]
@@ -39,6 +46,11 @@
     (json/read (io/reader body) :key-fn keyword :eof-error? false :eof-value {})
     {}))
 
+(defn correct-resource? [resource-uri resource]
+  "Checks that the resourceURI attribute in the given resource matches
+   the desired one."
+  (= resource-uri (:resourceURI resource)))
+
 (defn create-validation-fn
   "Creates a validation function that compares a resource against the
    given schema.  The generated function raises an exception with the 
@@ -50,3 +62,36 @@
         resource
         (throw (Exception. (str "resource does not satisfy defined schema\n"
                              (str/join "\n" errors))))))))
+
+(defn get-resource
+  "Gets the resource identified by its URI from Couchbase.  If the URI is nil,
+   this this returns an empty map.  If the URI doesn't exist in the database,
+   then an exception is thrown."
+  [cb-client uri]
+  (if uri
+    (if-let [json (cbc/get-json cb-client uri)]
+      json
+      (throw (Exception. (str "non-existent resource: " uri))))
+    {}))
+
+(defn resolve-href
+  "If the given value is a map and contains the key :href, then the referenced
+   resource is merged with the map (with the map values having priority).  The
+   :href attribute itself is removed along with any common attributes."
+  [cb-client v]
+  (if (map? v)
+    (if-let [uri (:href v)]     
+      (-> (get-resource cb-client uri)
+        (merge v)
+        (dissoc :href)
+        (strip-common-attrs))
+      v)
+    v))
+
+(defn resolve-hrefs
+  "Does a prewalk of the given data structure, replacing any map with an href
+   attribute with the result of merging the referenced resource with the 
+   values provided locally.  If a reference is found, the common attributes
+   are also removed from the map."
+  [cb-client v]
+  (w/prewalk (partial resolve-href cb-client) v))

@@ -34,15 +34,13 @@
 
 (def-map-schema VolumeConfigurationRef
   VolumeConfigurationAttrs
-  [(optional-path [:href]) NonEmptyString]
-  [(optional-path [:volumeConfig]) common/ResourceLink])
+  [(optional-path [:href]) NonEmptyString])
 
 (def-map-schema VolumeImageRef
   VolumeConfigurationAttrs
-  [(optional-path [:href]) NonEmptyString]
-  [(optional-path [:volumeConfig]) common/ResourceLink])
+  [(optional-path [:href]) NonEmptyString])
 
-;; TODO: Add real schema one Meters are supported.
+;; TODO: Add real schema once Meters are supported.
 (def MeterTemplateRef
   Anything)
 
@@ -53,6 +51,12 @@
 ;; TODO: Add real schema once EventLogs are supported.
 (def EventLogTemplateRef
   Anything)
+
+(def-map-schema VolumeTemplateAttrs
+  [(optional-path [:volumeConfig]) VolumeConfigurationRef
+   (optional-path [:volumeImage]) VolumeImageRef
+   (optional-path [:meterTemplates]) MeterTemplateRefs
+   (optional-path [:eventLogTemplate]) EventLogTemplateRef])
 
 (def-map-schema VolumeTemplate
   common/CommonAttrs

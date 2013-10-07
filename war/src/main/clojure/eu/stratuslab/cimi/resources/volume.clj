@@ -6,6 +6,9 @@
     [eu.stratuslab.cimi.resources.common :as common]
     [eu.stratuslab.cimi.resources.utils :as utils]
     [eu.stratuslab.cimi.resources.job :as job]
+    [eu.stratuslab.cimi.resources.volume-template :refer [VolumeTemplateAttrs]]
+    [eu.stratuslab.cimi.resources.volume-configuration :as vc]
+    [eu.stratuslab.cimi.resources.volume-image :as vi]
     [eu.stratuslab.cimi.cb.views :as views]
     [compojure.core :refer :all]
     [compojure.route :as route]
@@ -25,6 +28,8 @@
 
 (def ^:const collection-type-uri (str "http://schemas.dmtf.org/cimi/1/" collection-resource-type))
 
+(def ^:const create-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type "Create"))
+
 (def ^:const base-uri (str "/" resource-type))
 
 (def volume-states #{"CREATING" "AVAILABLE" "CAPTURING" "DELETING" "ERROR"})
@@ -37,7 +42,17 @@
    (optional-path [:bootable]) Boolean
    (optional-path [:eventLog]) NonEmptyString])
 
+(def-map-schema VolumeTemplateRef
+  VolumeTemplateAttrs
+  [(optional-path [:href]) NonEmptyString])
+
+(def-map-schema VolumeCreate
+  common/CommonAttrs
+  [[:volumeTemplate] VolumeTemplateRef])
+
 (def validate (utils/create-validation-fn Volume))
+
+(def validate-create (utils/create-validation-fn VolumeCreate))
 
 (defn uuid->uri
   "Convert a uuid into the URI for a MachineConfiguration resource.
@@ -59,17 +74,42 @@
              {:rel (:delete common/action-uri) :href href}]]
     (assoc resource :operations ops)))
 
+(defn volume-skeleton [entry]
+  (if (utils/correct-resource? create-uri entry)
+    (-> entry
+      (utils/strip-service-attrs)
+      (dissoc :volumeTemplate)
+      (assoc :resourceURI type-uri)
+      (utils/set-time-attributes)
+      (assoc :state "CREATING"))
+    (throw (Exception. (str create-uri " resource required")))))
+
+(defn merge-volume-config [cb-client {:keys [volumeConfig]}]
+  (let [ref-config (utils/get-resource cb-client (:href volumeConfig))]
+    (-> (merge ref-config volumeConfig)
+      (dissoc :href)
+      (vc/validate))))
+
+(defn merge-volume-image [cb-client {:keys [volumeImage]}]
+  (let [ref-config (utils/get-resource cb-client (:href volumeImage))]
+    (-> (merge ref-config volumeImage)
+      (dissoc :href)
+      (vi/validate))))
+
 (defn add
-  "Add a new Volume to the database."
+  "Add a new Volume to the database based on the VolumeTemplate
+   passed into this method."
   [cb-client entry]
+  (validate-create entry)
   (let [uri (uuid->uri (utils/create-uuid))
-        entry (-> entry
-                (utils/strip-service-attrs)
-                (assoc :id uri)
-                (assoc :resourceURI type-uri)
-                (utils/set-time-attributes)
-                (assoc :state "CREATING")
-                (validate))]
+        skeleton (volume-skeleton entry)
+        volume-config (merge-volume-config entry)
+        volume-image (merge-volume-image entry)
+        
+        entry (merge volume-config volume-image skeleton)
+        entry (select-keys entry [:id :name :description :created :updated :properties
+                                  :state :type :capacity :bootable :images :meters :eventLog])]
+    (validate entry)
     (if (cbc/add-json cb-client uri entry)
       (let [job-uri (job/add cb-client {:targetResource uri
                                         :action "create"})]

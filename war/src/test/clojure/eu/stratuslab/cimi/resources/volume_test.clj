@@ -4,6 +4,7 @@
    [eu.stratuslab.cimi.resources.utils :as utils]
    [eu.stratuslab.cimi.couchbase-test-utils :as t]
    [clj-schema.validation :refer [validation-errors]]
+   [ring.util.response :as rresp]
    [clojure.test :refer :all]
    [clojure.data.json :as json]
    [peridot.core :refer :all]))
@@ -20,6 +21,16 @@
    :bootable true
    :eventLog "EventLog/uuid"} )
 
+(def valid-template
+  {:name "template"
+   :description "dummy template"
+   :volumeTemplate {:volumeConfig {:type "http://schemas.cimi.stratuslab.eu/normal"
+                                   :format "ext4"
+                                   :capacity 1024}
+                    :volumeImage {:state "AVAILABLE"
+                                  :imageLocation "https://marketplace.stratuslab.eu/A"
+                                  :bootable true}}} )
+
 (deftest test-volume-schema
   (let [volume (assoc valid-entry
              :id "Volume/10"
@@ -32,4 +43,3 @@
         (is (empty? (validation-errors Volume (dissoc volume :eventLog))))
         (is (not (empty? (validation-errors Volume (dissoc volume :type)))))
         (is (not (empty? (validation-errors Volume (dissoc volume :capacity)))))))
-
