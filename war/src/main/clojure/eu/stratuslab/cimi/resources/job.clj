@@ -155,7 +155,7 @@
   [v]
   (if (coll? v)
     v
-    (if (or (keyword v) (symbol v))
+    (if (or (keyword? v) (symbol? v))
       (name v)
       (str v))))
 

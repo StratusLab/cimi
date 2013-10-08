@@ -24,7 +24,9 @@
     [clj-schema.schema :refer :all]
     [clj-schema.simple-schemas :refer :all]
     [clj-schema.validation :refer :all]
-    [clojure.data.json :as json])
+    [clojure.data.json :as json]
+    
+    [cemerick.friend :as friend])
   (:import [java.io InputStreamReader]))
 
 (def ^:const resource-type "CloudEntryPoint")
@@ -80,8 +82,10 @@
 (defn add-rops
   "Adds the resource operations to the given resource."
   [resource]
-  (let [ops [{:rel (:edit common/action-uri) :href base-uri}]]
-    (assoc resource :operations ops)))
+  (if (friend/authorized? #{::admin} friend/*identity*)
+    (let [ops [{:rel (:edit common/action-uri) :href base-uri}]]
+      (assoc resource :operations ops))
+    resource))
 
 (defn add
   "Creates a minimal CloudEntryPoint in the database.  Note that
@@ -134,8 +138,11 @@
     (rresp/not-found nil)))
 
 (defroutes resource-routes
-  (GET base-uri {:keys [cb-client base-uri]}
+  (GET base-uri {:keys [cb-client base-uri] :as request}
+    (println request)
     (retrieve cb-client base-uri))
-  (PUT base-uri {:keys [cb-client base-uri body]}
-    (let [json (utils/body->json body)]
-      (edit cb-client base-uri json))))
+  (PUT base-uri {:keys [cb-client base-uri body] :as request}
+    (println request)
+    (friend/authorize #{::admin}
+      (let [json (utils/body->json body)]
+        (edit cb-client base-uri json)))))

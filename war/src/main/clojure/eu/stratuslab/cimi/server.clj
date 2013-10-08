@@ -12,7 +12,10 @@
     [eu.stratuslab.cimi.middleware.format-response :refer [wrap-restful-response]]
     [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
     [eu.stratuslab.cimi.middleware.servlet-request :refer [wrap-servlet-paths wrap-base-uri]]
-    [eu.stratuslab.cimi.routes :as routes])
+    [eu.stratuslab.cimi.routes :as routes]
+    [cemerick.friend :as friend]
+    [cemerick.friend.workflows :as workflows]
+    [cemerick.friend.credentials :as creds])
   (:import
     [java.net URI]))
 
@@ -20,6 +23,18 @@
                          :bucket "default"
                          :username ""
                          :password ""})
+
+;;
+;; For debugging only...
+;;
+;; TODO: Remove from distributed version
+;;
+(def users {"root" {:username "root"
+                    :password (creds/hash-bcrypt "admin_password")
+                    :roles #{::admin}}
+            "jane" {:username "jane"
+                    :password (creds/hash-bcrypt "user_password")
+                    :roles #{::user}}})
 
 (defn- create-cb-client
   "Creates a Couchbase client instance from the given configuration.
@@ -38,13 +53,16 @@
    header treatment, and message formatting."
   [{:keys [cb-client]}]
   (log/info "creating servlet ring handler")
+
   ;; TODO: Authentication needs to be configured!
   (-> (handler/site routes/main-routes)
-      (wrap-base-uri)
-      (wrap-servlet-paths)
-      (wrap-cb-client cb-client)
-      (wrap-restful-params)
-      (wrap-restful-response)))
+    (friend/authenticate {:credential-fn (partial creds/bcrypt-credential-fn users)
+                          :workflows [(workflows/http-basic)]})
+    (wrap-base-uri)
+    (wrap-servlet-paths)
+    (wrap-cb-client cb-client)
+    (wrap-restful-params)
+    (wrap-restful-response)))
 
 (defn init
   "Creates a shared Couchbase client for the application and

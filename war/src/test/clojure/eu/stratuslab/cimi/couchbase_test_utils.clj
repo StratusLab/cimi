@@ -9,6 +9,7 @@
     [com.couchbase.client ClusterManager CouchbaseClient]
     [com.couchbase.client.clustermanager BucketType]
     [net.spy.memcached PersistTo ReplicateTo]
+    [java.util.logging Logger Level]
     [java.util.concurrent TimeUnit]))
 
 (def ^:dynamic *test-cb-client* nil)
@@ -17,6 +18,16 @@
   (-> resource-routes
     (wrap-cb-client *test-cb-client*)
     (wrap-base-uri)))
+
+(defn set-cb-logging []
+  (System/setProperty "net.spy.log.LoggerImpl" "net.spy.memcached.compat.log.SunLogger")
+  (.setLevel Level/WARNING (Logger/getLogger "net.spy.memcached"))
+  (.setLevel Level/WARNING (Logger/getLogger "com.couchbase.client"))
+  (.setLevel Level/WARNING (Logger/getLogger "com.couchbase.client.vbucket"))
+  (let [logger (Logger/getLogger "")
+        handlers (seq (.getHandlers (.getParent logger)))]
+    (.setLevel logger Level/WARNING)
+    (doall (map #(.setLevel % Level/WARNING) handlers))))
 
 (defn temp-bucket-fixture
   "Creates a new Couchbase bucket within the server.  The server must already
@@ -34,6 +45,7 @@
         mgr (ClusterManager. [(URI. mgr-uri)] "admin" "ADMIN4")]
     (try
       (.createNamedBucket mgr BucketType/COUCHBASE bucket 512 0 password false)
+      (set-cb-logging)
       (Thread/sleep 3000) ;; ensure bucket is loaded before running tests 
       (binding [*test-cb-client* (cbc/create-client cb-cfg)]
         (try

@@ -94,7 +94,10 @@
     (validate)))
 
 (defn template->params [template]
-  (select-keys template [:type :format :capacity :imageLocation :bootable]))
+  (let [params (select-keys template [:type :format :capacity :bootable])]
+    (if-let [imageLocation (get-in template [:imageLocation :href])]
+      (assoc params :imageLocation imageLocation)
+      params)))
 
 (defn add
   "Add a new Volume to the database based on the VolumeTemplate
