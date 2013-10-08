@@ -37,7 +37,7 @@
   [(optional-path [:href]) NonEmptyString])
 
 (def-map-schema VolumeImageRef
-  VolumeConfigurationAttrs
+  VolumeImageAttrs
   [(optional-path [:href]) NonEmptyString])
 
 ;; TODO: Add real schema once Meters are supported.
@@ -60,7 +60,7 @@
 
 (def-map-schema VolumeTemplate
   common/CommonAttrs
-  [(optional-path [:volumeConfig]) VolumeConfigurationRef
+  [[:volumeConfig] VolumeConfigurationRef
    (optional-path [:volumeImage]) VolumeImageRef
    (optional-path [:meterTemplates]) MeterTemplateRefs
    (optional-path [:eventLogTemplate]) EventLogTemplateRef])

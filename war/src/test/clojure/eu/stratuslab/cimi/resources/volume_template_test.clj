@@ -26,7 +26,7 @@
              :created "1964-08-25T10:00:00.0Z"
              :updated "1964-08-25T10:00:00.0Z")]
         (is (empty? (validation-errors VolumeTemplate volume-template)))
-        (is (empty? (validation-errors VolumeTemplate (dissoc volume-template :volumeConfig))))
+        (is (not (empty? (validation-errors VolumeTemplate (dissoc volume-template :volumeConfig)))))
         (is (empty? (validation-errors VolumeTemplate (dissoc volume-template :volumeImage))))))
 
 (deftest lifecycle 

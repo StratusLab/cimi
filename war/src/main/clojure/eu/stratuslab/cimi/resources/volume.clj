@@ -47,7 +47,7 @@
   [(optional-path [:href]) NonEmptyString])
 
 (def-map-schema VolumeCreate
-  common/CommonAttrs
+  common/CreateAttrs
   [[:volumeTemplate] VolumeTemplateRef])
 
 (def validate (utils/create-validation-fn Volume))
@@ -74,27 +74,15 @@
              {:rel (:delete common/action-uri) :href href}]]
     (assoc resource :operations ops)))
 
-(defn volume-skeleton [entry]
+(defn volume-skeleton [uri entry]
   (if (utils/correct-resource? create-uri entry)
     (-> entry
       (utils/strip-service-attrs)
       (dissoc :volumeTemplate)
       (assoc :resourceURI type-uri)
       (utils/set-time-attributes)
-      (assoc :state "CREATING"))
+      (assoc :state "CREATING" :id uri))
     (throw (Exception. (str create-uri " resource required")))))
-
-(defn merge-volume-config [cb-client {:keys [volumeConfig]}]
-  (let [ref-config (utils/get-resource cb-client (:href volumeConfig))]
-    (-> (merge ref-config volumeConfig)
-      (dissoc :href)
-      (vc/validate))))
-
-(defn merge-volume-image [cb-client {:keys [volumeImage]}]
-  (let [ref-config (utils/get-resource cb-client (:href volumeImage))]
-    (-> (merge ref-config volumeImage)
-      (dissoc :href)
-      (vi/validate))))
 
 (defn add
   "Add a new Volume to the database based on the VolumeTemplate
@@ -102,19 +90,24 @@
   [cb-client entry]
   (validate-create entry)
   (let [uri (uuid->uri (utils/create-uuid))
-        skeleton (volume-skeleton entry)
-        volume-config (merge-volume-config entry)
-        volume-image (merge-volume-image entry)
+        skeleton (volume-skeleton uri entry)
+        volume-config (utils/resolve-href cb-client (get-in entry [:volumeTemplate :volumeConfig]))
+        volume-image (utils/resolve-href cb-client (get-in entry [:volumeTemplate :volumeImage]))
         
         entry (merge volume-config volume-image skeleton)
-        entry (select-keys entry [:id :name :description :created :updated :properties
+        entry (select-keys entry [:id :resourceURI :name :description :created :updated :properties
                                   :state :type :capacity :bootable :images :meters :eventLog])]
     (validate entry)
     (if (cbc/add-json cb-client uri entry)
-      (let [job-uri (job/add cb-client {:targetResource uri
-                                        :action "create"})]
-        (rresp/header (rresp/created uri) "CIMI-Job-URI" job-uri))
-      (rresp/status (rresp/response (str "cannot create " uri)) 400))))
+      (let [job-resp (job/add cb-client {:targetResource uri
+                                         :action "create"})
+            job-uri (get-in job-resp [:headers "Location"])]
+        (-> uri
+          (rresp/created)
+          (rresp/header "CIMI-Job-URI" job-uri)))
+      (-> (str "cannot create " uri)
+        (rresp/response)
+        (rresp/status 400)))))
 
 (defn retrieve
   "Returns the data associated with the requested Volume
@@ -148,10 +141,14 @@
    if the delete request is successful.  The response will
    always return an accepted (202) code."
   [cb-client uuid]
-  (let [uri (uuid->uri uuid)]
-    (job/add cb-client {:targetResource uri
-                        :action "delete"})
-    (rresp/status (rresp/response nil) 202)))
+  (let [uri (uuid->uri uuid)
+        job-resp (job/add cb-client {:targetResource uri
+                                     :action "delete"})
+        job-uri (get-in job-resp [:headers "Location"])]
+    (-> nil
+      (rresp/response)
+      (rresp/status 202)
+      (rresp/header "CIMI-Job-URI" job-uri))))
 
 (defn query
   "Searches the database for resources of this type, taking into
