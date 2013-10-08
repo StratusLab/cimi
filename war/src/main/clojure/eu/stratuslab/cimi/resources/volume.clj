@@ -3,18 +3,13 @@
   (:require 
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
-    [eu.stratuslab.cimi.resources.common :as common]
-    [eu.stratuslab.cimi.resources.utils :as utils]
+    [eu.stratuslab.cimi.resources.common :as c]
+    [eu.stratuslab.cimi.resources.utils :as u]
     [eu.stratuslab.cimi.resources.job :as job]
     [eu.stratuslab.cimi.resources.volume-template :refer [VolumeTemplateAttrs]]
-    [eu.stratuslab.cimi.resources.volume-configuration :as vc]
-    [eu.stratuslab.cimi.resources.volume-image :as vi]
     [eu.stratuslab.cimi.cb.views :as views]
     [compojure.core :refer :all]
-    [compojure.route :as route]
-    [compojure.handler :as handler]
-    [compojure.response :as response]
-    [ring.util.response :as rresp]
+    [ring.util.response :as r]
     [clj-schema.schema :refer :all]
     [clj-schema.simple-schemas :refer :all]
     [clj-schema.validation :refer :all]
@@ -35,7 +30,7 @@
 (def volume-states #{"CREATING" "AVAILABLE" "CAPTURING" "DELETING" "ERROR"})
 
 (def-map-schema Volume 
-  common/CommonAttrs
+  c/CommonAttrs
   [(optional-path [:state]) volume-states
    [:type] NonEmptyString
    [:capacity] NonNegIntegral
@@ -47,12 +42,12 @@
   [(optional-path [:href]) NonEmptyString])
 
 (def-map-schema VolumeCreate
-  common/CreateAttrs
+  c/CreateAttrs
   [[:volumeTemplate] VolumeTemplateRef])
 
-(def validate (utils/create-validation-fn Volume))
+(def validate (u/create-validation-fn Volume))
 
-(def validate-create (utils/create-validation-fn VolumeCreate))
+(def validate-create (u/create-validation-fn VolumeCreate))
 
 (defn uuid->uri
   "Convert a uuid into the URI for a MachineConfiguration resource.
@@ -63,59 +58,71 @@
 (defn add-cops
   "Adds the collection operations to the given resource."
   [resource]
-  (let [ops [{:rel (:add common/action-uri) :href base-uri}]]
+  (let [ops [{:rel (:add c/action-uri) :href base-uri}]]
     (assoc resource :operations ops)))
 
 (defn add-rops
   "Adds the resource operations to the given resource."
   [resource]
   (let [href (:id resource)
-        ops [{:rel (:edit common/action-uri) :href href}
-             {:rel (:delete common/action-uri) :href href}]]
+        ops [{:rel (:edit c/action-uri) :href href}
+             {:rel (:delete c/action-uri) :href href}]]
     (assoc resource :operations ops)))
 
 (defn volume-skeleton [uri entry]
-  (if (utils/correct-resource? create-uri entry)
+  (if (u/correct-resource? create-uri entry)
     (-> entry
-      (utils/strip-service-attrs)
+      (u/strip-service-attrs)
       (dissoc :volumeTemplate)
       (assoc :resourceURI type-uri)
-      (utils/set-time-attributes)
+      (u/set-time-attributes)
       (assoc :state "CREATING" :id uri))
     (throw (Exception. (str create-uri " resource required")))))
+
+(defn create-req->template [cb-client uri create-req]
+  (let [skeleton (volume-skeleton uri create-req)
+        volumeTemplate (:volumeTemplate create-req)
+        volume-config (u/resolve-href cb-client (:volumeConfig volumeTemplate))
+        volume-image (u/resolve-href cb-client (:volumeImage volumeTemplate))]
+    (merge volume-config volume-image skeleton)))
+
+(defn template->volume [template]
+  (-> (select-keys template [:id :resourceURI :name :description 
+                             :created :updated :properties
+                             :state :type :capacity 
+                             :bootable :images :meters :eventLog])
+    (validate)))
+
+(defn template->params [template]
+  (select-keys template [:type :format :capacity :imageLocation :bootable]))
 
 (defn add
   "Add a new Volume to the database based on the VolumeTemplate
    passed into this method."
   [cb-client entry]
   (validate-create entry)
-  (let [uri (uuid->uri (utils/create-uuid))
-        skeleton (volume-skeleton uri entry)
-        volume-config (utils/resolve-href cb-client (get-in entry [:volumeTemplate :volumeConfig]))
-        volume-image (utils/resolve-href cb-client (get-in entry [:volumeTemplate :volumeImage]))
-        
-        entry (merge volume-config volume-image skeleton)
-        entry (select-keys entry [:id :resourceURI :name :description :created :updated :properties
-                                  :state :type :capacity :bootable :images :meters :eventLog])]
-    (validate entry)
-    (if (cbc/add-json cb-client uri entry)
-      (let [job-resp (job/add cb-client {:targetResource uri
-                                         :action "create"})
-            job-uri (get-in job-resp [:headers "Location"])]
-        (-> uri
-          (rresp/created)
-          (rresp/header "CIMI-Job-URI" job-uri)))
+  (let [uri (uuid->uri (u/create-uuid))
+        template (create-req->template cb-client uri entry)
+        volume (template->volume template)
+        params (template->params template)]
+    (if (cbc/add-json cb-client uri volume)
+      (let [job-resp (job/launch cb-client uri "create" params)]
+        (if (= 202 (:status job-resp))
+          (-> job-resp
+            (r/status 201)
+            (r/header "Location" uri))
+          job-resp))
       (-> (str "cannot create " uri)
-        (rresp/response)
-        (rresp/status 400)))))
+        (r/response)
+        (r/status 400)))))
 
 (defn retrieve
   "Returns the data associated with the requested Volume
    entry (identified by the uuid)."
   [cb-client uuid]
   (if-let [json (cbc/get-json cb-client (uuid->uri uuid))]
-    (rresp/response (add-rops json))
-    (rresp/not-found nil)))
+    (r/response (add-rops json))
+    (r/not-found nil)))
 
 ;; FIXME: Implementation should use CAS functions to avoid update conflicts.
 (defn edit
@@ -125,15 +132,15 @@
   (let [uri (uuid->uri uuid)]
     (if-let [current (cbc/get-json cb-client uri)]
       (let [updated (->> entry
-                      (utils/strip-service-attrs)
+                      (u/strip-service-attrs)
                       (merge current)
-                      (utils/set-time-attributes)
+                      (u/set-time-attributes)
                       (add-rops)
                       (validate))]
         (if (cbc/set-json cb-client uri updated)
-          (rresp/response updated)
-          (rresp/status (rresp/response nil) 409))) ;; conflict
-      (rresp/not-found nil))))
+          (r/response updated)
+          (r/status (r/response nil) 409))) ;; conflict
+      (r/not-found nil))))
 
 (defn delete
   "Submits an asynchronous request to delete the volume.
@@ -141,14 +148,7 @@
    if the delete request is successful.  The response will
    always return an accepted (202) code."
   [cb-client uuid]
-  (let [uri (uuid->uri uuid)
-        job-resp (job/add cb-client {:targetResource uri
-                                     :action "delete"})
-        job-uri (get-in job-resp [:headers "Location"])]
-    (-> nil
-      (rresp/response)
-      (rresp/status 202)
-      (rresp/header "CIMI-Job-URI" job-uri))))
+  (job/launch cb-client (uuid->uri uuid) "delete"))
 
 (defn query
   "Searches the database for resources of this type, taking into
@@ -168,21 +168,21 @@
         collection (add-cops {:resourceURI collection-type-uri
                               :id base-uri
                               :count (count volumes)})]
-    (rresp/response (if (empty? volumes)
+    (r/response (if (empty? volumes)
                       collection
                       (assoc collection :volumes volumes)))))
 
 (defroutes resource-routes
   (POST base-uri {:keys [cb-client body]}
-    (let [json (utils/body->json body)]
+    (let [json (u/body->json body)]
       (add cb-client json)))
   (GET base-uri {:keys [cb-client body]}
-    (let [json (utils/body->json body)]
+    (let [json (u/body->json body)]
       (query cb-client json)))
   (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
     (retrieve cb-client uuid))
   (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
-    (let [json (utils/body->json body)]
+    (let [json (u/body->json body)]
       (edit cb-client uuid json)))
   (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
     (delete cb-client uuid)))
