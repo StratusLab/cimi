@@ -29,6 +29,10 @@
       <groupId>org.clojure</groupId>
       <artifactId>data.json</artifactId>
     </dependency>
+    <dependency>
+      <groupId>clojure-ini</groupId>
+      <artifactId>clojure-ini</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>clj-http</groupId>
@@ -196,7 +200,8 @@
         <artifactId>clojure-maven-plugin</artifactId>
 
         <configuration>
-          <!-- Uncomment and modify to run only some tests. <testScript>src/main/scripts/test-runner.clj</testScript> -->
+          <!-- Edit this file and uncomment the next line to limit tests. -->
+          <!-- <testScript>src/main/scripts/test-runner.clj</testScript> -->
         </configuration>
 
         <executions>

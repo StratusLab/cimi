@@ -4,8 +4,12 @@
     [eu.stratuslab.cimi.cb.bootstrap :refer [bootstrap]]
     [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
     [eu.stratuslab.cimi.middleware.servlet-request :refer [wrap-base-uri]]
-    [eu.stratuslab.cimi.resources.utils :as utils])
-  (:import [java.net URI]
+    [eu.stratuslab.cimi.resources.utils :as utils]
+    [cemerick.friend :as friend]
+    [cemerick.friend.workflows :as workflows]
+    [cemerick.friend.credentials :as creds])
+  (:import
+    [java.net URI]
     [com.couchbase.client ClusterManager CouchbaseClient]
     [com.couchbase.client.clustermanager BucketType]
     [net.spy.memcached PersistTo ReplicateTo]
@@ -14,8 +18,20 @@
 
 (def ^:dynamic *test-cb-client* nil)
 
+(def test-users {"root" {:username "root"
+                         :password (creds/hash-bcrypt "admin_password")
+                         :roles #{:eu.stratuslab.cimi.authn/admin}}
+                 "jane" {:username "jane"
+                         :password (creds/hash-bcrypt "user_password")
+                         :roles #{:eu.stratuslab.cimi.authn/user}}})
+
 (defn make-ring-app [resource-routes]
   (-> resource-routes
+    (friend/authenticate {:allow-anon? true
+                          :unauthenticated-handler #(workflows/http-basic-deny "StratusLab " %)
+                          :realm "StratusLab"
+                          :credential-fn #(creds/bcrypt-credential-fn test-users %)
+                          :workflows [(workflows/http-basic)]})
     (wrap-cb-client *test-cb-client*)
     (wrap-base-uri)))
 

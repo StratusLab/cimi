@@ -4,9 +4,12 @@
   (:require
     [clojure.tools.logging :as log]
     [clojure.edn :as edn]
+    [clojure.string :as s]
     [couchbase-clj.client :as cbc]
     [compojure.handler :as handler]
+    [eu.stratuslab.cimi.couchbase-cfg :refer [read-cfg]]
     [ring.middleware.format-params :refer [wrap-restful-params]]
+    [eu.stratuslab.cimi.authn-workflows :as aw]
     [eu.stratuslab.cimi.cb.bootstrap :refer [bootstrap]]
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
     [eu.stratuslab.cimi.middleware.format-response :refer [wrap-restful-response]]
@@ -24,27 +27,19 @@
                          :username ""
                          :password ""})
 
-;;
-;; For debugging only...
-;;
-;; TODO: Remove from distributed version
-;;
-(def users {"root" {:username "root"
-                    :password (creds/hash-bcrypt "admin_password")
-                    :roles #{::admin}}
-            "jane" {:username "jane"
-                    :password (creds/hash-bcrypt "user_password")
-                    :roles #{::user}}})
-
 (defn- create-cb-client
   "Creates a Couchbase client instance from the given configuration.
    If the argument is nil, then the default connection parameters 
    ('default' bucket on local Couchbase) are used."
-  [cb-cfg]
-  (try
-    (cbc/create-client (edn/read-string cb-cfg))
-    (catch Exception e
-      (log/error "error creating couchbase client from configuration: " e)
+  [cb-cfg]  
+  (if-let [cfg (read-cfg cb-cfg)]
+    (try
+      (cbc/create-client cfg)
+      (catch Exception e
+        (log/error "error creating couchbase client: " e)
+        (cbc/create-client cb-client-defaults)))
+    (do
+      (log/warn "using default couchbase configuration")
       (cbc/create-client cb-client-defaults))))
 
 (defn create-ring-handler
@@ -54,10 +49,9 @@
   [{:keys [cb-client]}]
   (log/info "creating servlet ring handler")
 
-  ;; TODO: Authentication needs to be configured!
   (-> (handler/site routes/main-routes)
-    (friend/authenticate {:credential-fn (partial creds/bcrypt-credential-fn users)
-                          :workflows [(workflows/http-basic)]})
+    (friend/authenticate {:credential-fn nil
+                          :workflows [(aw/get-workflows cb-client)]})
     (wrap-base-uri)
     (wrap-servlet-paths)
     (wrap-cb-client cb-client)
@@ -71,9 +65,10 @@
    to the destroy function when tearing down the service."
   [{:keys [cb-cfg]}]
   
-  (log/info "initializing servlet implementation")
+  (log/info "initializing servlet implementation from" cb-cfg)
 
-  (let [cb-client (create-cb-client cb-cfg)]
+  (let [cb-params (read-cfg cb-cfg)
+        cb-client (create-cb-client cb-params)]
     (bootstrap cb-client)    
     {:cb-client cb-client}))
 

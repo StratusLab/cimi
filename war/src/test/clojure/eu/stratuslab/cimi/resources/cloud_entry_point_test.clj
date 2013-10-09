@@ -15,6 +15,7 @@
 
 (deftest retrieve-cloud-entry-point
   (let [results (-> (session (ring-app))
+                  (authorize "root" "admin_password")
                   (request "/"))
         response (:response results)
         body (:body response)
@@ -26,6 +27,7 @@
 
   ;; update the entry, verify updated doc is returned
   (let [results (-> (session (ring-app))
+                  (authorize "root" "admin_password")
                   (content-type "application/json")
                   (request "/"
                     :request-method :put
@@ -33,6 +35,8 @@
         response (:response results)
         body (:body response)
         request (:request results)]
+    (println request)
+    (println response)
     (is (= (:status response) 200))
     (is (= (:resourceURI body) type-uri))
     (is (= (:name body) "dummy")))

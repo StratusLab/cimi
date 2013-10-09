@@ -82,7 +82,7 @@
 (defn add-rops
   "Adds the resource operations to the given resource."
   [resource]
-  (if (friend/authorized? #{::admin} friend/*identity*)
+  (if (friend/authorized? #{:eu.stratuslab.cimi.authn/admin} friend/*identity*)
     (let [ops [{:rel (:edit common/action-uri) :href base-uri}]]
       (assoc resource :operations ops))
     resource))
@@ -139,10 +139,9 @@
 
 (defroutes resource-routes
   (GET base-uri {:keys [cb-client base-uri] :as request}
-    (println request)
     (retrieve cb-client base-uri))
   (PUT base-uri {:keys [cb-client base-uri body] :as request}
     (println request)
-    (friend/authorize #{::admin}
+    (friend/authorize #{:eu.stratuslab.cimi.authn/admin}
       (let [json (utils/body->json body)]
         (edit cb-client base-uri json)))))

@@ -3,15 +3,23 @@
    implementation to avoid having to AOT compile the complete
    application.  The namespace and methods are hardcoded here, but
    could be changed to read values from the ServletContext if more
-   flexibility is needed."
+   flexibility is needed.
+
+   The class will use the 'couchbase.cfg' servlet parameter to find
+   the Couchbase connection parameters.  If this parameter is not 
+   set, then the default '/etc/stratuslab/couchbase.cfg' will be 
+   used."
   (:require [ring.util.servlet :refer [make-service-method]])
   (:gen-class
    :extends javax.servlet.http.HttpServlet
    :init initState
    :state state))
 
+(def ^:const default-cb-cfg "/etc/stratuslab/couchbase.cfg")
+
 (defn- servlet-params [this]
-  {:cb-cfg (.getInitParameter this "cb-cfg")})
+  (let [cb-cfg (or (.getInitParameter this "couchbase.cfg") default-cb-cfg)]
+    {:cb-cfg cb-cfg}))
 
 (defn -update-state [this params]
   (swap! (.state this) merge params))
