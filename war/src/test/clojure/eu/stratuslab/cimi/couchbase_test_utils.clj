@@ -45,8 +45,8 @@
         mgr (ClusterManager. [(URI. mgr-uri)] "admin" "ADMIN4")]
     (try
       (.createNamedBucket mgr BucketType/COUCHBASE bucket 512 0 password false)
-      (set-cb-logging)
-      (Thread/sleep 3000) ;; ensure bucket is loaded before running tests 
+      #_(set-cb-logging)  ;; seems to cause failures on newest Couchbase version
+      (Thread/sleep 2000) ;; ensure bucket is loaded before running tests 
       (binding [*test-cb-client* (cbc/create-client cb-cfg)]
         (try
           (bootstrap *test-cb-client*)
