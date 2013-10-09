@@ -8,24 +8,26 @@
     [clojure.test :refer :all]
     [peridot.core :refer :all]))
 
+(use-fixtures :each t/flush-bucket-fixture)
+
 (use-fixtures :once t/temp-bucket-fixture)
 
 (defn ring-app []
   (t/make-ring-app resource-routes))
 
-(deftest retrieve-cloud-entry-point
+(deftest lifecycle
+
+  ;; retrieve cloud entry point anonymously
   (let [results (-> (session (ring-app))
-                  (authorize "root" "admin_password")
                   (request "/"))
         response (:response results)
         body (:body response)
         request (:request results)]
     (is (= (:status response) 200))
-    (is (= (:resourceURI body) type-uri))))
-
-(deftest update-cloud-entry-point
-
+    (is (= (:resourceURI body) type-uri)))
+  
   ;; update the entry, verify updated doc is returned
+  ;; must be done as administrator
   (let [results (-> (session (ring-app))
                   (authorize "root" "admin_password")
                   (content-type "application/json")
@@ -40,7 +42,7 @@
     (is (= (:status response) 200))
     (is (= (:resourceURI body) type-uri))
     (is (= (:name body) "dummy")))
-
+  
   ;; verify that subsequent reads find the right data
   (let [results (-> (session (ring-app))
                   (request "/"))
@@ -49,9 +51,9 @@
         request (:request results)]
     (is (= (:status response) 200))
     (is (= (:resourceURI body) type-uri))
-    (is (= (:name body) "dummy"))))
+    (is (= (:name body) "dummy")))
 
-(deftest delete-cloud-entry-point
+  ;; verify that the delete fails
   (let [results (-> (session (ring-app))
                   (request "/" :request-method :delete))
         response (:response results)]

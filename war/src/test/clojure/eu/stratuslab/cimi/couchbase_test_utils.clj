@@ -7,7 +7,8 @@
     [eu.stratuslab.cimi.resources.utils :as utils]
     [cemerick.friend :as friend]
     [cemerick.friend.workflows :as workflows]
-    [cemerick.friend.credentials :as creds])
+    [cemerick.friend.credentials :as creds]
+    [clojure.tools.logging :as log])
   (:import
     [java.net URI]
     [com.couchbase.client ClusterManager CouchbaseClient]
@@ -45,6 +46,14 @@
     (.setLevel logger Level/WARNING)
     (doall (map #(.setLevel % Level/WARNING) handlers))))
 
+(defn flush-bucket-fixture
+  [f]
+  (try
+    (f)
+    (finally
+      (if (not (.get (.flush (cbc/get-client *test-cb-client*))))
+        (log/warn "flush of couchbase bucket failed")))))
+
 (defn temp-bucket-fixture
   "Creates a new Couchbase bucket within the server.  The server must already
    be running on the local machine and have a username/password of admin/ADMIN4.
@@ -60,7 +69,7 @@
                 :password password}
         mgr (ClusterManager. [(URI. mgr-uri)] "admin" "ADMIN4")]
     (try
-      (.createNamedBucket mgr BucketType/COUCHBASE bucket 512 0 password false)
+      (.createNamedBucket mgr BucketType/COUCHBASE bucket 512 0 password true)
       #_(set-cb-logging)  ;; seems to cause failures on newest Couchbase version
       (Thread/sleep 2000) ;; ensure bucket is loaded before running tests 
       (binding [*test-cb-client* (cbc/create-client cb-cfg)]
@@ -68,6 +77,7 @@
           (bootstrap *test-cb-client*)
           (f)
           (finally
-            (cbc/shutdown *test-cb-client* 3000))))
+            (if (not (cbc/shutdown *test-cb-client* 2000))
+              (log/warn "shutdown of couchbase client failed")))))
       (finally
         (.deleteBucket mgr bucket)))))

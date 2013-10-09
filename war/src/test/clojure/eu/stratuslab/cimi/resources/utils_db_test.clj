@@ -5,7 +5,9 @@
    [clojure.test :refer :all]
    [couchbase-clj.client :as cbc]))
 
-(use-fixtures :each t/temp-bucket-fixture)
+(use-fixtures :each t/flush-bucket-fixture)
+
+(use-fixtures :once t/temp-bucket-fixture)
 
 (deftest check-get-resource
   (let [uri "DummyResource/10"

@@ -8,7 +8,9 @@
    [clojure.data.json :as json]
    [peridot.core :refer :all]))
 
-(use-fixtures :each t/temp-bucket-fixture)
+(use-fixtures :each t/flush-bucket-fixture)
+
+(use-fixtures :once t/temp-bucket-fixture)
 
 (defn ring-app []
   (t/make-ring-app resource-routes))
