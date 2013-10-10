@@ -10,29 +10,29 @@
     [java.io StringReader StringWriter ByteArrayInputStream]))
 
 (def strip-transform
-"<xsl:stylesheet version='1.0'
-                 xmlns:xsl='http://www.w3.org/1999/XSL/Transform'
-                 xmlns:cimi='http://cimi'>
+  "<xsl:stylesheet version='1.0'
+                   xmlns:xsl='http://www.w3.org/1999/XSL/Transform'
+                   xmlns:cimi='http://cimi'>
 
-  <xsl:template match='comment()|processing-instruction()' />
+    <xsl:template match='comment()|processing-instruction()' />
 
-  <xsl:template match='*'>
-    <xsl:if test='namespace-uri()=\"http://cimi\"'>
-      <!-- remove element prefix -->
-      <xsl:element name='{local-name()}'>
-        <!-- process attributes -->
-        <xsl:for-each select='@*'>
-          <!-- remove attribute prefix -->
-          <xsl:attribute name='{local-name()}'>
-            <xsl:value-of select='.'/>
-          </xsl:attribute>
-        </xsl:for-each>
-        <xsl:apply-templates/>
-      </xsl:element>
-    </xsl:if>
-  </xsl:template>
+    <xsl:template match='*'>
+      <xsl:if test='namespace-uri()=\"http://cimi\"'>
+        <!-- remove element prefix -->
+        <xsl:element name='{local-name()}'>
+          <!-- process attributes -->
+          <xsl:for-each select='@*'>
+            <!-- remove attribute prefix -->
+            <xsl:attribute name='{local-name()}'>
+              <xsl:value-of select='.'/>
+            </xsl:attribute>
+          </xsl:for-each>
+          <xsl:apply-templates/>
+        </xsl:element>
+      </xsl:if>
+    </xsl:template>
 
-</xsl:stylesheet>")
+  </xsl:stylesheet>")
 
 (def document-builder-factory
   (doto (DocumentBuilderFactory/newInstance)

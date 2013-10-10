@@ -3,7 +3,7 @@
    through the referenced (or embedded) VolumeConfiguration and the source
    for initializing the Volume through the referenced (or embedded)
    VolumeImage."
-  (:require 
+  (:require
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.volume-configuration :refer [VolumeConfigurationAttrs]]
@@ -33,37 +33,37 @@
 (def ^:const base-uri (str "/" resource-type))
 
 (def-map-schema VolumeConfigurationRef
-  VolumeConfigurationAttrs
-  [(optional-path [:href]) NonEmptyString])
+                VolumeConfigurationAttrs
+                [(optional-path [:href]) NonEmptyString])
 
 (def-map-schema VolumeImageRef
-  VolumeImageAttrs
-  [(optional-path [:href]) NonEmptyString])
+                VolumeImageAttrs
+                [(optional-path [:href]) NonEmptyString])
 
 ;; TODO: Add real schema once Meters are supported.
 (def MeterTemplateRef
   Anything)
 
 (def-seq-schema MeterTemplateRefs
-  (constraints (fn [refs] (pos? (count refs))))
-  MeterTemplateRef)
+                (constraints (fn [refs] (pos? (count refs))))
+                MeterTemplateRef)
 
 ;; TODO: Add real schema once EventLogs are supported.
 (def EventLogTemplateRef
   Anything)
 
 (def-map-schema VolumeTemplateAttrs
-  [(optional-path [:volumeConfig]) VolumeConfigurationRef
-   (optional-path [:volumeImage]) VolumeImageRef
-   (optional-path [:meterTemplates]) MeterTemplateRefs
-   (optional-path [:eventLogTemplate]) EventLogTemplateRef])
+                [(optional-path [:volumeConfig]) VolumeConfigurationRef
+                 (optional-path [:volumeImage]) VolumeImageRef
+                 (optional-path [:meterTemplates]) MeterTemplateRefs
+                 (optional-path [:eventLogTemplate]) EventLogTemplateRef])
 
 (def-map-schema VolumeTemplate
-  common/CommonAttrs
-  [[:volumeConfig] VolumeConfigurationRef
-   (optional-path [:volumeImage]) VolumeImageRef
-   (optional-path [:meterTemplates]) MeterTemplateRefs
-   (optional-path [:eventLogTemplate]) EventLogTemplateRef])
+                common/CommonAttrs
+                [[:volumeConfig] VolumeConfigurationRef
+                 (optional-path [:volumeImage]) VolumeImageRef
+                 (optional-path [:meterTemplates]) MeterTemplateRefs
+                 (optional-path [:eventLogTemplate]) EventLogTemplateRef])
 
 (def validate (utils/create-validation-fn VolumeTemplate))
 
@@ -92,11 +92,11 @@
   [cb-client entry]
   (let [uri (uuid->uri (utils/create-uuid))
         entry (-> entry
-                (utils/strip-service-attrs)
-                (assoc :id uri)
-                (assoc :resourceURI type-uri)
-                (utils/set-time-attributes)
-                (validate))]
+                  (utils/strip-service-attrs)
+                  (assoc :id uri)
+                  (assoc :resourceURI type-uri)
+                  (utils/set-time-attributes)
+                  (validate))]
     (if (cbc/add-json cb-client uri entry)
       (rresp/created uri)
       (rresp/status (rresp/response (str "cannot create " uri)) 400))))
@@ -117,11 +117,11 @@
   (let [uri (uuid->uri uuid)]
     (if-let [current (cbc/get-json cb-client uri)]
       (let [updated (->> entry
-                      (utils/strip-service-attrs)
-                      (merge current)
-                      (utils/set-time-attributes)
-                      (add-rops)
-                      (validate))]
+                         (utils/strip-service-attrs)
+                         (merge current)
+                         (utils/set-time-attributes)
+                         (add-rops)
+                         (validate))]
         (if (cbc/set-json cb-client uri updated)
           (rresp/response updated)
           (rresp/status (rresp/response nil) 409))) ;; conflict
@@ -143,12 +143,12 @@
                                     :limit 100
                                     :stale false
                                     :on-error :continue}
-                              opts))
+                                   opts))
         v (views/get-view cb-client :resource-uri)
 
         volume-templates (->> (cbc/query cb-client v q)
-                         (map cbc/view-doc-json)
-                         (map add-rops))
+                              (map cbc/view-doc-json)
+                              (map add-rops))
         collection (add-cops {:resourceURI collection-type-uri
                               :id base-uri
                               :count (count volume-templates)})]
@@ -157,16 +157,16 @@
                       (assoc collection :volumeTemplates volume-templates)))))
 
 (defroutes resource-routes
-  (POST base-uri {:keys [cb-client body]}
-    (let [json (utils/body->json body)]
-      (add cb-client json)))
-  (GET base-uri {:keys [cb-client body]}
-    (let [json (utils/body->json body)]
-      (query cb-client json)))
-  (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-    (retrieve cb-client uuid))
-  (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
-    (let [json (utils/body->json body)]
-      (edit cb-client uuid json)))
-  (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-    (delete cb-client uuid)))
+           (POST base-uri {:keys [cb-client body]}
+                 (let [json (utils/body->json body)]
+                   (add cb-client json)))
+           (GET base-uri {:keys [cb-client body]}
+                (let [json (utils/body->json body)]
+                  (query cb-client json)))
+           (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
+                (retrieve cb-client uuid))
+           (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
+                (let [json (utils/body->json body)]
+                  (edit cb-client uuid json)))
+           (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
+                   (delete cb-client uuid)))

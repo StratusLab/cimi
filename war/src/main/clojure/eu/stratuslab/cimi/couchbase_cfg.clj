@@ -28,9 +28,9 @@
   [hostports]
   (if hostports
     (->> (s/split hostports #"\s+")
-      (remove empty?)
-      (map hostport->uri)
-      (remove nil?))
+         (remove empty?)
+         (map hostport->uri)
+         (remove nil?))
     [(URI/create "http://localhost:8091/pools")]))
 
 (defn get-value

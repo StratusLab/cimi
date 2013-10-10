@@ -7,7 +7,7 @@
    NOTE: Unlike for most other resources, the unique identifier for the
    message is the 'created' timestamp in UTC.  This allows the query to 
    return messages in reversed time order."
-  (:require 
+  (:require
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.volume-configuration :refer [VolumeConfigurationAttrs]]
@@ -37,9 +37,9 @@
 (def ^:const base-uri (str "/" resource-type))
 
 (def-map-schema ServiceMessage
-  common/CommonAttrs
-  [[:name] NonEmptyString
-   [:description] NonEmptyString])
+                common/CommonAttrs
+                [[:name] NonEmptyString
+                 [:description] NonEmptyString])
 
 (def validate (utils/create-validation-fn ServiceMessage))
 
@@ -56,8 +56,8 @@
    added."
   [entry]
   (->> (:created entry)
-    (uuid->uri)
-    (assoc entry :id)))
+       (uuid->uri)
+       (assoc entry :id)))
 
 (defn add-cops
   "Adds the collection operations to the given resource."
@@ -77,11 +77,11 @@
   "Add a new ServiceMessage to the database."
   [cb-client entry]
   (let [entry (-> entry
-                (utils/strip-service-attrs)
-                (assoc :resourceURI type-uri)
-                (utils/set-time-attributes)
-                (add-id)
-                (validate))
+                  (utils/strip-service-attrs)
+                  (assoc :resourceURI type-uri)
+                  (utils/set-time-attributes)
+                  (add-id)
+                  (validate))
         uri (:id entry)]
     (if (cbc/add-json cb-client uri entry)
       (rresp/created uri)
@@ -103,10 +103,10 @@
   (let [uri (uuid->uri uuid)]
     (if-let [current (cbc/get-json cb-client uri)]
       (let [updated (->> entry
-                      (utils/strip-service-attrs)
-                      (merge current)
-                      (utils/set-time-attributes)
-                      (validate))]
+                         (utils/strip-service-attrs)
+                         (merge current)
+                         (utils/set-time-attributes)
+                         (validate))]
         (if (cbc/set-json cb-client uri updated)
           (rresp/response updated)
           (rresp/status (rresp/response nil) 409))) ;; conflict
@@ -130,10 +130,10 @@
                                     :on-error :continue}
                                    opts))
         v (views/get-view cb-client :resource-uri)
-        
+
         messages (->> (cbc/query cb-client v q)
-                   (map cbc/view-doc-json)
-                   (map add-rops))
+                      (map cbc/view-doc-json)
+                      (map add-rops))
         collection (add-cops {:resourceURI collection-type-uri
                               :id base-uri
                               :count (count messages)})]
@@ -142,16 +142,16 @@
                       (assoc collection :serviceMessages messages)))))
 
 (defroutes resource-routes
-  (POST base-uri {:keys [cb-client body]}
-    (let [json (utils/body->json body)]
-      (add cb-client json)))
-  (GET base-uri {:keys [cb-client body]}
-    (let [json (utils/body->json body)]
-      (query cb-client json)))
-  (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-    (retrieve cb-client uuid))
-  (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
-    (let [json (utils/body->json body)]
-      (edit cb-client uuid json)))
-  (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-    (delete cb-client uuid)))
+           (POST base-uri {:keys [cb-client body]}
+                 (let [json (utils/body->json body)]
+                   (add cb-client json)))
+           (GET base-uri {:keys [cb-client body]}
+                (let [json (utils/body->json body)]
+                  (query cb-client json)))
+           (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
+                (retrieve cb-client uuid))
+           (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
+                (let [json (utils/body->json body)]
+                  (edit cb-client uuid json)))
+           (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
+                   (delete cb-client uuid)))

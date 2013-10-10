@@ -12,13 +12,13 @@
 
 (deftest apply-bootstrap-to-empty-db
   (bootstrap t/*test-cb-client*)
-  
+
   ;; verify that the CloudEntryPoint exists
   (let [cep (cbc/get-json t/*test-cb-client* cep/resource-type)]
     (is (not (nil? cep)))
     (is (not (empty? cep)))
     (is (= cep/type-uri (:resourceURI cep))))
- 
+
   ;; verify that views exist
   (let [doc-id-view (views/get-view t/*test-cb-client* :doc-id)
         resource-uri-view (views/get-view t/*test-cb-client* :resource-uri)]
@@ -31,7 +31,7 @@
                                        :stale false})
         by-doc-id-view (views/get-view t/*test-cb-client* :doc-id)
         by-doc-id (cbc/query t/*test-cb-client* by-doc-id-view by-doc-id-q)
-        
+
         by-resource-uri-q (cbq/create-query {:key cep/type-uri
                                              :include-docs false
                                              :stale false})

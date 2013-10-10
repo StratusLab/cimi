@@ -21,24 +21,24 @@
     [clj-schema.schema :refer :all]
     [clj-schema.simple-schemas :refer :all]
     [clj-schema.validation :refer :all]
-)
+    )
   (:import
     [java.net URI]))
 
 (def-map-schema UserEntry
-  [[:username] NonEmptyString
-   [:password] NonEmptyString
-   [:roles] (sequence-of NonEmptyString)])
+                [[:username] NonEmptyString
+                 [:password] NonEmptyString
+                 [:roles] (sequence-of NonEmptyString)])
 
 (def-map-schema BasicAuthnMap
-  [[(wild NonEmptyString)] UserEntry])
+                [[(wild NonEmptyString)] UserEntry])
 
 (def valid-basic-authn? (u/create-validation-fn BasicAuthnMap))
 
 (defn convert-special-roles
   [s]
   (let [special-roles {"::admin" :eu.stratuslab.cimi.authn/admin
-                       "::user"  :eu.stratuslab.cimi.authn/user}]
+                       "::user" :eu.stratuslab.cimi.authn/user}]
     (or (get special-roles s) s)))
 
 (defn transform-roles
@@ -47,14 +47,14 @@
    a keyword if it starts with '::'."
   [m]
   (->> m
-    (:roles)
-    (map convert-special-roles)
-    (set)
-    (assoc m :roles)))
+       (:roles)
+       (map convert-special-roles)
+       (set)
+       (assoc m :roles)))
 
 (defn basic-workflow [json-cfg]
   (if json-cfg
-    (try 
+    (try
       (valid-basic-authn? json-cfg)
       (let [cfg (into {} (map (fn [[k v]] [k (transform-roles v)]) json-cfg))
             cred-fn (partial creds/bcrypt-credential-fn cfg)]

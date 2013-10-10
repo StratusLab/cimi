@@ -30,7 +30,7 @@
 (def user-dn-fmt (str "uid=%s," users-dn))
 (def group-dn-fmt (str "cn=%s," groups-dn))
 
-(defn- add-partition! 
+(defn- add-partition!
   "Adds a partition to the embedded directory service"
   [service id dn]
   (let [partition (doto (JdbmPartition.)
@@ -61,7 +61,7 @@
                       (.setDirectoryService directory-service)
                       ;; remove--need user checking for bind (.setAllowAnonymousAccess true)
                       (.setTransports
-                       (into-array [ldap-transport ssl-transport])))]
+                        (into-array [ldap-transport ssl-transport])))]
     (-> (add-partition! directory-service "clojure" root-dn)
         (add-index! "objectClass" "ou" "uid"))
     (.startup directory-service)

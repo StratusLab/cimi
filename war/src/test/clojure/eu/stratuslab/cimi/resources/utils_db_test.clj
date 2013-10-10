@@ -1,9 +1,9 @@
 (ns eu.stratuslab.cimi.resources.utils-db-test
   (:require
-   [eu.stratuslab.cimi.resources.utils :refer :all]
-   [eu.stratuslab.cimi.couchbase-test-utils :as t]
-   [clojure.test :refer :all]
-   [couchbase-clj.client :as cbc]))
+    [eu.stratuslab.cimi.resources.utils :refer :all]
+    [eu.stratuslab.cimi.couchbase-test-utils :as t]
+    [clojure.test :refer :all]
+    [couchbase-clj.client :as cbc]))
 
 (use-fixtures :each t/flush-bucket-fixture)
 
@@ -18,23 +18,23 @@
 
 (deftest check-resolve-href-identities
   (are [x] (= x (resolve-href t/*test-cb-client* x))
-       1
-       "a"
-       [1 2 3]
-       {}
-       {:name "name"}
-       {:name "name" :properties {"a" 1 "b" 2} :data [1 2 3 4 5]}))
+           1
+           "a"
+           [1 2 3]
+           {}
+           {:name "name"}
+           {:name "name" :properties {"a" 1 "b" 2} :data [1 2 3 4 5]}))
 
 (deftest check-resolve-href
   (let [data1 {:name "BAD" :alpha "A" :beta "B"}]
     (cbc/add-json t/*test-cb-client* "Data/1" data1)
 
     (are [x correct] (= correct (resolve-href t/*test-cb-client* x))
-         {:href "Data/1"} {:alpha "A" :beta "B"}
-         {:href "Data/1" :name "BAD"} {:alpha "A" :beta "B"}
-         {:href "Data/1" :alpha "OK"} {:alpha "OK" :beta "B"}
-         {:href "Data/1" :alpha "OK" :beta "OK"} {:alpha "OK" :beta "OK"}
-         ))
+                     {:href "Data/1"} {:alpha "A" :beta "B"}
+                     {:href "Data/1" :name "BAD"} {:alpha "A" :beta "B"}
+                     {:href "Data/1" :alpha "OK"} {:alpha "OK" :beta "B"}
+                     {:href "Data/1" :alpha "OK" :beta "OK"} {:alpha "OK" :beta "OK"}
+                     ))
   (is (thrown? Exception (resolve-href t/*test-cb-client* {:href "Data/BAD"}))))
 
 (deftest check-resolve-hrefs

@@ -21,30 +21,30 @@
     factory))
 
 (defmulti serialize-element
-  (fn [xml-writer key value]
-    key)
-  :default nil)
+          (fn [xml-writer key value]
+            key)
+          :default nil)
 
 (defmethod serialize-element nil
-  [xml-writer key value]
+           [xml-writer key value]
   (doto xml-writer
     (.writeStartElement key)
     (.writeCharacters (str value))
     (.writeEndElement)))
 
 (defmethod serialize-element "resourceURI"
-  [xml-writer key value]
+           [xml-writer key value]
   nil)
 
 (defmethod serialize-element "properties"
-  [xml-writer key value]
+           [xml-writer key value]
   (doall
-   (for [[k v] value]
-     (doto xml-writer
-       (.writeStartElement "property")
-       (.writeAttribute "key" k)
-       (.writeCharacters (str v))
-       (.writeEndElement)))))
+    (for [[k v] value]
+      (doto xml-writer
+        (.writeStartElement "property")
+        (.writeAttribute "key" k)
+        (.writeCharacters (str v))
+        (.writeEndElement)))))
 
 (defn serialize-elements
   [xml-writer data]

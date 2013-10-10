@@ -19,16 +19,16 @@
 
 (deftest check-special-roles
   (are [s correct] (= correct (convert-special-roles s))
-    nil nil
-    "not-special" "not-special"
-    "::admin" :eu.stratuslab.cimi.authn/admin
-    "::user" :eu.stratuslab.cimi.authn/user))
+                   nil nil
+                   "not-special" "not-special"
+                   "::admin" :eu.stratuslab.cimi.authn/admin
+                   "::user" :eu.stratuslab.cimi.authn/user))
 
 (deftest check-role-transform
   (let [m {:username "OK"
            :roles ["a" "::admin" "::user" "b"]}
         correct {:username "OK"
-                 :roles #{"a" 
+                 :roles #{"a"
                           "b"
                           :eu.stratuslab.cimi.authn/admin
                           :eu.stratuslab.cimi.authn/user}}]

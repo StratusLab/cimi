@@ -9,6 +9,6 @@
 (def grammar-url
   (str (io/resource "eu/stratuslab/cimi/filter-grammar.txt")))
 
-(def parser 
+(def parser
   (insta/parser grammar-url))
 

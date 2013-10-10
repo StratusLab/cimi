@@ -1,7 +1,7 @@
 (ns eu.stratuslab.cimi.resources.event
   "Resources containing information about service events concerning
    specific resources."
-  (:require 
+  (:require
     [clojure.string :as str]
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
@@ -29,40 +29,40 @@
 (def ^:const base-uri (str "/" resource-type))
 
 (def-map-schema StateContent
-  [[:resName] NonEmptyString
-   [:resource] NonEmptyString
-   [:resType] NonEmptyString
-   [:state] NonEmptyString
-   (optional-path [:previous]) NonEmptyString])
+                [[:resName] NonEmptyString
+                 [:resource] NonEmptyString
+                 [:resType] NonEmptyString
+                 [:state] NonEmptyString
+                 (optional-path [:previous]) NonEmptyString])
 
 (def-map-schema AlarmContent
-  [[:resName] NonEmptyString
-   [:resource] NonEmptyString
-   [:resType] NonEmptyString
-   [:code] NonEmptyString
-   (optional-path [:detail]) NonEmptyString])
+                [[:resName] NonEmptyString
+                 [:resource] NonEmptyString
+                 [:resType] NonEmptyString
+                 [:code] NonEmptyString
+                 (optional-path [:detail]) NonEmptyString])
 
 (def-map-schema ModelContent
-  [[:resName] NonEmptyString
-   [:resource] NonEmptyString
-   [:resType] NonEmptyString
-   [:change] NonEmptyString
-   (optional-path [:detail]) NonEmptyString])
+                [[:resName] NonEmptyString
+                 [:resource] NonEmptyString
+                 [:resType] NonEmptyString
+                 [:change] NonEmptyString
+                 (optional-path [:detail]) NonEmptyString])
 
 (def-map-schema AccessContent
-  [[:operation] NonEmptyString
-   [:resource] NonEmptyString
-   (optional-path [:detail]) NonEmptyString
-   [:initiator] NonEmptyString])
+                [[:operation] NonEmptyString
+                 [:resource] NonEmptyString
+                 (optional-path [:detail]) NonEmptyString
+                 [:initiator] NonEmptyString])
 
 (def-map-schema Event
-  common/CommonAttrs
-  [[:timestamp] NonEmptyString
-   [:type] NonEmptyString
-   (optional-path [:content]) (or StateContent AlarmContent ModelContent AccessContent)
-   [:outcome] #{"Pending" "Unknown" "Status" "Success" "Warning" "Failure"}
-   [:severity] #{"critical" "high" "medium" "low"}
-   (optional-path [:contact]) String])
+                common/CommonAttrs
+                [[:timestamp] NonEmptyString
+                 [:type] NonEmptyString
+                 (optional-path [:content]) (or StateContent AlarmContent ModelContent AccessContent)
+                 [:outcome] #{"Pending" "Unknown" "Status" "Success" "Warning" "Failure"}
+                 [:severity] #{"critical" "high" "medium" "low"}
+                 (optional-path [:contact]) String])
 
 (def validate (utils/create-validation-fn Event))
 
@@ -90,11 +90,11 @@
   [cb-client entry]
   (let [uri (uuid->uri (utils/create-uuid))
         entry (-> entry
-                (utils/strip-service-attrs)
-                (merge {:id uri
-                        :resourceURI type-uri})
-                (utils/set-time-attributes)
-                (validate))]
+                  (utils/strip-service-attrs)
+                  (merge {:id uri
+                          :resourceURI type-uri})
+                  (utils/set-time-attributes)
+                  (validate))]
     (if (cbc/add-json cb-client uri entry)
       (rresp/created uri)
       (rresp/status (rresp/response (str "cannot create " uri)) 400))))
@@ -115,11 +115,11 @@
   (let [uri (uuid->uri uuid)]
     (if-let [current (cbc/get-json cb-client uri)]
       (let [updated (->> entry
-                      (utils/strip-service-attrs)
-                      (merge current)
-                      (utils/set-time-attributes)
-                      (add-rops)
-                      (validate))]
+                         (utils/strip-service-attrs)
+                         (merge current)
+                         (utils/set-time-attributes)
+                         (add-rops)
+                         (validate))]
         (if (cbc/set-json cb-client uri updated)
           (rresp/response updated)
           (rresp/status (rresp/response nil) 409))) ;; conflict
@@ -141,12 +141,12 @@
                                     :limit 100
                                     :stale false
                                     :on-error :continue}
-                              opts))
+                                   opts))
         v (views/get-view cb-client :resource-uri)
 
         configs (->> (cbc/query cb-client v q)
-                  (map cbc/view-doc-json)
-                  (map add-rops))
+                     (map cbc/view-doc-json)
+                     (map add-rops))
         collection (add-cops {:resourceURI collection-type-uri
                               :id base-uri
                               :count (count configs)})]
@@ -155,16 +155,16 @@
                       (assoc collection :events configs)))))
 
 (defroutes resource-routes
-  (POST base-uri {:keys [cb-client body]}
-    (let [json (utils/body->json body)]
-      (add cb-client json)))
-  (GET base-uri {:keys [cb-client body]}
-    (let [json (utils/body->json body)]
-      (query cb-client json)))
-  (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-    (retrieve cb-client uuid))
-  (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
-    (let [json (utils/body->json body)]
-      (edit cb-client uuid json)))
-  (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-    (delete cb-client uuid)))
+           (POST base-uri {:keys [cb-client body]}
+                 (let [json (utils/body->json body)]
+                   (add cb-client json)))
+           (GET base-uri {:keys [cb-client body]}
+                (let [json (utils/body->json body)]
+                  (query cb-client json)))
+           (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
+                (retrieve cb-client uuid))
+           (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
+                (let [json (utils/body->json body)]
+                  (edit cb-client uuid json)))
+           (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
+                   (delete cb-client uuid)))

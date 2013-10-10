@@ -6,14 +6,14 @@
    flexibility is needed.
 
    The class will use the 'couchbase.cfg' servlet parameter to find
-   the Couchbase connection parameters.  If this parameter is not 
+   the Couchbase connection parameters.  If this parameter is not
    set, then the default '/etc/stratuslab/couchbase.cfg' will be 
    used."
   (:require [ring.util.servlet :refer [make-service-method]])
   (:gen-class
-   :extends javax.servlet.http.HttpServlet
-   :init initState
-   :state state))
+    :extends javax.servlet.http.HttpServlet
+    :init initState
+    :state state))
 
 (def ^:const default-cb-cfg "/etc/stratuslab/couchbase.cfg")
 
@@ -31,22 +31,22 @@
         handler-fn (symbol "create-ring-handler")
         init-fn (symbol "init")
         destroy-fn (symbol "destroy")]
-    (require n)  ;; this dynamically loads the server impl.
+    (require n) ;; this dynamically loads the server impl.
     (-update-state this
-      {:handler-fn (ns-resolve (the-ns n) handler-fn)
-       :init-fn (ns-resolve (the-ns n) init-fn)
-       :destroy-fn (ns-resolve (the-ns n) destroy-fn)}))
+                   {:handler-fn (ns-resolve (the-ns n) handler-fn)
+                    :init-fn (ns-resolve (the-ns n) init-fn)
+                    :destroy-fn (ns-resolve (the-ns n) destroy-fn)}))
 
   (let [init-fn (-> this .state deref :init-fn)
         servlet-params (servlet-params this)
         cfg-params (init-fn servlet-params)]
-    (-update-state this 
-      {:cfg-params cfg-params}))
-  
+    (-update-state this
+                   {:cfg-params cfg-params}))
+
   (let [handler-fn (-> this .state deref :handler-fn)
         cfg-params (-> this .state deref :cfg-params)]
     (-update-state this
-      {:service-fn (make-service-method (handler-fn cfg-params))})))
+                   {:service-fn (make-service-method (handler-fn cfg-params))})))
 
 (defn -destroy-void
   [this]

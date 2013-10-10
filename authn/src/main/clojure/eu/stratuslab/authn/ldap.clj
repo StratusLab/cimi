@@ -19,12 +19,12 @@
   {:user-base-dn "ou=users,o=cloud"
    :user-object-class "inetOrgPerson"
    :user-id-attr "uid"
-   
+
    :role-base-dn "ou=groups,o=cloud"
    :role-object-class "groupOfUniqueNames"
    :role-member-attr "uniqueMember"
    :role-name-attr "cn"
-   
+
    :skip-bind? false
    })
 
@@ -54,7 +54,7 @@
 
 (defn user-dn
   [pool {:keys [user-base-dn] :as params}]
-  (->> 
+  (->>
     (user-filter params)
     (assoc {:attributes [:dn]} :filter)
     (ldap/search pool user-base-dn)
@@ -64,11 +64,11 @@
 (defn roles
   [pool {:keys [role-base-dn role-name-attr] :as params}]
   (->> (role-filter params)
-    (assoc {:attributes [role-name-attr]} :filter)
-    (ldap/search pool role-base-dn)
-    (map (keyword role-name-attr))
-    (cons :eu.stratuslab.authn/user)
-    (set)))
+       (assoc {:attributes [role-name-attr]} :filter)
+       (ldap/search pool role-base-dn)
+       (map (keyword role-name-attr))
+       (cons :eu.stratuslab.authn/user)
+       (set)))
 
 (defn force-bind
   [pool {:keys [password] :as params}]

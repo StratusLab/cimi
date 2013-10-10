@@ -31,7 +31,7 @@
   "Creates a Couchbase client instance from the given configuration.
    If the argument is nil, then the default connection parameters 
    ('default' bucket on local Couchbase) are used."
-  [cb-cfg]  
+  [cb-cfg]
   (if-let [cfg (read-cfg cb-cfg)]
     (try
       (cbc/create-client cfg)
@@ -50,13 +50,13 @@
   (log/info "creating servlet ring handler")
 
   (-> (handler/site routes/main-routes)
-    (friend/authenticate {:credential-fn nil
-                          :workflows [(aw/get-workflows cb-client)]})
-    (wrap-base-uri)
-    (wrap-servlet-paths)
-    (wrap-cb-client cb-client)
-    (wrap-restful-params)
-    (wrap-restful-response)))
+      (friend/authenticate {:credential-fn nil
+                            :workflows [(aw/get-workflows cb-client)]})
+      (wrap-base-uri)
+      (wrap-servlet-paths)
+      (wrap-cb-client cb-client)
+      (wrap-restful-params)
+      (wrap-restful-response)))
 
 (defn init
   "Creates a shared Couchbase client for the application and
@@ -64,12 +64,12 @@
    service state.  This map must be saved and then provided
    to the destroy function when tearing down the service."
   [{:keys [cb-cfg]}]
-  
+
   (log/info "initializing servlet implementation from" cb-cfg)
 
   (let [cb-params (read-cfg cb-cfg)
         cb-client (create-cb-client cb-params)]
-    (bootstrap cb-client)    
+    (bootstrap cb-client)
     {:cb-client cb-client}))
 
 (defn destroy

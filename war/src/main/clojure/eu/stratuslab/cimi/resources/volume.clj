@@ -1,6 +1,6 @@
 (ns eu.stratuslab.cimi.resources.volume
   "Utilities for managing the CRUD features for volumes."
-  (:require 
+  (:require
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.common :as c]
@@ -29,21 +29,21 @@
 
 (def volume-states #{"CREATING" "AVAILABLE" "CAPTURING" "DELETING" "ERROR"})
 
-(def-map-schema Volume 
-  c/CommonAttrs
-  [(optional-path [:state]) volume-states
-   [:type] NonEmptyString
-   [:capacity] NonNegIntegral
-   (optional-path [:bootable]) Boolean
-   (optional-path [:eventLog]) NonEmptyString])
+(def-map-schema ^{:doc "Documentation"} Volume
+                c/CommonAttrs
+                [(optional-path [:state]) volume-states
+                 [:type] NonEmptyString
+                 [:capacity] NonNegIntegral
+                 (optional-path [:bootable]) Boolean
+                 (optional-path [:eventLog]) NonEmptyString])
 
 (def-map-schema VolumeTemplateRef
-  VolumeTemplateAttrs
-  [(optional-path [:href]) NonEmptyString])
+                VolumeTemplateAttrs
+                [(optional-path [:href]) NonEmptyString])
 
 (def-map-schema VolumeCreate
-  c/CreateAttrs
-  [[:volumeTemplate] VolumeTemplateRef])
+                c/CreateAttrs
+                [[:volumeTemplate] VolumeTemplateRef])
 
 (def validate (u/create-validation-fn Volume))
 
@@ -72,11 +72,11 @@
 (defn volume-skeleton [uri entry]
   (if (u/correct-resource? create-uri entry)
     (-> entry
-      (u/strip-service-attrs)
-      (dissoc :volumeTemplate)
-      (assoc :resourceURI type-uri)
-      (u/set-time-attributes)
-      (assoc :state "CREATING" :id uri))
+        (u/strip-service-attrs)
+        (dissoc :volumeTemplate)
+        (assoc :resourceURI type-uri)
+        (u/set-time-attributes)
+        (assoc :state "CREATING" :id uri))
     (throw (Exception. (str create-uri " resource required")))))
 
 (defn create-req->template [cb-client uri create-req]
@@ -87,11 +87,11 @@
     (merge volume-config volume-image skeleton)))
 
 (defn template->volume [template]
-  (-> (select-keys template [:id :resourceURI :name :description 
+  (-> (select-keys template [:id :resourceURI :name :description
                              :created :updated :properties
-                             :state :type :capacity 
+                             :state :type :capacity
                              :bootable :images :meters :eventLog])
-    (validate)))
+      (validate)))
 
 (defn template->params [template]
   (let [params (select-keys template [:type :format :capacity :bootable])]
@@ -112,12 +112,12 @@
       (let [job-resp (job/launch cb-client uri "create" params)]
         (if (= 202 (:status job-resp))
           (-> job-resp
-            (r/status 201)
-            (r/header "Location" uri))
+              (r/status 201)
+              (r/header "Location" uri))
           job-resp))
       (-> (str "cannot create " uri)
-        (r/response)
-        (r/status 400)))))
+          (r/response)
+          (r/status 400)))))
 
 (defn retrieve
   "Returns the data associated with the requested Volume
@@ -135,11 +135,11 @@
   (let [uri (uuid->uri uuid)]
     (if-let [current (cbc/get-json cb-client uri)]
       (let [updated (->> entry
-                      (u/strip-service-attrs)
-                      (merge current)
-                      (u/set-time-attributes)
-                      (add-rops)
-                      (validate))]
+                         (u/strip-service-attrs)
+                         (merge current)
+                         (u/set-time-attributes)
+                         (add-rops)
+                         (validate))]
         (if (cbc/set-json cb-client uri updated)
           (r/response updated)
           (r/status (r/response nil) 409))) ;; conflict
@@ -162,30 +162,30 @@
                                     :limit 100
                                     :stale false
                                     :on-error :continue}
-                              opts))
+                                   opts))
         v (views/get-view cb-client :resource-uri)
 
         volumes (->> (cbc/query cb-client v q)
-                  (map cbc/view-doc-json)
-                  (map add-rops))
+                     (map cbc/view-doc-json)
+                     (map add-rops))
         collection (add-cops {:resourceURI collection-type-uri
                               :id base-uri
                               :count (count volumes)})]
     (r/response (if (empty? volumes)
-                      collection
-                      (assoc collection :volumes volumes)))))
+                  collection
+                  (assoc collection :volumes volumes)))))
 
 (defroutes resource-routes
-  (POST base-uri {:keys [cb-client body]}
-    (let [json (u/body->json body)]
-      (add cb-client json)))
-  (GET base-uri {:keys [cb-client body]}
-    (let [json (u/body->json body)]
-      (query cb-client json)))
-  (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-    (retrieve cb-client uuid))
-  (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
-    (let [json (u/body->json body)]
-      (edit cb-client uuid json)))
-  (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-    (delete cb-client uuid)))
+           (POST base-uri {:keys [cb-client body]}
+                 (let [json (u/body->json body)]
+                   (add cb-client json)))
+           (GET base-uri {:keys [cb-client body]}
+                (let [json (u/body->json body)]
+                  (query cb-client json)))
+           (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
+                (retrieve cb-client uuid))
+           (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
+                (let [json (u/body->json body)]
+                  (edit cb-client uuid json)))
+           (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
+                   (delete cb-client uuid)))

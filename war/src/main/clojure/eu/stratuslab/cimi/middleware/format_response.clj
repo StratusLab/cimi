@@ -17,9 +17,9 @@
 (defn wrap-yaml-in-html
   [body]
   (str
-   "<html>\n<head></head>\n<body><div><pre>\n"
-   (yaml/generate-string body)
-   "</pre></div></body></html>"))
+    "<html>\n<head></head>\n<body><div><pre>\n"
+    (yaml/generate-string body)
+    "</pre></div></body></html>"))
 
 (defn wrap-restful-response
   "Wrapper that tries to do the right thing with the response :body
@@ -42,4 +42,4 @@
                                    (make-encoder serial/resource-as-xml
                                                  "application/xml")
                                    default]
-                                                :charset "utf-8"))
+                        :charset "utf-8"))

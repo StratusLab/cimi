@@ -12,13 +12,13 @@
             [eu.stratuslab.cimi.resources.volume-image :as vi]))
 
 (defroutes main-routes
-  cep/resource-routes
-  mc/resource-routes
-  job/resource-routes
-  sm/resource-routes
-  v/resource-routes
-  vt/resource-routes
-  vc/resource-routes
-  vi/resource-routes
-  (GET "/debug" {:as req} {:body req})
-  (route/not-found "Page not found"))
+           cep/resource-routes
+           mc/resource-routes
+           job/resource-routes
+           sm/resource-routes
+           v/resource-routes
+           vt/resource-routes
+           vc/resource-routes
+           vi/resource-routes
+           (GET "/debug" {:as req} {:body req})
+           (route/not-found "Page not found"))

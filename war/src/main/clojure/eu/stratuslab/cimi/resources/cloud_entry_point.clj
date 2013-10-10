@@ -1,7 +1,7 @@
 (ns eu.stratuslab.cimi.resources.cloud-entry-point
   "Root resource for CIMI, providing information about the locations
   of other resources within the server."
-  (:require 
+  (:require
     [clojure.tools.logging :as log]
     [clojure.set :as set]
     [couchbase-clj.client :as cbc]
@@ -25,7 +25,7 @@
     [clj-schema.simple-schemas :refer :all]
     [clj-schema.validation :refer :all]
     [clojure.data.json :as json]
-    
+
     [cemerick.friend :as friend])
   (:import [java.io InputStreamReader]))
 
@@ -36,7 +36,7 @@
 (def ^:const base-uri "/")
 
 ;; FIXME: Generate these automatically.
-(def resource-links 
+(def resource-links
   {:machineConfigs {:href mc/resource-type}
    :jobs {:href job/resource-type}
    :volumes {:href volume/resource-type}
@@ -45,37 +45,37 @@
    :volumeImages {:href volume-image/resource-type}})
 
 (def-map-schema CloudEntryPoint
-  common/CommonAttrs
-  [[:baseURI] NonEmptyString
-   (optional-path [:resourceMetadata]) common/ResourceLink
-   (optional-path [:systems]) common/ResourceLink
-   (optional-path [:systemTemplates]) common/ResourceLink
-   (optional-path [:machines]) common/ResourceLink
-   (optional-path [:machineTemplates]) common/ResourceLink
-   (optional-path [:machineConfigs]) common/ResourceLink
-   (optional-path [:machineImages]) common/ResourceLink
-   (optional-path [:credentials]) common/ResourceLink
-   (optional-path [:credentialTemplates]) common/ResourceLink
-   (optional-path [:volumes]) common/ResourceLink
-   (optional-path [:volumeTemplates]) common/ResourceLink
-   (optional-path [:volumeConfigs]) common/ResourceLink
-   (optional-path [:volumeImages]) common/ResourceLink
-   (optional-path [:networks]) common/ResourceLink
-   (optional-path [:networkTemplates]) common/ResourceLink
-   (optional-path [:networkConfigs]) common/ResourceLink
-   (optional-path [:networkPorts]) common/ResourceLink
-   (optional-path [:networkPortTemplates]) common/ResourceLink
-   (optional-path [:networkPortConfigs]) common/ResourceLink
-   (optional-path [:addresses]) common/ResourceLink
-   (optional-path [:addressTemplates]) common/ResourceLink
-   (optional-path [:forwardingGroups]) common/ResourceLink
-   (optional-path [:forwardingGroupTemplates]) common/ResourceLink
-   (optional-path [:jobs]) common/ResourceLink
-   (optional-path [:meters]) common/ResourceLink
-   (optional-path [:meterTemplates]) common/ResourceLink
-   (optional-path [:meterConfigs]) common/ResourceLink
-   (optional-path [:eventLogs]) common/ResourceLink
-   (optional-path [:eventLogTemplates]) common/ResourceLink])
+                common/CommonAttrs
+                [[:baseURI] NonEmptyString
+                 (optional-path [:resourceMetadata]) common/ResourceLink
+                 (optional-path [:systems]) common/ResourceLink
+                 (optional-path [:systemTemplates]) common/ResourceLink
+                 (optional-path [:machines]) common/ResourceLink
+                 (optional-path [:machineTemplates]) common/ResourceLink
+                 (optional-path [:machineConfigs]) common/ResourceLink
+                 (optional-path [:machineImages]) common/ResourceLink
+                 (optional-path [:credentials]) common/ResourceLink
+                 (optional-path [:credentialTemplates]) common/ResourceLink
+                 (optional-path [:volumes]) common/ResourceLink
+                 (optional-path [:volumeTemplates]) common/ResourceLink
+                 (optional-path [:volumeConfigs]) common/ResourceLink
+                 (optional-path [:volumeImages]) common/ResourceLink
+                 (optional-path [:networks]) common/ResourceLink
+                 (optional-path [:networkTemplates]) common/ResourceLink
+                 (optional-path [:networkConfigs]) common/ResourceLink
+                 (optional-path [:networkPorts]) common/ResourceLink
+                 (optional-path [:networkPortTemplates]) common/ResourceLink
+                 (optional-path [:networkPortConfigs]) common/ResourceLink
+                 (optional-path [:addresses]) common/ResourceLink
+                 (optional-path [:addressTemplates]) common/ResourceLink
+                 (optional-path [:forwardingGroups]) common/ResourceLink
+                 (optional-path [:forwardingGroupTemplates]) common/ResourceLink
+                 (optional-path [:jobs]) common/ResourceLink
+                 (optional-path [:meters]) common/ResourceLink
+                 (optional-path [:meterTemplates]) common/ResourceLink
+                 (optional-path [:meterConfigs]) common/ResourceLink
+                 (optional-path [:eventLogs]) common/ResourceLink
+                 (optional-path [:eventLogTemplates]) common/ResourceLink])
 
 (def validate (utils/create-validation-fn CloudEntryPoint))
 
@@ -95,13 +95,13 @@
    NOTE: Unlike other resources, the :id is 'CloudEntryPoint'
    rather than the relative URI for the resource."
   [cb-client]
-  
+
   (let [record (-> {:id resource-type
                     :resourceURI type-uri}
-                 (utils/set-time-attributes))]
+                   (utils/set-time-attributes))]
     (cbc/add-json cb-client resource-type record {:observe true
-                                             :persist :master
-                                             :replicate :zero})))
+                                                  :persist :master
+                                                  :replicate :zero})))
 
 (defn retrieve
   "Returns the data associated with the CloudEntryPoint.  This combines
@@ -110,9 +110,9 @@
   [cb-client baseURI]
   (if-let [cep (cbc/get-json cb-client resource-type)]
     (rresp/response (-> cep
-                      (assoc :baseURI baseURI)
-                      (merge resource-links)
-                      (add-rops)))
+                        (assoc :baseURI baseURI)
+                        (merge resource-links)
+                        (add-rops)))
     (rresp/not-found nil)))
 
 ;; FIXME: Implementation should use CAS functions to avoid update conflicts.
@@ -124,24 +124,24 @@
   [cb-client baseURI entry]
   (if-let [current (cbc/get-json cb-client resource-type)]
     (let [db-doc (-> entry
-                   (select-keys [:name :description :properties])
-                   (merge current)
-                   (utils/set-time-attributes))
+                     (select-keys [:name :description :properties])
+                     (merge current)
+                     (utils/set-time-attributes))
           doc (-> db-doc
-                (assoc :baseURI baseURI)
-                (merge resource-links)
-                (add-rops)
-                (validate))]
+                  (assoc :baseURI baseURI)
+                  (merge resource-links)
+                  (add-rops)
+                  (validate))]
       (if (cbc/set-json cb-client resource-type db-doc)
         (rresp/response doc)
         (rresp/status (rresp/response nil) 409)))
     (rresp/not-found nil)))
 
 (defroutes resource-routes
-  (GET base-uri {:keys [cb-client base-uri] :as request}
-    (retrieve cb-client base-uri))
-  (PUT base-uri {:keys [cb-client base-uri body] :as request}
-    (println request)
-    (friend/authorize #{:eu.stratuslab.cimi.authn/admin}
-      (let [json (utils/body->json body)]
-        (edit cb-client base-uri json)))))
+           (GET base-uri {:keys [cb-client base-uri] :as request}
+                (retrieve cb-client base-uri))
+           (PUT base-uri {:keys [cb-client base-uri body] :as request}
+                (println request)
+                (friend/authorize #{:eu.stratuslab.cimi.authn/admin}
+                                  (let [json (utils/body->json body)]
+                                    (edit cb-client base-uri json)))))

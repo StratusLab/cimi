@@ -13,7 +13,7 @@
    The workarounds in the given ticket may or may not work to 
    resolve the problem."
 
-  (:require 
+  (:require
     [couchbase-clj.client :as cbc])
   (:import
     [com.couchbase.client.protocol.views DesignDocument ViewDesign]))
@@ -26,14 +26,14 @@
 function(doc, meta) {
   emit(meta.id, null);
 }"
-  
-  :resource-uri ;; view on resource type (full CIMI URI)
-  "
-function(doc, meta) {
-  if (meta.type==\"json\" && doc.resourceURI) {
-    emit(doc.resourceURI,null);
-  }
-}"})
+
+   :resource-uri ;; view on resource type (full CIMI URI)
+   "
+ function(doc, meta) {
+   if (meta.type==\"json\" && doc.resourceURI) {
+     emit(doc.resourceURI,null);
+   }
+ }"})
 
 (defn create-design-doc
   "Creates the Couchbase design document that includes all of the 
@@ -48,7 +48,7 @@ function(doc, meta) {
   [cb-client]
   (let [java-cb-client (cbc/get-client cb-client)]
     (->> (create-design-doc)
-      (.createDesignDoc java-cb-client))))
+         (.createDesignDoc java-cb-client))))
 
 (defn get-view
   "Returns the Couchbase view associated with the given keyword."

@@ -6,7 +6,7 @@
   "Parses the given string as an integer.  If the value cannot be
   parsed as a base-10 integer, then the default is returned."
   [s default]
-  (try 
+  (try
     (Integer/parseInt s)
     (catch Exception consumed
       default)))
@@ -17,48 +17,48 @@
   attributes will be returned.  Invalid attribute names will be
   ignored."
   [s]
-  (let [attr-names (str/split (.trim s)  #"\s*,\s*")
+  (let [attr-names (str/split (.trim s) #"\s*,\s*")
         valid-names (set (filter #(re-matches #"(?:[a-zA-Z_]\w*)|\*" %) attr-names))]
     (if (contains? valid-names "*")
       identity
       valid-names)))
 
 (defmulti process-query-params
-  "Process the standard CIMI query parameters.  The valid parameters
-  are '$first', '$last', '$filter', '$select' and '$expand'.  The
-  function dispatches on the name of the query parameter after the
-  leading dollar sign.  Parameters not starting with a dollar sign or
-  other invalid parameters are ignored."
-  (fn [req key value]
-    (if (.startsWith key "$")
-      (keyword (.substring key 1))))
-  :default nil)
+          "Process the standard CIMI query parameters.  The valid parameters
+          are '$first', '$last', '$filter', '$select' and '$expand'.  The
+          function dispatches on the name of the query parameter after the
+          leading dollar sign.  Parameters not starting with a dollar sign or
+          other invalid parameters are ignored."
+          (fn [req key value]
+            (if (.startsWith key "$")
+              (keyword (.substring key 1))))
+          :default nil)
 
 (defmethod process-query-params nil
-  [req key value]
+           [req key value]
   req)
 
 (defmethod process-query-params :first
-  [req key value]
+           [req key value]
   (let [index (parse-int value 1)]
-   (assoc req :first index)))
+    (assoc req :first index)))
 
 (defmethod process-query-params :last
-  [req key value]
+           [req key value]
   (if-let [index (parse-int value nil)]
     (assoc req :last index)
     req))
 
 (defmethod process-query-params :select
-  [req key value]
+           [req key value]
   (assoc req :select (attribute-filter-fn value)))
 
 (defmethod process-query-params :expand
-  [req key value]
+           [req key value]
   (assoc req :expand (attribute-filter-fn value)))
 
 (defmethod process-query-params :filter
-  [req key value]
+           [req key value]
   nil)
 
 (defn wrap-cimi-query-params
@@ -68,7 +68,7 @@
   middleware automatically adds the wrap-params middleware; it should
   not be added separately."
   [handler & [options]]
-  (wrap-params 
-   (fn [req]
-     (let [query-params (:query-params req)]
-       (reduce-kv process-query-params req query-params)))))
+  (wrap-params
+    (fn [req]
+      (let [query-params (:query-params req)]
+        (reduce-kv process-query-params req query-params)))))

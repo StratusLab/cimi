@@ -1,6 +1,6 @@
 (ns eu.stratuslab.cimi.resources.volume-configuration
   "Contains the physical and file system attributes of a Volume."
-  (:require 
+  (:require
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.common :as common]
@@ -28,15 +28,15 @@
 (def ^:const base-uri (str "/" resource-type))
 
 (def-map-schema VolumeConfigurationAttrs
-  [(optional-path [:type]) NonEmptyString
-   (optional-path [:format]) NonEmptyString
-   (optional-path [:capacity]) NonNegIntegral])
+                [(optional-path [:type]) NonEmptyString
+                 (optional-path [:format]) NonEmptyString
+                 (optional-path [:capacity]) NonNegIntegral])
 
 (def-map-schema VolumeConfiguration
-  common/CommonAttrs
-  [(optional-path [:type]) NonEmptyString
-   (optional-path [:format]) NonEmptyString
-   [:capacity] NonNegIntegral])
+                common/CommonAttrs
+                [(optional-path [:type]) NonEmptyString
+                 (optional-path [:format]) NonEmptyString
+                 [:capacity] NonNegIntegral])
 
 (def validate (utils/create-validation-fn VolumeConfiguration))
 
@@ -65,11 +65,11 @@
   [cb-client entry]
   (let [uri (uuid->uri (utils/create-uuid))
         entry (-> entry
-                (utils/strip-service-attrs)
-                (assoc :id uri)
-                (assoc :resourceURI type-uri)
-                (utils/set-time-attributes)
-                (validate))]
+                  (utils/strip-service-attrs)
+                  (assoc :id uri)
+                  (assoc :resourceURI type-uri)
+                  (utils/set-time-attributes)
+                  (validate))]
     (if (cbc/add-json cb-client uri entry)
       (rresp/created uri)
       (rresp/status (rresp/response (str "cannot create " uri)) 400))))
@@ -90,11 +90,11 @@
   (let [uri (uuid->uri uuid)]
     (if-let [current (cbc/get-json cb-client uri)]
       (let [updated (->> entry
-                      (utils/strip-service-attrs)
-                      (merge current)
-                      (utils/set-time-attributes)
-                      (add-rops)
-                      (validate))]
+                         (utils/strip-service-attrs)
+                         (merge current)
+                         (utils/set-time-attributes)
+                         (add-rops)
+                         (validate))]
         (if (cbc/set-json cb-client uri updated)
           (rresp/response updated)
           (rresp/status (rresp/response nil) 409))) ;; conflict
@@ -116,12 +116,12 @@
                                     :limit 100
                                     :stale false
                                     :on-error :continue}
-                              opts))
+                                   opts))
         v (views/get-view cb-client :resource-uri)
 
         volume-configs (->> (cbc/query cb-client v q)
-                         (map cbc/view-doc-json)
-                         (map add-rops))
+                            (map cbc/view-doc-json)
+                            (map add-rops))
         collection (add-cops {:resourceURI collection-type-uri
                               :id base-uri
                               :count (count volume-configs)})]
@@ -130,16 +130,16 @@
                       (assoc collection :volumeConfigurations volume-configs)))))
 
 (defroutes resource-routes
-  (POST base-uri {:keys [cb-client body]}
-    (let [json (utils/body->json body)]
-      (add cb-client json)))
-  (GET base-uri {:keys [cb-client body]}
-    (let [json (utils/body->json body)]
-      (query cb-client json)))
-  (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-    (retrieve cb-client uuid))
-  (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
-    (let [json (utils/body->json body)]
-      (edit cb-client uuid json)))
-  (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-    (delete cb-client uuid)))
+           (POST base-uri {:keys [cb-client body]}
+                 (let [json (utils/body->json body)]
+                   (add cb-client json)))
+           (GET base-uri {:keys [cb-client body]}
+                (let [json (utils/body->json body)]
+                  (query cb-client json)))
+           (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
+                (retrieve cb-client uuid))
+           (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
+                (let [json (utils/body->json body)]
+                  (edit cb-client uuid json)))
+           (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
+                   (delete cb-client uuid)))

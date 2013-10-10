@@ -28,7 +28,7 @@
                :resourceURI "http://example.org/DummyResource"
                :properties {"a" 1 "b" 2}
                :operations [{:rel "add" :href "/add"}]}
-        correct {:name "name" 
+        correct {:name "name"
                  :description "description"
                  :properties {"a" 1 "b" 2}}]
     (is (= correct (strip-service-attrs entry)))))

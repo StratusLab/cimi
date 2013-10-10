@@ -1,6 +1,6 @@
 (ns eu.stratuslab.cimi.resources.job
   "Utilities for managing the CRUD features for jobs."
-  (:require 
+  (:require
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.common :as c]
@@ -25,17 +25,17 @@
 (def ^:const base-uri (str "/" resource-type))
 
 (def-map-schema Job
-  c/CommonAttrs
-  [(optional-path [:state]) #{"QUEUED" "RUNNING" "FAILED" "SUCCESS" "STOPPING" "STOPPED"}
-   [:targetResource] NonEmptyString
-   (optional-path [:affectedResources]) (sequence-of NonEmptyString)
-   [:action] NonEmptyString
-   (optional-path [:returnCode]) Integral
-   (optional-path [:progress]) NonNegIntegral
-   (optional-path [:statusMessage]) NonEmptyString
-   (optional-path [:timeOfStatusChange]) NonEmptyString
-   (optional-path [:parentJob]) NonEmptyString
-   (optional-path [:nestedJobs]) (sequence-of NonEmptyString)])
+                c/CommonAttrs
+                [(optional-path [:state]) #{"QUEUED" "RUNNING" "FAILED" "SUCCESS" "STOPPING" "STOPPED"}
+                 [:targetResource] NonEmptyString
+                 (optional-path [:affectedResources]) (sequence-of NonEmptyString)
+                 [:action] NonEmptyString
+                 (optional-path [:returnCode]) Integral
+                 (optional-path [:progress]) NonNegIntegral
+                 (optional-path [:statusMessage]) NonEmptyString
+                 (optional-path [:timeOfStatusChange]) NonEmptyString
+                 (optional-path [:parentJob]) NonEmptyString
+                 (optional-path [:nestedJobs]) (sequence-of NonEmptyString)])
 
 (def validate (u/create-validation-fn Job))
 
@@ -68,18 +68,18 @@
 (defn create
   "Creates a new job and adds it to the database.  Unlike the add function
    this returns just the job URI (or nil if there is an error).  This is 
-   useful when creating jobs in the process of manipulating other resources."  
+   useful when creating jobs in the process of manipulating other resources."
   [cb-client entry]
   (let [uri (uuid->uri (u/create-uuid))
         entry (-> entry
-                (u/strip-service-attrs)
-                (merge {:id uri
-                        :resourceURI type-uri
-                        :state "QUEUED"
-                        :progress 0})
-                (u/set-time-attributes)
-                (set-timestamp)
-                (validate))]
+                  (u/strip-service-attrs)
+                  (merge {:id uri
+                          :resourceURI type-uri
+                          :state "QUEUED"
+                          :progress 0})
+                  (u/set-time-attributes)
+                  (set-timestamp)
+                  (validate))]
     (if (cbc/add-json cb-client uri entry)
       uri)))
 
@@ -106,11 +106,11 @@
   (let [uri (uuid->uri uuid)]
     (if-let [current (cbc/get-json cb-client uri)]
       (let [updated (->> entry
-                      (u/strip-service-attrs)
-                      (merge current)
-                      (u/set-time-attributes)
-                      (add-rops)
-                      (validate))]
+                         (u/strip-service-attrs)
+                         (merge current)
+                         (u/set-time-attributes)
+                         (add-rops)
+                         (validate))]
         (if (cbc/set-json cb-client uri updated)
           (rresp/response updated)
           (rresp/status (rresp/response nil) 409))) ;; conflict
@@ -137,12 +137,12 @@
                                     :limit 100
                                     :stale false
                                     :on-error :continue}
-                              opts))
+                                   opts))
         v (views/get-view cb-client :resource-uri)
 
         configs (->> (cbc/query cb-client v q)
-                  (map cbc/view-doc-json)
-                  (map add-rops))
+                     (map cbc/view-doc-json)
+                     (map add-rops))
         collection (add-cops {:resourceURI collection-type-uri
                               :id base-uri
                               :count (count configs)})]
@@ -180,27 +180,27 @@
     (if-let [job-resp (add cb-client job-map)]
       (let [job-uri (get-in job-resp [:headers "Location"])]
         (-> nil
-          (rresp/response)
-          (rresp/status 202)
-          (rresp/header "CIMI-Job-URI" job-uri)))
+            (rresp/response)
+            (rresp/status 202)
+            (rresp/header "CIMI-Job-URI" job-uri)))
       (-> (str "cannot create job [" action ", " uri "]")
-        (rresp/response)
-        (rresp/status 500)))))
+          (rresp/response)
+          (rresp/status 500)))))
 
 (defroutes resource-routes
-  (POST base-uri {:keys [cb-client body]}
-    (let [json (u/body->json body)]
-      (add cb-client json)))
-  (GET base-uri {:keys [cb-client body]}
-    (let [json (u/body->json body)]
-      (query cb-client json)))
-  (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-    (retrieve cb-client uuid))
-  (POST (str base-uri "/:uuid/:action") [uuid action :as {:keys [cb-client body]}]
-    (let [json (u/body->json body)]
-      (action cb-client uuid action json)))
-  (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
-    (let [json (u/body->json body)]
-      (edit cb-client uuid json)))
-  (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-    (delete cb-client uuid)))
+           (POST base-uri {:keys [cb-client body]}
+                 (let [json (u/body->json body)]
+                   (add cb-client json)))
+           (GET base-uri {:keys [cb-client body]}
+                (let [json (u/body->json body)]
+                  (query cb-client json)))
+           (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
+                (retrieve cb-client uuid))
+           (POST (str base-uri "/:uuid/:action") [uuid action :as {:keys [cb-client body]}]
+                 (let [json (u/body->json body)]
+                   (action cb-client uuid action json)))
+           (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
+                (let [json (u/body->json body)]
+                  (edit cb-client uuid json)))
+           (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
+                   (delete cb-client uuid)))

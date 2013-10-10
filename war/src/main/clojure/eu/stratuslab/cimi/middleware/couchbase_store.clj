@@ -2,7 +2,7 @@
   "Session store using Couchbase for storage.  The sessions will
    only live for the TTL (in seconds) given.  Reading or writing
    the session will update the expiration time."
-  (:require 
+  (:require
     [ring.middleware.session.store :refer [SessionStore]]
     [couchbase-clj.client :as cbc])
   (:import java.util.UUID))

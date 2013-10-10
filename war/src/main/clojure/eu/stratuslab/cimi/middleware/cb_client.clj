@@ -7,5 +7,5 @@
    request.  The client can be retrieved from the request with the
    :cb-client key."
   ([handler cb-client]
-    (fn [req]
-      (handler (assoc req :cb-client cb-client)))))
+   (fn [req]
+     (handler (assoc req :cb-client cb-client)))))

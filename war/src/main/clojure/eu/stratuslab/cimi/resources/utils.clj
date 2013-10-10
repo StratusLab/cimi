@@ -61,7 +61,7 @@
       (if (empty? errors)
         resource
         (throw (Exception. (str "resource does not satisfy defined schema\n"
-                             (str/join "\n" errors))))))))
+                                (str/join "\n" errors))))))))
 
 (defn get-resource
   "Gets the resource identified by its URI from Couchbase.  If the URI is nil,
@@ -80,11 +80,11 @@
    :href attribute itself is removed along with any common attributes."
   [cb-client v]
   (if (map? v)
-    (if-let [uri (:href v)]     
+    (if-let [uri (:href v)]
       (-> (get-resource cb-client uri)
-        (merge v)
-        (dissoc :href)
-        (strip-common-attrs))
+          (merge v)
+          (dissoc :href)
+          (strip-common-attrs))
       v)
     v))
 

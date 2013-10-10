@@ -3,7 +3,7 @@
         kerodon.test
         kerodon.core
         eu.stratuslab.authn.handler)
-  (:require 
+  (:require
     [compojure.core :refer :all]
     [eu.stratuslab.authn.ldap :as ldap]
     [cemerick.friend.credentials :as credentials]
@@ -39,38 +39,38 @@
   {:user-object-class "inetOrgPerson"
    :user-id-attr "uid"
    :user-base-dn server/users-dn
-   
+
    :role-base-dn server/groups-dn
    :role-object-class "groupOfUniqueNames"
    :role-member-attr "uniqueMember"
    :role-name-attr "cn"
-   
+
    :skip-bind? false
-   
+
    :ldap-connection-pool *conn*})
 
 (defroutes hello-world
-  (GET "/" []
-    "Hello World"))
+           (GET "/" []
+                "Hello World"))
 
 (defn get-workflow-list []
   [
-   ;; using fixed map for user information
-   (workflows/interactive-form
-     :credential-fn
-     (partial credentials/bcrypt-credential-fn users))
+    ;; using fixed map for user information
+    (workflows/interactive-form
+      :credential-fn
+      (partial credentials/bcrypt-credential-fn users))
 
-   ;; use authn against LDAP database
-   (workflows/interactive-form
-     :credential-fn
-     (partial ldap/ldap-credential-fn (get-ldap-params)))
-   ])
+    ;; use authn against LDAP database
+    (workflows/interactive-form
+      :credential-fn
+      (partial ldap/ldap-credential-fn (get-ldap-params)))
+    ])
 
 (defn- ldap-server
   "Start the LDAP server, fill data and stop it after all tests."
   [f]
   (server/start!)
-  
+
   (binding [*conn* (ldap-client/connect {:host {:port server/ldap-port}})]
     (try
       (ldap-client/add *conn* (:dn ldap-user) (:object ldap-user))
@@ -80,7 +80,7 @@
       (ldap-client/delete *conn* (:dn ldap-user))
       (catch Exception e))
     )
-  
+
   (server/stop!))
 
 (defn test-each-workflow
@@ -95,34 +95,34 @@
 
 (deftest anyone-can-view-frontpage
   (-> (session *app*)
-    (visit "/")
-    (has (text? "Hello World"))))
+      (visit "/")
+      (has (text? "Hello World"))))
 
 (deftest user-authentication
   (let [state (-> (session *app*)
-                (visit "/user")
-                (follow-redirect)
-                (fill-in "user" user-uid)
-                (fill-in "password" user-password)
-                (press "login"))]
+                  (visit "/user")
+                  (follow-redirect)
+                  (fill-in "user" user-uid)
+                  (fill-in "password" user-password)
+                  (press "login"))]
     (testing "user login"
-             (-> state
-               (follow-redirect)
-               (has (text? "Hello User!"))))
+      (-> state
+          (follow-redirect)
+          (has (text? "Hello User!"))))
     (testing "user logout"
-             (-> state
-               (visit "/logout")
-               (follow-redirect)
-               (visit "/user")
-               (has (status? 302))))))
+      (-> state
+          (visit "/logout")
+          (follow-redirect)
+          (visit "/user")
+          (has (status? 302))))))
 
 (deftest failed-login-shows-error
   (-> (session *app*)
-    (visit "/login")
-    (fill-in "user" user-uid)
-    (fill-in "password" "bad")
-    (press "login")
-    (follow-redirect)
-    (within [:#msg]
-      (has (text? "Login failed.")))
-    (has (value? "user" user-uid))))
+      (visit "/login")
+      (fill-in "user" user-uid)
+      (fill-in "password" "bad")
+      (press "login")
+      (follow-redirect)
+      (within [:#msg]
+              (has (text? "Login failed.")))
+      (has (value? "user" user-uid))))

@@ -74,23 +74,23 @@
    given ports"
   [port ssl-port]
   [
-   (ldap/connect {:host {:port port}})
-   (ldap/connect {:host {:address "localhost"
-                         :port port}
-                  :num-connections 4})
-   (ldap/connect {:host (str "localhost:" port)})
-   (ldap/connect {:ssl? true
-                  :host {:port ssl-port}})
-   (ldap/connect {:host {:port port}
-                  :connect-timeout 1000
-                  :timeout 5000})
-   (ldap/connect {:host [(str "localhost:" port)
-                         {:port ssl-port}]})
-   (ldap/connect {:host [(str "localhost:" ssl-port)
-                         {:port ssl-port}]
-                  :ssl? true
-                  :num-connections 5})  
-   ])
+    (ldap/connect {:host {:port port}})
+    (ldap/connect {:host {:address "localhost"
+                          :port port}
+                   :num-connections 4})
+    (ldap/connect {:host (str "localhost:" port)})
+    (ldap/connect {:ssl? true
+                   :host {:port ssl-port}})
+    (ldap/connect {:host {:port port}
+                   :connect-timeout 1000
+                   :timeout 5000})
+    (ldap/connect {:host [(str "localhost:" port)
+                          {:port ssl-port}]})
+    (ldap/connect {:host [(str "localhost:" ssl-port)
+                          {:port ssl-port}]
+                   :ssl? true
+                   :num-connections 5})
+    ])
 
 
 (defn- test-server
@@ -119,7 +119,7 @@
       (try
         (ldap/delete *conn* (:dn user-x*))
         (ldap/delete *conn* (:dn user-y*))
-        
+
         (ldap/delete *conn* (:dn group-x*))
         (ldap/delete *conn* (:dn group-y*))
         (ldap/delete *conn* (:dn group-xy*))
@@ -197,12 +197,12 @@
             params {:user-object-class "inetOrgPerson"
                     :user-id-attr "uid"
                     :user-base-dn server/users-dn
-                    
+
                     :role-base-dn server/groups-dn
                     :role-object-class "groupOfUniqueNames"
                     :role-member-attr "uniqueMember"
                     :role-name-attr "cn"
-                    
+
                     :username username
                     :cemerick.friend/workflow :form}
 
@@ -218,12 +218,12 @@
             params {:user-object-class "inetOrgPerson"
                     :user-id-attr "uid"
                     :user-base-dn server/users-dn
-                    
+
                     :role-base-dn server/groups-dn
                     :role-object-class "groupOfUniqueNames"
                     :role-member-attr "uniqueMember"
                     :role-name-attr "cn"
-                    
+
                     :username username
                     :cemerick.friend/workflow :form}]
         (is (nil? (authn-map *conn* params)))))))
@@ -236,20 +236,20 @@
             ldap-params {:user-object-class "inetOrgPerson"
                          :user-id-attr "uid"
                          :user-base-dn server/users-dn
-                         
+
                          :role-base-dn server/groups-dn
                          :role-object-class "groupOfUniqueNames"
                          :role-member-attr "uniqueMember"
                          :role-name-attr "cn"
-                                                  
+
                          :skip-bind? false
-                    
+
                          :ldap-connection-pool *conn*}
 
             cred-map {:username username
                       :password password
                       :cemerick.friend/workflow :form}
-            
+
             correct {:identity username
                      :roles (get groups user)
                      :cemerick.friend/workflow :form}]
@@ -262,14 +262,14 @@
             ldap-params {:user-object-class "inetOrgPerson"
                          :user-id-attr "uid"
                          :user-base-dn server/users-dn
-                         
+
                          :role-base-dn server/groups-dn
                          :role-object-class "groupOfUniqueNames"
                          :role-member-attr "uniqueMember"
                          :role-name-attr "cn"
-                         
+
                          :skip-bind? true
-                         
+
                          :ldap-connection-pool *conn*}
 
             cred-map {:username username

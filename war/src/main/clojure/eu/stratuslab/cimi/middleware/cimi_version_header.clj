@@ -45,7 +45,7 @@
   the major, minor, and update values of the versions.  Invalid
   versions are ignored.  Returns nil on a nil input."
   [s]
-  (if s 
+  (if s
     (remove nil? (map parse-version (str/split s #"\s*,\s*")))))
 
 (defn select-spec-version

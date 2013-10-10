@@ -6,6 +6,7 @@
     [clj-schema.simple-schemas :refer :all]
     [clj-schema.validation :refer :all]
     [clojure.test :refer :all]
+    [clojure.pprint :refer [pprint]]
     [peridot.core :refer :all]))
 
 (use-fixtures :each t/flush-bucket-fixture)
@@ -18,43 +19,31 @@
 (deftest lifecycle
 
   ;; retrieve cloud entry point anonymously
-  (let [results (-> (session (ring-app))
-                  (request "/"))
-        response (:response results)
-        body (:body response)
-        request (:request results)]
-    (is (= (:status response) 200))
-    (is (= (:resourceURI body) type-uri)))
-  
+  (-> (session (ring-app))
+      (request "/")
+      (t/is-status 200)
+      (t/is-resource-uri type-uri))
+
   ;; update the entry, verify updated doc is returned
   ;; must be done as administrator
-  (let [results (-> (session (ring-app))
-                  (authorize "root" "admin_password")
-                  (content-type "application/json")
-                  (request "/"
-                    :request-method :put
-                    :body "{\"name\": \"dummy\"}"))
-        response (:response results)
-        body (:body response)
-        request (:request results)]
-    (println request)
-    (println response)
-    (is (= (:status response) 200))
-    (is (= (:resourceURI body) type-uri))
-    (is (= (:name body) "dummy")))
-  
-  ;; verify that subsequent reads find the right data
-  (let [results (-> (session (ring-app))
-                  (request "/"))
-        response (:response results)
-        body (:body response)
-        request (:request results)]
-    (is (= (:status response) 200))
-    (is (= (:resourceURI body) type-uri))
-    (is (= (:name body) "dummy")))
+  (-> (session (ring-app))
+      (authorize "root" "admin_password")
+      (content-type "application/json")
+      (request "/"
+               :request-method :put
+               :body "{\"name\": \"dummy\"}")
+      (t/is-status 200)
+      (t/is-resource-uri type-uri)
+      (t/is-key-value :name "dummy"))
 
-  ;; verify that the delete fails
-  (let [results (-> (session (ring-app))
-                  (request "/" :request-method :delete))
-        response (:response results)]
-    (is (nil? response))))
+  ;; verify that subsequent reads find the right data
+  (-> (session (ring-app))
+      (request "/")
+      (t/is-status 200)
+      (t/is-resource-uri type-uri)
+      (t/is-key-value :name "dummy"))
+
+  ;; verify that delete action is not treated
+  (-> (session (ring-app))
+      (request "/" :request-method :delete)
+      (t/is-nil-response)))

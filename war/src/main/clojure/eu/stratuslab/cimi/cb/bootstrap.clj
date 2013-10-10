@@ -3,7 +3,7 @@
    in the Couchbase database for minimal operation of the CIMI 
    service."
 
-  (:require 
+  (:require
     [clojure.tools.logging :as log]
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
     [eu.stratuslab.cimi.cb.views :as views]))
@@ -21,7 +21,7 @@
    if not, it will create one.  The CloudEntryPoint is the core
    resource of the service and must exist."
   [cb-client]
-  (try 
+  (try
     (cep/add cb-client)
     (log/info "created CloudEntryPoint")
     (catch Exception e

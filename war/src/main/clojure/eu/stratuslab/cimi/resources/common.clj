@@ -19,19 +19,19 @@
     (assoc m :add "add" :edit "edit" :delete "delete")))
 
 (def-map-schema ^{:doc "Link to another resource."} ResourceLink
-  [[:href] NonEmptyString])
+                [[:href] NonEmptyString])
 
 (def-map-schema Operation
-  [[:rel] (set (vals action-uri))
-   [:href] NonEmptyString])
+                [[:rel] (set (vals action-uri))
+                 [:href] NonEmptyString])
 
 (def-seq-schema Operations
-  (constraints (fn [s] (pos? (count s))))
-  [Operation])
+                (constraints (fn [s] (pos? (count s))))
+                [Operation])
 
 (def-map-schema Properties
-  (constraints (fn [m] (pos? (count (keys m)))))
-  [[(wild NonEmptyString)] String])
+                (constraints (fn [m] (pos? (count (keys m)))))
+                [[(wild NonEmptyString)] String])
 
 ;;
 ;; These attributes are common to all resources except the 
@@ -40,14 +40,14 @@
 ;; :operations will be replaced by the service-generated values.
 ;;
 (def-map-schema CommonAttrs
-  [[:id] NonEmptyString
-   [:resourceURI] NonEmptyString
-   (optional-path [:name]) NonEmptyString
-   (optional-path [:description]) NonEmptyString
-   [:created] NonEmptyString
-   [:updated] NonEmptyString
-   (optional-path [:properties]) Properties
-   (optional-path [:operations]) Operations])
+                [[:id] NonEmptyString
+                 [:resourceURI] NonEmptyString
+                 (optional-path [:name]) NonEmptyString
+                 (optional-path [:description]) NonEmptyString
+                 [:created] NonEmptyString
+                 [:updated] NonEmptyString
+                 (optional-path [:properties]) Properties
+                 (optional-path [:operations]) Operations])
 
 ;;
 ;; These are the common attributes for create resources.
@@ -55,10 +55,10 @@
 ;; ones other than :name and :description will be ignored.
 ;;
 (def-map-schema CreateAttrs
-  [[:resourceURI] NonEmptyString
-   (optional-path [:name]) NonEmptyString
-   (optional-path [:description]) NonEmptyString
-   (optional-path [:created]) NonEmptyString
-   (optional-path [:updated]) NonEmptyString
-   (optional-path [:properties]) Properties
-   (optional-path [:operations]) Operations])
+                [[:resourceURI] NonEmptyString
+                 (optional-path [:name]) NonEmptyString
+                 (optional-path [:description]) NonEmptyString
+                 (optional-path [:created]) NonEmptyString
+                 (optional-path [:updated]) NonEmptyString
+                 (optional-path [:properties]) Properties
+                 (optional-path [:operations]) Operations])

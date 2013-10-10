@@ -1,7 +1,7 @@
 (ns eu.stratuslab.cimi.middleware.servlet-request
   "Middleware for pulling out servlet paths from the request and using
 these to create the base URL of the application."
-  (:require 
+  (:require
     [clojure.tools.logging :as log]))
 
 (defn wrap-servlet-paths
