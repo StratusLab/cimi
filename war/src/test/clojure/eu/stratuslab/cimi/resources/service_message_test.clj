@@ -19,57 +19,53 @@
    :description "description"})
 
 (deftest lifecycle
-  ;; create resource
-  (let [resp (add t/*test-cb-client* valid-entry)]
-    (is (rresp/response? resp))
-    (is (= 201 (:status resp)))
-    (let [headers (:headers resp)]
-      (is headers)
-      (let [uri (get headers "Location")]
-        (is uri)
 
-        ;; get uri and retrieve resource
-        (let [uuid (second (re-matches #"ServiceMessage/(.*)" uri))]
-          (is uuid)
-          (let [resp (retrieve t/*test-cb-client* uuid)]
-            (is (rresp/response? resp))
-            (is (= 200 (:status resp)))
-            (let [body (:body resp)]
-              (is body)
-              (is (= body (merge body valid-entry))))
+  ;; add a new entry
+  (let [uri (-> (session (ring-app))
+                (request base-uri
+                         :request-method :post
+                         :body (json/write-str valid-entry))
+                (t/is-status 201)
+                (t/location))
+        abs-uri (str "/" uri)]
 
-            ;; ensure resource is found by query
-            (let [resp (query t/*test-cb-client*)]
-              (is (rresp/response? resp))
-              (is (= 200 (:status resp)))
-              (let [body (:body resp)
-                    resource-uri (:resourceURI body)
-                    entries (:serviceMessages body)
-                    ids (set (map :id entries))]
-                (is (= collection-type-uri resource-uri))
-                (is (pos? (:count body)))
-                (is (= (count entries) (:count body)))
-                (is (ids uri))))
+    (is uri)
 
-            ;; update the resource
-            (let [current (retrieve t/*test-cb-client* uuid)
-                  updated (assoc (:body current) :name "NEW TITLE")
-                  updated-resp (edit t/*test-cb-client* uuid updated)]
-              (is (rresp/response? updated-resp))
-              (is (= 200 (:status updated-resp))))
+    ;; verify that the new entry is accessible
+    (-> (session (ring-app))
+        (request abs-uri)
+        (t/is-status 200)
+        (t/does-body-contain valid-entry))
 
-            ;; get the resource again and make sure it's updated
-            (let [resp (retrieve t/*test-cb-client* uuid)]
-              (is (rresp/response? resp))
-              (is (= 200 (:status resp)))
-              (is (= "NEW TITLE" (:name (:body resp)))))
+    ;; query to see that entry is listed
+    (let [entries (-> (session (ring-app))
+                      (request base-uri)
+                      (t/is-resource-uri collection-type-uri)
+                      (t/is-count pos?)
+                      (t/entries :serviceMessages))]
+      (is ((set (map :id entries)) uri)))
 
-            ;; delete the resource
-            (let [resp (delete t/*test-cb-client* uuid)]
-              (is (rresp/response? resp))
-              (is (= 200 (:status resp))))
+    ;; update entry with new title
+    (-> (session (ring-app))
+        (request abs-uri
+                 :request-method :put
+                 :body (json/write-str {:name "new title"}))
+        (t/is-status 200))
 
-            ;; ensure that resource is gone
-            (let [resp (retrieve t/*test-cb-client* uuid)]
-              (is (rresp/response? resp))
-              (is (= 404 (:status resp))))))))))
+    ;; check that update was done
+    (-> (session (ring-app))
+        (request abs-uri)
+        (t/is-status 200)
+        (t/is-key-value :name "new title")
+        (t/is-key-value :description "description"))
+
+    ;; delete the entry
+    (-> (session (ring-app))
+        (request abs-uri
+                 :request-method :delete)
+        (t/is-status 200))
+
+    ;; ensure that it really is gone
+    (-> (session (ring-app))
+        (request abs-uri)
+        (t/is-status 404))))

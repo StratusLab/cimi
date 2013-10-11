@@ -39,6 +39,9 @@
 (defn is-resource-uri [m type-uri]
   (is-key-value m :resourceURI type-uri))
 
+(defn is-id [m id]
+  (is-key-value m :id id))
+
 (defn is-count [m f]
   (let [count (get-in m [:response :body :count])]
     (is (f count))
@@ -63,7 +66,9 @@
   m)
 
 (defn location [m]
-  (get-in m [:response :headers "Location"]))
+  (let [uri (get-in m [:response :headers "Location"])]
+    (is uri)
+    uri))
 
 (defn entries [m k]
   (get-in m [:response :body k]))

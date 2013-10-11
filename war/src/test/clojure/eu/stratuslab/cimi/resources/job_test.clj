@@ -2,6 +2,7 @@
   (:require
     [eu.stratuslab.cimi.resources.job :refer :all]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
+    [clojure.data.json :as json]
     [clojure.test :refer :all]
     [peridot.core :refer :all]))
 
@@ -24,3 +25,55 @@
    :parentJob "Job/uuid-1"
    :nestedJobs ["Job/uuid-2"]})
 
+(deftest lifecycle
+
+  ;; add a new entry
+  (let [uri (-> (session (ring-app))
+                (request base-uri
+                         :request-method :post
+                         :body (json/write-str valid-entry))
+                (t/is-status 201)
+                (t/location))
+        abs-uri (str "/" uri)]
+
+    (is uri)
+
+    ;; verify that the new entry is accessible
+    ;; timeOfStatusChange is taken out of comparison because it is set by service
+    (-> (session (ring-app))
+        (request abs-uri)
+        (t/is-status 200)
+        (t/does-body-contain (dissoc valid-entry :timeOfStatusChange)))
+
+    ;; query to see that entry is listed
+    (let [entries (-> (session (ring-app))
+                      (request base-uri)
+                      (t/is-resource-uri collection-type-uri)
+                      (t/is-count pos?)
+                      (t/entries :jobs))]
+      (is ((set (map :id entries)) uri)))
+
+    ;; update entry with new title
+    (-> (session (ring-app))
+        (request abs-uri
+                 :request-method :put
+                 :body (json/write-str {:state "RUNNING"}))
+        (t/is-status 200))
+
+    ;; check that update was done
+    (-> (session (ring-app))
+        (request abs-uri)
+        (t/is-status 200)
+        (t/is-key-value :state "RUNNING")
+        (t/is-key-value :targetResource "Machine/uuid-1"))
+
+    ;; delete the entry
+    (-> (session (ring-app))
+        (request abs-uri
+                 :request-method :delete)
+        (t/is-status 200))
+
+    ;; ensure that it really is gone
+    (-> (session (ring-app))
+        (request abs-uri)
+        (t/is-status 404))))

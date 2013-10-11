@@ -27,94 +27,78 @@
 (deftest test-crud-workflow
 
   ;; create
-  (let [results (-> (session (ring-app))
-                    (request base-uri :request-method :post
-                             :body (json/write-str valid-entry)))
-        response (:response results)
-        resource-uri (get-in response [:headers "Location"])
-        resource-url (str "/" resource-uri)]
-    (is (= 201 (:status response)))
-    (is (empty? (:body response)))
-    (is (not (empty? resource-uri)))
+  (let [uri (-> (session (ring-app))
+                (request base-uri :request-method :post
+                         :body (json/write-str valid-entry))
+                (t/is-status 201)
+                (t/location))
+        abs-uri (str "/" uri)]
 
-    ;; read    
-    (let [results (-> (session (ring-app))
-                      (request resource-url))
-          response (:response results)]
-      (is (= 200 (:status response)))
-      (is (= resource-uri (get-in response [:body :id]))))
+    ;; read
+    (-> (session (ring-app))
+        (request abs-uri)
+        (t/is-status 200)
+        (t/is-id uri))
 
-    ;; update    
-    (let [results (-> (session (ring-app))
-                      (request resource-url :request-method :put
-                               :body (json/write-str {:name "OK"})))
-          response (:response results)]
-      (is (= 200 (:status response)))
-      (is (= "OK" (:name (:body response)))))
+    ;; update
+    (-> (session (ring-app))
+        (request abs-uri
+                 :request-method :put
+                 :body (json/write-str {:name "OK"}))
+        (t/is-status 200)
+        (t/is-key-value :name "OK"))
 
-    ;; re-read for updated entry    
-    (let [results (-> (session (ring-app))
-                      (request resource-url))
-          response (:response results)]
-      (is (= 200 (:status response)))
-      (is (= resource-uri (get-in response [:body :id])))
-      (is (= "OK" (get-in response [:body :name]))))
+    ;; re-read for updated entry
+    (-> (session (ring-app))
+        (request abs-uri)
+        (t/is-status 200)
+        (t/is-id uri)
+        (t/is-key-value :name "OK"))
 
     ;; delete
-    (let [results (-> (session (ring-app))
-                      (request resource-url :request-method :delete))
-          response (:response results)]
-      (is (= 200 (:status response)))
-      (is (empty? (:body response))))
+    (-> (session (ring-app))
+        (request abs-uri
+                 :request-method :delete)
+        (t/is-status 200))
 
     ;; re-read to ensure entry is gone
-    (let [results (-> (session (ring-app))
-                      (request resource-url))
-          response (:response results)]
-      (is (= 404 (:status response)))
-      (is (empty? (:body response))))))
+    (-> (session (ring-app))
+        (request abs-uri)
+        (t/is-status 404))))
 
 
 (deftest read-non-existing-resource-fails
-  (let [resource-uri (str base-uri "/" (utils/create-uuid))
-        results (-> (session (ring-app))
-                    (request resource-uri))
-        response (:response results)]
-    (is (= 404 (:status response)))
-    (is (empty? (:body response)))))
-
+  (let [resource-uri (str base-uri "/" (utils/create-uuid))]
+    (-> (session (ring-app))
+        (request resource-uri)
+        (t/is-status 404))))
 
 (deftest delete-non-existing-resource-fails
-  (let [resource-uri (str base-uri "/" (utils/create-uuid))
-        results (-> (session (ring-app))
-                    (request resource-uri :request-method :delete))
-        response (:response results)]
-    (is (= 404 (:status response)))
-    (is (empty? (:body response)))))
-
+  (let [resource-uri (str base-uri "/" (utils/create-uuid))]
+    (-> (session (ring-app))
+        (request resource-uri
+                 :request-method :delete)
+        (t/is-status 404))))
 
 (deftest update-non-existing-resource-fails
-  (let [resource-uri (str base-uri "/" (utils/create-uuid))
-        results (-> (session (ring-app))
-                    (request resource-uri :request-method :put
-                             :body (json/write-str {:name "OK"})))
-        response (:response results)]
-    (is (= 404 (:status response)))
-    (is (empty? (:body response)))))
-
+  (let [resource-uri (str base-uri "/" (utils/create-uuid))]
+    (-> (session (ring-app))
+        (request resource-uri
+                 :request-method :put
+                 :body (json/write-str {:name "OK"}))
+        (t/is-status 404))))
 
 (defn create-with-rest [name]
-  (let [results (-> (session (ring-app))
-                    (request base-uri :request-method :post
-                             :body (json/write-str (assoc valid-entry :name name))))
-        response (:response results)]
-    (get-in response [:headers "Location"])))
+  (-> (session (ring-app))
+      (request base-uri
+               :request-method :post
+               :body (json/write-str (assoc valid-entry :name name)))
+      (t/location)))
 
 (defn get-with-rest [resource-uri]
-  (let [results (-> (session (ring-app))
-                    (request (str "/" resource-uri)))
-        response (:response results)]
-    (:body response)))
+  (-> (session (ring-app))
+      (request (str "/" resource-uri))
+      (get-in [:response :body])))
 
 (deftest test-queries
 
@@ -124,28 +108,27 @@
         m (zipmap keys values)
         bodies (map get-with-rest values)
         names (map :name bodies)]
+
     (is (= keys names))
 
     ;; ensure that all of the entries are present
-    (let [results (-> (session (ring-app))
-                      (request base-uri))
-          response (:response results)
-          body (:body response)
-          docs (:machineConfigurations body)]
-      (is (= collection-type-uri (:resourceURI body)))
-      (is (= base-uri (:id body)))
-      (is (= (count keys) (:count body)))
-      (is (= (count keys) (count docs)))
+    (let [docs (-> (session (ring-app))
+                   (request base-uri)
+                   (t/is-status 200)
+                   (t/is-resource-uri collection-type-uri)
+                   (t/is-id base-uri)
+                   (t/is-count (partial = (count keys)))
+                   (get-in [:response :body :machineConfigurations]))]
       (is (= (set keys) (set (map :name docs)))))
 
     ;; limit to half the entries and make sure only a subset is returned
     (let [limit 5
-          results (-> (session (ring-app))
-                      (request base-uri :body (json/write-str {:limit limit})))
-          response (:response results)
-          body (:body response)
-          docs (:machineConfigurations body)]
-      (is (= collection-type-uri (:resourceURI body)))
-      (is (= base-uri (:id body)))
-      (is (= limit (:count body)))
+          docs (-> (session (ring-app))
+                   (request base-uri
+                            :body (json/write-str {:limit limit}))
+                   (t/is-status 200)
+                   (t/is-resource-uri collection-type-uri)
+                   (t/is-id base-uri)
+                   (t/is-count (partial = limit))
+                   (get-in [:response :body :machineConfigurations]))]
       (is (= limit (count docs))))))
