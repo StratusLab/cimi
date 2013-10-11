@@ -23,3 +23,4 @@
    :timeOfStatusChange "20130825T10:00:00.00Z"
    :parentJob "Job/uuid-1"
    :nestedJobs ["Job/uuid-2"]})
+

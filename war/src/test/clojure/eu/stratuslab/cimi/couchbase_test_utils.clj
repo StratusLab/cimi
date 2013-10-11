@@ -56,6 +56,12 @@
   (let [body (get-in m [:response :body])]
     (is (= (merge body v) body))))
 
+(defn has-job [m]
+  (let [job-uri (get-in m [:response :headers "CIMI-Job-URI"])]
+    (is job-uri)
+    (is (.startsWith job-uri "Job/")))
+  m)
+
 (defn location [m]
   (get-in m [:response :headers "Location"]))
 

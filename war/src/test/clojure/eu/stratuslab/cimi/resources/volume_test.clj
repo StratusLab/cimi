@@ -33,46 +33,37 @@
                                   :bootable true}}})
 
 (deftest lifecycle
-  ;; create resource
-  (let [resp (add t/*test-cb-client* valid-template)]
-    (is (rresp/response? resp))
-    (is (= 201 (:status resp)))
-    (let [headers (:headers resp)]
-      (is headers)
-      (let [uri (get headers "Location")
-            job-uri (get headers "CIMI-Job-URI")]
-        (is uri)
-        (is job-uri)
-        (is (.startsWith job-uri "Job/"))
 
-        (let [uuid (second (re-matches #"Volume/(.*)" uri))]
-          (is uuid)
-          (let [resp (retrieve t/*test-cb-client* uuid)]
-            (is (rresp/response? resp))
-            (is (= 200 (:status resp)))
-            (let [body (:body resp)]
-              (is body))
+  ;; create a volume from a template
+  (let [uri (-> (session (ring-app))
+                (request base-uri
+                         :request-method :post
+                         :body (json/write-str valid-template))
+                (t/is-status 201)
+                (t/has-job)
+                (t/location))
+        abs-uri (str "/" uri)]
 
-            ;; ensure resource is found by query
-            (let [resp (query t/*test-cb-client*)]
-              (is (rresp/response? resp))
-              (is (= 200 (:status resp)))
-              (let [body (:body resp)
-                    resource-uri (:resourceURI body)
-                    entries (:volumes body)
-                    ids (set (map :id entries))]
-                (is (= collection-type-uri resource-uri))
-                (is (pos? (:count body)))
-                (is (= (count entries) (:count body)))
-                (is (ids uri))))
+   (is uri)
 
-            ;; delete the resource
-            (let [resp (delete t/*test-cb-client* uuid)]
-              (is (rresp/response? resp))
-              (is (= 202 (:status resp))))
+   ;; check that volume was created
+   (-> (session (ring-app))
+       (request abs-uri)
+       (t/is-status 200)
+       (t/is-key-value :name "template")
+       (t/is-key-value :description "dummy template"))
 
-            (let [resp (delete t/*test-cb-client* uuid)
-                  job-uri (get-in resp [:headers "CIMI-Job-URI"])]
-              (is (rresp/response? resp))
-              (is (= 202 (:status resp)))
-              (is (.startsWith job-uri "Job/")))))))))
+   ;; query to see that entry is listed
+   (let [entries (-> (session (ring-app))
+                     (request base-uri)
+                     (t/is-resource-uri collection-type-uri)
+                     (t/is-count pos?)
+                     (t/entries :volumes))]
+     (is ((set (map :id entries)) uri)))
+
+   ;; delete the entry -- asynchronous
+   (-> (session (ring-app))
+       (request abs-uri
+                :request-method :delete)
+       (t/is-status 202)
+       (t/has-job))))

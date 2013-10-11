@@ -163,8 +163,7 @@
                   (properties-map props))]
     (if-let [job-resp (add cb-client job-map)]
       (let [job-uri (get-in job-resp [:headers "Location"])]
-        (-> nil
-            (rresp/response)
+        (-> (rresp/response nil)
             (rresp/status 202)
             (rresp/header "CIMI-Job-URI" job-uri)))
       (-> (str "cannot create job [" action ", " uri "]")
@@ -172,12 +171,20 @@
           (rresp/status 500)))))
 
 (defroutes resource-routes
+
+           ;;
+           ;; collection
+           ;;
            (POST base-uri {:keys [cb-client body]}
                  (let [json (u/body->json body)]
                    (add cb-client json)))
            (GET base-uri {:keys [cb-client body]}
                 (let [json (u/body->json body)]
                   (query cb-client json)))
+
+           ;;
+           ;; resource
+           ;;
            (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
                 (retrieve cb-client uuid))
            (POST (str base-uri "/:uuid/:action") [uuid action :as {:keys [cb-client body]}]
