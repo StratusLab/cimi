@@ -4,7 +4,7 @@
   (:require
     [clojure.tools.logging :as log]
     [couchbase-clj.client :as cbc]
-    [eu.stratuslab.cimi.resources.common :as common]
+    [eu.stratuslab.cimi.resources.schema :as schema]
     [eu.stratuslab.cimi.resources.utils :as u]
     [eu.stratuslab.cimi.resources.machine-configuration :as mc]
     [eu.stratuslab.cimi.resources.job :as job]
@@ -16,13 +16,7 @@
 
     [compojure.core :refer :all]
     [ring.util.response :as r]
-    [clj-schema.schema :refer :all]
-    [clj-schema.simple-schemas :refer :all]
-    [clj-schema.validation :refer :all]
-
-    [cemerick.friend :as friend])
-  (:import
-    [java.io InputStreamReader]))
+    [cemerick.friend :as friend]))
 
 (def ^:const resource-type "CloudEntryPoint")
 
@@ -39,46 +33,13 @@
    :volumeConfigs {:href volume-configuration/resource-type}
    :volumeImages {:href volume-image/resource-type}})
 
-(def-map-schema CloudEntryPoint
-                common/CommonAttrs
-                [[:baseURI] NonEmptyString
-                 (optional-path [:resourceMetadata]) common/ResourceLink
-                 (optional-path [:systems]) common/ResourceLink
-                 (optional-path [:systemTemplates]) common/ResourceLink
-                 (optional-path [:machines]) common/ResourceLink
-                 (optional-path [:machineTemplates]) common/ResourceLink
-                 (optional-path [:machineConfigs]) common/ResourceLink
-                 (optional-path [:machineImages]) common/ResourceLink
-                 (optional-path [:credentials]) common/ResourceLink
-                 (optional-path [:credentialTemplates]) common/ResourceLink
-                 (optional-path [:volumes]) common/ResourceLink
-                 (optional-path [:volumeTemplates]) common/ResourceLink
-                 (optional-path [:volumeConfigs]) common/ResourceLink
-                 (optional-path [:volumeImages]) common/ResourceLink
-                 (optional-path [:networks]) common/ResourceLink
-                 (optional-path [:networkTemplates]) common/ResourceLink
-                 (optional-path [:networkConfigs]) common/ResourceLink
-                 (optional-path [:networkPorts]) common/ResourceLink
-                 (optional-path [:networkPortTemplates]) common/ResourceLink
-                 (optional-path [:networkPortConfigs]) common/ResourceLink
-                 (optional-path [:addresses]) common/ResourceLink
-                 (optional-path [:addressTemplates]) common/ResourceLink
-                 (optional-path [:forwardingGroups]) common/ResourceLink
-                 (optional-path [:forwardingGroupTemplates]) common/ResourceLink
-                 (optional-path [:jobs]) common/ResourceLink
-                 (optional-path [:meters]) common/ResourceLink
-                 (optional-path [:meterTemplates]) common/ResourceLink
-                 (optional-path [:meterConfigs]) common/ResourceLink
-                 (optional-path [:eventLogs]) common/ResourceLink
-                 (optional-path [:eventLogTemplates]) common/ResourceLink])
-
-(def validate (u/create-validation-fn CloudEntryPoint))
+(def validate (u/create-validation-fn schema/CloudEntryPoint))
 
 (defn add-rops
   "Adds the resource operations to the given resource."
   [resource]
   (if (friend/authorized? #{:eu.stratuslab.cimi.authn/admin} friend/*identity*)
-    (let [ops [{:rel (:edit common/action-uri) :href base-uri}]]
+    (let [ops [{:rel (:edit schema/action-uri) :href base-uri}]]
       (assoc resource :operations ops))
     resource))
 

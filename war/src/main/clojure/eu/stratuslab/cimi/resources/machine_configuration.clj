@@ -4,17 +4,11 @@
     [clojure.string :as str]
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
-    [eu.stratuslab.cimi.resources.common :as common]
+    [eu.stratuslab.cimi.resources.schema :as schema]
     [eu.stratuslab.cimi.resources.utils :as utils]
     [eu.stratuslab.cimi.cb.views :as views]
     [compojure.core :refer :all]
-    [compojure.route :as route]
-    [compojure.handler :as handler]
-    [compojure.response :as response]
     [ring.util.response :as rresp]
-    [clj-schema.schema :refer :all]
-    [clj-schema.simple-schemas :refer :all]
-    [clj-schema.validation :refer :all]
     [clojure.tools.logging :as log]))
 
 (def ^:const resource-type "MachineConfiguration")
@@ -27,24 +21,7 @@
 
 (def ^:const base-uri (str "/" resource-type))
 
-(def-map-schema Disk
-                [[:capacity] PosIntegral
-                 [:format] NonEmptyString
-                 (optional-path [:initialLocation]) NonEmptyString])
-
-(def-seq-schema Disks
-                (constraints (fn [s] (pos? (count s))))
-                [Disk])
-
-(def-map-schema MachineConfiguration
-                common/CommonAttrs
-                [[:cpu] PosIntegral
-                 [:memory] PosIntegral
-                 [:cpuArch] #{"68000" "Alpha" "ARM" "Itanium" "MIPS" "PA_RISC"
-                              "POWER" "PowerPC" "x86" "x86_64" "zArchitecture", "SPARC"}
-                 (optional-path [:disks]) Disks])
-
-(def validate (utils/create-validation-fn MachineConfiguration))
+(def validate (utils/create-validation-fn schema/MachineConfiguration))
 
 (defn uuid->uri
   "Convert a uuid into the URI for a MachineConfiguration resource.
@@ -55,15 +32,15 @@
 (defn add-cops
   "Adds the collection operations to the given resource."
   [resource]
-  (let [ops [{:rel (:add common/action-uri) :href base-uri}]]
+  (let [ops [{:rel (:add schema/action-uri) :href base-uri}]]
     (assoc resource :operations ops)))
 
 (defn add-rops
   "Adds the resource operations to the given resource."
   [resource]
   (let [href (:id resource)
-        ops [{:rel (:edit common/action-uri) :href href}
-             {:rel (:delete common/action-uri) :href href}]]
+        ops [{:rel (:edit schema/action-uri) :href href}
+             {:rel (:delete schema/action-uri) :href href}]]
     (assoc resource :operations ops)))
 
 (defn add

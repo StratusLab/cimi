@@ -3,7 +3,7 @@
   (:require
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
-    [eu.stratuslab.cimi.resources.common :as common]
+    [eu.stratuslab.cimi.resources.schema :as schema]
     [eu.stratuslab.cimi.resources.utils :as utils]
     [eu.stratuslab.cimi.resources.job :as job]
     [eu.stratuslab.cimi.cb.views :as views]
@@ -12,9 +12,6 @@
     [compojure.handler :as handler]
     [compojure.response :as response]
     [ring.util.response :as rresp]
-    [clj-schema.schema :refer :all]
-    [clj-schema.simple-schemas :refer :all]
-    [clj-schema.validation :refer :all]
     [clojure.tools.logging :as log]))
 
 (def ^:const resource-type "VolumeConfiguration")
@@ -27,18 +24,7 @@
 
 (def ^:const base-uri (str "/" resource-type))
 
-(def-map-schema VolumeConfigurationAttrs
-                [(optional-path [:type]) NonEmptyString
-                 (optional-path [:format]) NonEmptyString
-                 (optional-path [:capacity]) NonNegIntegral])
-
-(def-map-schema VolumeConfiguration
-                common/CommonAttrs
-                [(optional-path [:type]) NonEmptyString
-                 (optional-path [:format]) NonEmptyString
-                 [:capacity] NonNegIntegral])
-
-(def validate (utils/create-validation-fn VolumeConfiguration))
+(def validate (utils/create-validation-fn schema/VolumeConfiguration))
 
 (defn uuid->uri
   "Convert a uuid into the URI for a VolumeConfiguration resource.
@@ -49,15 +35,15 @@
 (defn add-cops
   "Adds the collection operations to the given resource."
   [resource]
-  (let [ops [{:rel (:add common/action-uri) :href base-uri}]]
+  (let [ops [{:rel (:add schema/action-uri) :href base-uri}]]
     (assoc resource :operations ops)))
 
 (defn add-rops
   "Adds the resource operations to the given resource."
   [resource]
   (let [href (:id resource)
-        ops [{:rel (:edit common/action-uri) :href href}
-             {:rel (:delete common/action-uri) :href href}]]
+        ops [{:rel (:edit schema/action-uri) :href href}
+             {:rel (:delete schema/action-uri) :href href}]]
     (assoc resource :operations ops)))
 
 (defn add

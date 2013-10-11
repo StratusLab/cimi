@@ -5,17 +5,11 @@
     [clojure.string :as str]
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
-    [eu.stratuslab.cimi.resources.common :as common]
+    [eu.stratuslab.cimi.resources.schema :as schema]
     [eu.stratuslab.cimi.resources.utils :as utils]
     [eu.stratuslab.cimi.cb.views :as views]
     [compojure.core :refer :all]
-    [compojure.route :as route]
-    [compojure.handler :as handler]
-    [compojure.response :as response]
     [ring.util.response :as rresp]
-    [clj-schema.schema :refer :all]
-    [clj-schema.simple-schemas :refer :all]
-    [clj-schema.validation :refer :all]
     [clojure.tools.logging :as log]))
 
 (def ^:const resource-type "Event")
@@ -28,43 +22,7 @@
 
 (def ^:const base-uri (str "/" resource-type))
 
-(def-map-schema StateContent
-                [[:resName] NonEmptyString
-                 [:resource] NonEmptyString
-                 [:resType] NonEmptyString
-                 [:state] NonEmptyString
-                 (optional-path [:previous]) NonEmptyString])
-
-(def-map-schema AlarmContent
-                [[:resName] NonEmptyString
-                 [:resource] NonEmptyString
-                 [:resType] NonEmptyString
-                 [:code] NonEmptyString
-                 (optional-path [:detail]) NonEmptyString])
-
-(def-map-schema ModelContent
-                [[:resName] NonEmptyString
-                 [:resource] NonEmptyString
-                 [:resType] NonEmptyString
-                 [:change] NonEmptyString
-                 (optional-path [:detail]) NonEmptyString])
-
-(def-map-schema AccessContent
-                [[:operation] NonEmptyString
-                 [:resource] NonEmptyString
-                 (optional-path [:detail]) NonEmptyString
-                 [:initiator] NonEmptyString])
-
-(def-map-schema Event
-                common/CommonAttrs
-                [[:timestamp] NonEmptyString
-                 [:type] NonEmptyString
-                 (optional-path [:content]) (or StateContent AlarmContent ModelContent AccessContent)
-                 [:outcome] #{"Pending" "Unknown" "Status" "Success" "Warning" "Failure"}
-                 [:severity] #{"critical" "high" "medium" "low"}
-                 (optional-path [:contact]) String])
-
-(def validate (utils/create-validation-fn Event))
+(def validate (utils/create-validation-fn schema/Event))
 
 (defn uuid->uri
   "Convert the uuid into a URI for the Event resource."
@@ -74,15 +32,15 @@
 (defn add-cops
   "Adds the collection operations to the given resource."
   [resource]
-  (let [ops [{:rel (:add common/action-uri) :href base-uri}]]
+  (let [ops [{:rel (:add schema/action-uri) :href base-uri}]]
     (assoc resource :operations ops)))
 
 (defn add-rops
   "Adds the resource operations to the given resource."
   [resource]
   (let [href (:id resource)
-        ops [{:rel (:edit common/action-uri) :href href}
-             {:rel (:delete common/action-uri) :href href}]]
+        ops [{:rel (:edit schema/action-uri) :href href}
+             {:rel (:delete schema/action-uri) :href href}]]
     (assoc resource :operations ops)))
 
 (defn add

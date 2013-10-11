@@ -20,17 +20,6 @@
   {:volumeConfig {:href "VolumeConfiguration/uuid"}
    :volumeImage {:href "VolumeImage/mkplaceid"}})
 
-(deftest test-volume-template-schema
-  (let [uri (uuid->uri (utils/create-uuid))
-        volume-template (assoc valid-entry
-                          :id uri
-                          :resourceURI type-uri
-                          :created "1964-08-25T10:00:00.0Z"
-                          :updated "1964-08-25T10:00:00.0Z")]
-    (is (empty? (validation-errors VolumeTemplate volume-template)))
-    (is (not (empty? (validation-errors VolumeTemplate (dissoc volume-template :volumeConfig)))))
-    (is (empty? (validation-errors VolumeTemplate (dissoc volume-template :volumeImage))))))
-
 (deftest lifecycle
 
   ;; add a new entry

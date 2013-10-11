@@ -18,19 +18,6 @@
   {:name "title"
    :description "description"})
 
-(deftest test-schema
-  (let [timestamp "1964-08-25T10:00:00.0Z"
-        uri (uuid->uri timestamp)
-        service-message {:id uri
-                         :resourceURI type-uri
-                         :created timestamp
-                         :updated timestamp
-                         :name "title"
-                         :description "description"}]
-    (is (empty? (validation-errors ServiceMessage service-message)))
-    (is (not (empty? (validation-errors ServiceMessage (dissoc service-message :name)))))
-    (is (not (empty? (validation-errors ServiceMessage (dissoc service-message :description)))))))
-
 (deftest lifecycle
   ;; create resource
   (let [resp (add t/*test-cb-client* valid-entry)]

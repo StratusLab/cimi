@@ -3,14 +3,11 @@
   (:require
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
-    [eu.stratuslab.cimi.resources.common :as c]
+    [eu.stratuslab.cimi.resources.schema :as schema]
     [eu.stratuslab.cimi.resources.utils :as u]
     [eu.stratuslab.cimi.cb.views :as views]
     [compojure.core :refer :all]
     [ring.util.response :as rresp]
-    [clj-schema.schema :refer :all]
-    [clj-schema.simple-schemas :refer :all]
-    [clj-schema.validation :refer :all]
     [clojure.walk :as w]
     [clojure.tools.logging :as log]))
 
@@ -24,20 +21,7 @@
 
 (def ^:const base-uri (str "/" resource-type))
 
-(def-map-schema Job
-                c/CommonAttrs
-                [(optional-path [:state]) #{"QUEUED" "RUNNING" "FAILED" "SUCCESS" "STOPPING" "STOPPED"}
-                 [:targetResource] NonEmptyString
-                 (optional-path [:affectedResources]) (sequence-of NonEmptyString)
-                 [:action] NonEmptyString
-                 (optional-path [:returnCode]) Integral
-                 (optional-path [:progress]) NonNegIntegral
-                 (optional-path [:statusMessage]) NonEmptyString
-                 (optional-path [:timeOfStatusChange]) NonEmptyString
-                 (optional-path [:parentJob]) NonEmptyString
-                 (optional-path [:nestedJobs]) (sequence-of NonEmptyString)])
-
-(def validate (u/create-validation-fn Job))
+(def validate (u/create-validation-fn schema/Job))
 
 (defn uuid->uri
   "Convert a uuid into the URI for a MachineConfiguration resource.
@@ -53,16 +37,16 @@
 (defn add-cops
   "Adds the collection operations to the given resource."
   [resource]
-  (let [ops [{:rel (:add c/action-uri) :href base-uri}]]
+  (let [ops [{:rel (:add schema/action-uri) :href base-uri}]]
     (assoc resource :operations ops)))
 
 (defn add-rops
   "Adds the resource operations to the given resource."
   [resource]
   (let [href (:id resource)
-        ops [{:rel (:edit c/action-uri) :href href}
-             {:rel (:delete c/action-uri) :href href}
-             {:rel (:stop c/action-uri) :href (str href "/stop")}]]
+        ops [{:rel (:edit schema/action-uri) :href href}
+             {:rel (:delete schema/action-uri) :href href}
+             {:rel (:stop schema/action-uri) :href (str href "/stop")}]]
     (assoc resource :operations ops)))
 
 (defn create

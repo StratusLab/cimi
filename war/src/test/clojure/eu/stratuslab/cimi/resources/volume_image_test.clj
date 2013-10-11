@@ -27,18 +27,6 @@
     (is (nil? (image-id {:imageLocation {:href "BAD"}})))
     (is (nil? (image-id {})))))
 
-(deftest test-volume-image-schema
-  (let [volume-image (assoc valid-entry
-                       :id "VolumeImage/10"
-                       :resourceURI type-uri
-                       :created "1964-08-25T10:00:00.0Z"
-                       :updated "1964-08-25T10:00:00.0Z")]
-    (is (empty? (validation-errors VolumeImage volume-image)))
-    (is (not (empty? (validation-errors VolumeImage (dissoc volume-image :state)))))
-    (is (not (empty? (validation-errors VolumeImage (dissoc volume-image :imageLocation)))))
-    (is (not (empty? (validation-errors VolumeImage (assoc volume-image :imageLocation {})))))
-    (is (not (empty? (validation-errors VolumeImage (dissoc volume-image :bootable)))))))
-
 (deftest lifecycle
   ;; create resource
   (let [resp (add t/*test-cb-client* valid-entry)]

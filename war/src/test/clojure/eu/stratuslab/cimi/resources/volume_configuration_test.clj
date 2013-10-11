@@ -21,18 +21,6 @@
    :format "ext4"
    :capacity 1000})
 
-(deftest test-volume-configuration-schema
-  (let [uri (uuid->uri (utils/create-uuid))
-        volume-configuration (assoc valid-entry
-                               :id uri
-                               :resourceURI type-uri
-                               :created "1964-08-25T10:00:00.0Z"
-                               :updated "1964-08-25T10:00:00.0Z")]
-    (is (empty? (validation-errors VolumeConfiguration volume-configuration)))
-    (is (empty? (validation-errors VolumeConfiguration (dissoc volume-configuration :type))))
-    (is (empty? (validation-errors VolumeConfiguration (dissoc volume-configuration :format))))
-    (is (not (empty? (validation-errors VolumeConfiguration (dissoc volume-configuration :capacity)))))))
-
 (deftest lifecycle
   ;; create resource
   (let [resp (add t/*test-cb-client* valid-entry)]

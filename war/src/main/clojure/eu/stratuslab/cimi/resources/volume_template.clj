@@ -6,9 +6,7 @@
   (:require
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
-    [eu.stratuslab.cimi.resources.volume-configuration :refer [VolumeConfigurationAttrs]]
-    [eu.stratuslab.cimi.resources.volume-image :refer [VolumeImageAttrs]]
-    [eu.stratuslab.cimi.resources.common :as common]
+    [eu.stratuslab.cimi.resources.schema :as schema]
     [eu.stratuslab.cimi.resources.utils :as utils]
     [eu.stratuslab.cimi.resources.job :as job]
     [eu.stratuslab.cimi.cb.views :as views]
@@ -17,9 +15,6 @@
     [compojure.handler :as handler]
     [compojure.response :as response]
     [ring.util.response :as rresp]
-    [clj-schema.schema :refer :all]
-    [clj-schema.simple-schemas :refer :all]
-    [clj-schema.validation :refer :all]
     [clojure.tools.logging :as log]))
 
 (def ^:const resource-type "VolumeTemplate")
@@ -32,40 +27,7 @@
 
 (def ^:const base-uri (str "/" resource-type))
 
-(def-map-schema VolumeConfigurationRef
-                VolumeConfigurationAttrs
-                [(optional-path [:href]) NonEmptyString])
-
-(def-map-schema VolumeImageRef
-                VolumeImageAttrs
-                [(optional-path [:href]) NonEmptyString])
-
-;; TODO: Add real schema once Meters are supported.
-(def MeterTemplateRef
-  Anything)
-
-(def-seq-schema MeterTemplateRefs
-                (constraints (fn [refs] (pos? (count refs))))
-                MeterTemplateRef)
-
-;; TODO: Add real schema once EventLogs are supported.
-(def EventLogTemplateRef
-  Anything)
-
-(def-map-schema VolumeTemplateAttrs
-                [(optional-path [:volumeConfig]) VolumeConfigurationRef
-                 (optional-path [:volumeImage]) VolumeImageRef
-                 (optional-path [:meterTemplates]) MeterTemplateRefs
-                 (optional-path [:eventLogTemplate]) EventLogTemplateRef])
-
-(def-map-schema VolumeTemplate
-                common/CommonAttrs
-                [[:volumeConfig] VolumeConfigurationRef
-                 (optional-path [:volumeImage]) VolumeImageRef
-                 (optional-path [:meterTemplates]) MeterTemplateRefs
-                 (optional-path [:eventLogTemplate]) EventLogTemplateRef])
-
-(def validate (utils/create-validation-fn VolumeTemplate))
+(def validate (utils/create-validation-fn schema/VolumeTemplate))
 
 (defn uuid->uri
   "Convert a uuid into the URI for a VolumeTemplate resource.
@@ -76,15 +38,15 @@
 (defn add-cops
   "Adds the collection operations to the given resource."
   [resource]
-  (let [ops [{:rel (:add common/action-uri) :href base-uri}]]
+  (let [ops [{:rel (:add schema/action-uri) :href base-uri}]]
     (assoc resource :operations ops)))
 
 (defn add-rops
   "Adds the resource operations to the given resource."
   [resource]
   (let [href (:id resource)
-        ops [{:rel (:edit common/action-uri) :href href}
-             {:rel (:delete common/action-uri) :href href}]]
+        ops [{:rel (:edit schema/action-uri) :href href}
+             {:rel (:delete schema/action-uri) :href href}]]
     (assoc resource :operations ops)))
 
 (defn add

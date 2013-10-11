@@ -3,16 +3,12 @@
   (:require
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
-    [eu.stratuslab.cimi.resources.common :as c]
+    [eu.stratuslab.cimi.resources.schema :as schema]
     [eu.stratuslab.cimi.resources.utils :as u]
     [eu.stratuslab.cimi.resources.job :as job]
-    [eu.stratuslab.cimi.resources.volume-template :refer [VolumeTemplateAttrs]]
     [eu.stratuslab.cimi.cb.views :as views]
     [compojure.core :refer :all]
     [ring.util.response :as r]
-    [clj-schema.schema :refer :all]
-    [clj-schema.simple-schemas :refer :all]
-    [clj-schema.validation :refer :all]
     [clojure.tools.logging :as log]))
 
 (def ^:const resource-type "Volume")
@@ -27,27 +23,9 @@
 
 (def ^:const base-uri (str "/" resource-type))
 
-(def volume-states #{"CREATING" "AVAILABLE" "CAPTURING" "DELETING" "ERROR"})
+(def validate (u/create-validation-fn schema/Volume))
 
-(def-map-schema ^{:doc "Documentation"} Volume
-                c/CommonAttrs
-                [(optional-path [:state]) volume-states
-                 [:type] NonEmptyString
-                 [:capacity] NonNegIntegral
-                 (optional-path [:bootable]) Boolean
-                 (optional-path [:eventLog]) NonEmptyString])
-
-(def-map-schema VolumeTemplateRef
-                VolumeTemplateAttrs
-                [(optional-path [:href]) NonEmptyString])
-
-(def-map-schema VolumeCreate
-                c/CreateAttrs
-                [[:volumeTemplate] VolumeTemplateRef])
-
-(def validate (u/create-validation-fn Volume))
-
-(def validate-create (u/create-validation-fn VolumeCreate))
+(def validate-create (u/create-validation-fn schema/VolumeCreate))
 
 (defn uuid->uri
   "Convert a uuid into the URI for a MachineConfiguration resource.
@@ -58,15 +36,15 @@
 (defn add-cops
   "Adds the collection operations to the given resource."
   [resource]
-  (let [ops [{:rel (:add c/action-uri) :href base-uri}]]
+  (let [ops [{:rel (:add schema/action-uri) :href base-uri}]]
     (assoc resource :operations ops)))
 
 (defn add-rops
   "Adds the resource operations to the given resource."
   [resource]
   (let [href (:id resource)
-        ops [{:rel (:edit c/action-uri) :href href}
-             {:rel (:delete c/action-uri) :href href}]]
+        ops [{:rel (:edit schema/action-uri) :href href}
+             {:rel (:delete schema/action-uri) :href href}]]
     (assoc resource :operations ops)))
 
 (defn volume-skeleton [uri entry]
