@@ -39,6 +39,11 @@
 (defn is-resource-uri [m type-uri]
   (is-key-value m :resourceURI type-uri))
 
+(defn is-count [m f]
+  (let [count (get-in m [:response :body :count])]
+    (is (f count))
+    m))
+
 (defn is-nil-response [m]
   (is (nil? (:response m)))
   m)
@@ -46,6 +51,16 @@
 (defn dump [m]
   (pprint m)
   m)
+
+(defn does-body-contain [m v]
+  (let [body (get-in m [:response :body])]
+    (is (= (merge body v) body))))
+
+(defn location [m]
+  (get-in m [:response :headers "Location"]))
+
+(defn entries [m k]
+  (get-in m [:response :body k]))
 
 (defn make-ring-app [resource-routes]
   (-> resource-routes

@@ -3,10 +3,9 @@
   of other resources within the server."
   (:require
     [clojure.tools.logging :as log]
-    [clojure.set :as set]
     [couchbase-clj.client :as cbc]
     [eu.stratuslab.cimi.resources.common :as common]
-    [eu.stratuslab.cimi.resources.utils :as utils]
+    [eu.stratuslab.cimi.resources.utils :as u]
     [eu.stratuslab.cimi.resources.machine-configuration :as mc]
     [eu.stratuslab.cimi.resources.job :as job]
 
@@ -15,19 +14,15 @@
     [eu.stratuslab.cimi.resources.volume-configuration :as volume-configuration]
     [eu.stratuslab.cimi.resources.volume-image :as volume-image]
 
-    [clojure.tools.logging :refer [debug info warn]]
     [compojure.core :refer :all]
-    [compojure.route :as route]
-    [compojure.handler :as handler]
-    [compojure.response :as response]
-    [ring.util.response :as rresp]
+    [ring.util.response :as r]
     [clj-schema.schema :refer :all]
     [clj-schema.simple-schemas :refer :all]
     [clj-schema.validation :refer :all]
-    [clojure.data.json :as json]
 
     [cemerick.friend :as friend])
-  (:import [java.io InputStreamReader]))
+  (:import
+    [java.io InputStreamReader]))
 
 (def ^:const resource-type "CloudEntryPoint")
 
@@ -77,7 +72,7 @@
                  (optional-path [:eventLogs]) common/ResourceLink
                  (optional-path [:eventLogTemplates]) common/ResourceLink])
 
-(def validate (utils/create-validation-fn CloudEntryPoint))
+(def validate (u/create-validation-fn CloudEntryPoint))
 
 (defn add-rops
   "Adds the resource operations to the given resource."
@@ -98,7 +93,7 @@
 
   (let [record (-> {:id resource-type
                     :resourceURI type-uri}
-                   (utils/set-time-attributes))]
+                   (u/set-time-attributes))]
     (cbc/add-json cb-client resource-type record {:observe true
                                                   :persist :master
                                                   :replicate :zero})))
@@ -109,11 +104,11 @@
    from the web container and the generated resource links."
   [cb-client baseURI]
   (if-let [cep (cbc/get-json cb-client resource-type)]
-    (rresp/response (-> cep
-                        (assoc :baseURI baseURI)
-                        (merge resource-links)
-                        (add-rops)))
-    (rresp/not-found nil)))
+    (r/response (-> cep
+                    (assoc :baseURI baseURI)
+                    (merge resource-links)
+                    (add-rops)))
+    (r/not-found nil)))
 
 ;; FIXME: Implementation should use CAS functions to avoid update conflicts.
 (defn edit
@@ -126,22 +121,27 @@
     (let [db-doc (-> entry
                      (select-keys [:name :description :properties])
                      (merge current)
-                     (utils/set-time-attributes))
+                     (u/set-time-attributes))
           doc (-> db-doc
                   (assoc :baseURI baseURI)
                   (merge resource-links)
                   (add-rops)
                   (validate))]
       (if (cbc/set-json cb-client resource-type db-doc)
-        (rresp/response doc)
-        (rresp/status (rresp/response nil) 409)))
-    (rresp/not-found nil)))
+        (r/response doc)
+        (r/status (r/response nil) 409)))
+    (r/not-found nil)))
 
 (defroutes resource-routes
            (GET base-uri {:keys [cb-client base-uri] :as request}
                 (retrieve cb-client base-uri))
            (PUT base-uri {:keys [cb-client base-uri body] :as request}
-                (println request)
                 (friend/authorize #{:eu.stratuslab.cimi.authn/admin}
-                                  (let [json (utils/body->json body)]
-                                    (edit cb-client base-uri json)))))
+                                  (let [json (u/body->json body)]
+                                    (edit cb-client base-uri json))))
+           (DELETE base-uri request
+                   (-> (r/response nil)
+                       (r/status 405)))
+           (POST base-uri request
+                 (-> (r/response nil)
+                     (r/status 405))))

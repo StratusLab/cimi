@@ -114,7 +114,6 @@
             (let [resp (query t/*test-cb-client*)]
               (is (rresp/response? resp))
               (is (= 200 (:status resp)))
-              (println resp)
               (let [body (:body resp)
                     resource-uri (:resourceURI body)
                     entries (:volumeTemplates body)
