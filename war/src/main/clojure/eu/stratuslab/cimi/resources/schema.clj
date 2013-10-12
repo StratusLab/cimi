@@ -13,6 +13,7 @@
 ; See the License for the specific language governing permissions and
 ; limitations under the License.
 ;
+
 (ns eu.stratuslab.cimi.resources.schema
   "Data, definitions, and utilities common to all resources."
   (:require
@@ -49,6 +50,18 @@
 (def-map-schema Properties
                 (constraints (fn [m] (pos? (count (keys m)))))
                 [[(wild NonEmptyString)] String])
+
+;;
+;; Ownership and access control
+;;
+
+(def-map-schema AccessControlRule
+                [[:principal] NonEmptyString
+                 [:level] #{"VIEW", "MODIFY"}])
+
+(def-map-schema AccessControlList
+                [[:owner] NonEmptyString
+                 (optional-path [:rules]) (sequence-of AccessControlRule)])
 
 ;;
 ;; These attributes are common to all resources except the 

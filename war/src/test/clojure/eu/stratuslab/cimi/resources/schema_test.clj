@@ -1,3 +1,19 @@
+;
+; Copyright 2013 Centre National de la Recherche Scientifique (CNRS)
+;
+; Licensed under the Apache License, Version 2.0 (the "License")
+; you may not use this file except in compliance with the License.
+; You may obtain a copy of the License at
+;
+;     http://www.apache.org/licenses/LICENSE-2.0
+;
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS,
+; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+; See the License for the specific language governing permissions and
+; limitations under the License.
+;
+
 (ns eu.stratuslab.cimi.resources.schema-test
   (:require
     [eu.stratuslab.cimi.resources.schema :refer :all]
@@ -11,6 +27,31 @@
     [eu.stratuslab.cimi.resources.job :as job]
     [clj-schema.validation :refer [validation-errors]]
     [clojure.test :refer :all]))
+
+(deftest test-access-control-rule
+  (let [rule {:principal ":eu.stratuslab.cimi.authn/admin"
+              :level "VIEW"}]
+    (are [v pred] (pred (validation-errors AccessControlRule v))
+                  rule empty?
+                  (assoc rule :level "MODIFY") empty?
+                  (assoc rule :level "BAD") (complement empty?)
+                  (assoc rule :principal "author") empty?
+                  (assoc rule :principal "") (complement empty?)
+                  (dissoc rule :principal) (complement empty?)
+                  (dissoc rule :level) (complement empty?))))
+
+(deftest test-access-control-list
+  (let [acl {:owner ":eu.stratuslab.cimi.authn/admin"
+             :rules [{:principal ":group1"
+                      :level "VIEW"}
+                     {:principal "group2"
+                      :level "MODIFY"}]}]
+    (are [v pred] (pred (validation-errors AccessControlList v))
+                  acl empty?
+                  (dissoc acl :rules) empty?
+                  (assoc acl :owner "") (complement empty?)
+                  (assoc acl :rules []) empty?
+                  (assoc acl :bad "value") (complement empty?))))
 
 (deftest test-resource-link-schema
   (let [ref {:href "https://example.org/resource"}]
