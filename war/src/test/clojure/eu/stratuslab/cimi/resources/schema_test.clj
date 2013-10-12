@@ -55,32 +55,37 @@
 
 (deftest test-resource-link-schema
   (let [ref {:href "https://example.org/resource"}]
-    (is (empty? (validation-errors ResourceLink ref)))
-    (is (not (empty? (validation-errors ResourceLink (dissoc ref :href)))))
-    (is (not (empty? (validation-errors ResourceLink (assoc ref :bad "BAD")))))))
+    (are [v pred] (pred (validation-errors ResourceLink v))
+                  ref empty?
+                  (dissoc ref :href) (complement empty?)
+                  (assoc ref :bad "BAD") (complement empty?))))
 
 (deftest test-operation-schema
-  (is (empty? (validation-errors Operation {:rel "add" :href "/add"})))
-  (is (not (empty? (validation-errors Operation {:rel "add"}))))
-  (is (not (empty? (validation-errors Operation {:href "/add"}))))
-  (is (not (empty? (validation-errors Operation {}))))
-  )
+  (are [v pred] (pred (validation-errors Operation v))
+                {:rel "add" :href "/add"} empty?
+                {:rel "add"} (complement empty?)
+                {:href "/add"} (complement empty?)
+                {} (complement empty?)))
 
 (deftest test-operations-schema
   (let [ops [{:rel "add" :href "/add"}
              {:rel "delete" :href "/delete"}]]
-    (is (empty? (validation-errors Operations ops)))
-    (is (empty? (validation-errors Operations (rest ops))))
-    (is (not (empty? (validation-errors Operations []))))))
+    (are [v pred] (pred (validation-errors Operations v))
+                  ops empty?
+                  (rest ops) empty?
+                  [] (complement empty?))))
 
 (deftest test-properties-schema
-  (is (empty? (validation-errors Properties {"a" "b"})))
-  (is (empty? (validation-errors Properties {"a" "b", "c" "d"})))
-  (is (not (empty? (validation-errors Properties {})))))
+  (are [v pred] (pred (validation-errors Properties v))
+                {"a" "b"} empty?
+                {"a" "b", "c" "d"} empty?
+                {"a" 1} (complement empty?)
+                {} (complement empty?)))
 
 (deftest test-common-attrs-schema
   (let [date "1964-08-25T10:00:00.0Z"
-        minimal {:id "a"
+        minimal {:acl {:owner "me"}
+                 :id "a"
                  :resourceURI "http://example.org/data"
                  :created date
                  :updated date}
@@ -89,20 +94,19 @@
                   :description "description"
                   :properties {"a" "b"}
                   :operations [{:rel "add" :href "/add"}])]
-    (is (empty? (validation-errors CommonAttrs minimal)))
-    (is (not (empty? (validation-errors CommonAttrs (dissoc minimal :id)))))
-    (is (not (empty? (validation-errors CommonAttrs (dissoc minimal :resourceURI)))))
-    (is (not (empty? (validation-errors CommonAttrs (dissoc minimal :created)))))
-    (is (not (empty? (validation-errors CommonAttrs (dissoc minimal :updated)))))
 
-    (is (empty? (validation-errors CommonAttrs maximal)))
-    (is (empty? (validation-errors CommonAttrs (dissoc maximal :name))))
-    (is (empty? (validation-errors CommonAttrs (dissoc maximal :description))))
-    (is (empty? (validation-errors CommonAttrs (dissoc maximal :properties))))
-    (is (empty? (validation-errors CommonAttrs (dissoc maximal :operations))))
-    (is (not (empty? (validation-errors CommonAttrs (assoc maximal :bad "bad")))))
-    )
-  )
+    (are [v pred] (pred (validation-errors CommonAttrs v))
+                  minimal empty?
+                  (dissoc minimal :id) (complement empty?)
+                  (dissoc minimal :resourceURI) (complement empty?)
+                  (dissoc minimal :created) (complement empty?)
+                  (dissoc minimal :updated) (complement empty?)
+                  maximal empty?
+                  (dissoc maximal :name) empty?
+                  (dissoc maximal :description) empty?
+                  (dissoc maximal :properties) empty?
+                  (dissoc maximal :operations) empty?
+                  (assoc maximal :bad "bad") (complement empty?))))
 
 (deftest test-action-uri-map
   (is (= valid-actions (set (keys action-uri)))))
@@ -112,7 +116,8 @@
 ;;
 
 (def valid-vc-entry
-  {:type "http://stratuslab.eu/cimi/1/raw"
+  {:acl {:owner "me"}
+   :type "http://stratuslab.eu/cimi/1/raw"
    :format "ext4"
    :capacity 1000})
 
@@ -123,17 +128,19 @@
                                :resourceURI vc/type-uri
                                :created "1964-08-25T10:00:00.0Z"
                                :updated "1964-08-25T10:00:00.0Z")]
-    (is (empty? (validation-errors VolumeConfiguration volume-configuration)))
-    (is (empty? (validation-errors VolumeConfiguration (dissoc volume-configuration :type))))
-    (is (empty? (validation-errors VolumeConfiguration (dissoc volume-configuration :format))))
-    (is (not (empty? (validation-errors VolumeConfiguration (dissoc volume-configuration :capacity)))))))
+    (are [v pred] (pred (validation-errors VolumeConfiguration v))
+                  volume-configuration empty?
+                  (dissoc volume-configuration :type) empty?
+                  (dissoc volume-configuration :format) empty?
+                  (dissoc volume-configuration :capacity) (complement empty?))))
 
 ;;
 ;; VolumeImage
 ;;
 
 (def valid-vi-entry
-  {:state "CREATING"
+  {:acl {:owner "me"}
+   :state "CREATING"
    :imageLocation {:href "GWE_nifKGCcXiFk42XaLrS8LQ-J"}
    :bootable true})
 
@@ -143,18 +150,21 @@
                        :resourceURI vi/type-uri
                        :created "1964-08-25T10:00:00.0Z"
                        :updated "1964-08-25T10:00:00.0Z")]
-    (is (empty? (validation-errors VolumeImage volume-image)))
-    (is (not (empty? (validation-errors VolumeImage (dissoc volume-image :state)))))
-    (is (not (empty? (validation-errors VolumeImage (dissoc volume-image :imageLocation)))))
-    (is (not (empty? (validation-errors VolumeImage (assoc volume-image :imageLocation {})))))
-    (is (not (empty? (validation-errors VolumeImage (dissoc volume-image :bootable)))))))
+
+    (are [v pred] (pred (validation-errors VolumeImage v))
+                  volume-image empty?
+                  (dissoc volume-image :state) (complement empty?)
+                  (dissoc volume-image :imageLocation) (complement empty?)
+                  (assoc volume-image :imageLocation {}) (complement empty?)
+                  (dissoc volume-image :bootable) (complement empty?))))
 
 ;;
 ;; VolumeTemplate
 ;;
 
 (def valid-vt-entry
-  {:volumeConfig {:href "VolumeConfiguration/uuid"}
+  {:acl {:owner "me"}
+   :volumeConfig {:href "VolumeConfiguration/uuid"}
    :volumeImage {:href "VolumeImage/mkplaceid"}})
 
 (deftest test-volume-template-schema
@@ -164,16 +174,19 @@
                           :resourceURI vt/type-uri
                           :created "1964-08-25T10:00:00.0Z"
                           :updated "1964-08-25T10:00:00.0Z")]
-    (is (empty? (validation-errors VolumeTemplate volume-template)))
-    (is (not (empty? (validation-errors VolumeTemplate (dissoc volume-template :volumeConfig)))))
-    (is (empty? (validation-errors VolumeTemplate (dissoc volume-template :volumeImage))))))
+
+    (are [v pred] (pred (validation-errors VolumeTemplate v))
+                  volume-template empty?
+                  (dissoc volume-template :volumeConfig) (complement empty?)
+                  (dissoc volume-template :volumeImage) empty?)))
 
 ;;
 ;; Volume
 ;;
 
 (def valid-v-entry
-  {:state "CREATING"
+  {:acl {:owner "me"}
+   :state "CREATING"
    :type "http://schemas.cimi.stratuslab.eu/normal"
    :capacity 1024
    :bootable true
@@ -185,19 +198,22 @@
                  :resourceURI v/type-uri
                  :created "1964-08-25T10:00:00.0Z"
                  :updated "1964-08-25T10:00:00.0Z")]
-    (is (empty? (validation-errors Volume volume)))
-    (is (empty? (validation-errors Volume (dissoc volume :state))))
-    (is (empty? (validation-errors Volume (dissoc volume :bootable))))
-    (is (empty? (validation-errors Volume (dissoc volume :eventLog))))
-    (is (not (empty? (validation-errors Volume (dissoc volume :type)))))
-    (is (not (empty? (validation-errors Volume (dissoc volume :capacity)))))))
+
+    (are [v pred] (pred (validation-errors Volume v))
+                  volume empty?
+                  (dissoc volume :state) empty?
+                  (dissoc volume :bootable) empty?
+                  (dissoc volume :eventLog) empty?
+                  (dissoc volume :type) (complement empty?)
+                  (dissoc volume :capacity) (complement empty?))))
 
 ;;
 ;; Job
 ;;
 
 (def valid-job-entry
-  {:state "QUEUED"
+  {:acl {:owner "me"}
+   :state "QUEUED"
    :targetResource "Machine/uuid-1"
    :affectedResources ["Machine/uuid-2"]
    :action "http://schemas.cimi.stratuslab.eu/create-volume"
@@ -214,24 +230,27 @@
               :resourceURI job/type-uri
               :created "1964-08-25T10:00:00.0Z"
               :updated "1964-08-25T10:00:00.0Z")]
-    (is (empty? (validation-errors Job job)))
-    (is (empty? (validation-errors Job (dissoc job :state))))
-    (is (empty? (validation-errors Job (dissoc job :affectedResources))))
-    (is (empty? (validation-errors Job (dissoc job :returnCode))))
-    (is (empty? (validation-errors Job (dissoc job :progress))))
-    (is (empty? (validation-errors Job (dissoc job :statusMessage))))
-    (is (empty? (validation-errors Job (dissoc job :timeOfStatusChange))))
-    (is (empty? (validation-errors Job (dissoc job :parentJob))))
-    (is (empty? (validation-errors Job (dissoc job :nestedJobs))))
-    (is (not (empty? (validation-errors Job (dissoc job :targetResource)))))
-    (is (not (empty? (validation-errors Job (dissoc job :action)))))))
+
+    (are [v pred] (pred (validation-errors Job v))
+                  job empty?
+                  (dissoc job :state) empty?
+                  (dissoc job :affectedResources) empty?
+                  (dissoc job :returnCode) empty?
+                  (dissoc job :progress) empty?
+                  (dissoc job :statusMessage) empty?
+                  (dissoc job :timeOfStatusChange) empty?
+                  (dissoc job :parentJob) empty?
+                  (dissoc job :nestedJobs) empty?
+                  (dissoc job :targetResource) (complement empty?)
+                  (dissoc job :action) (complement empty?))))
 
 ;;
 ;; MachineConfiguration
 ;;
 
 (def valid-mc-entry
-  {:name "valid"
+  {:acl {:owner "me"}
+   :name "valid"
    :description "valid machine configuration"
    :cpu 1
    :memory 512000
@@ -242,19 +261,22 @@
 
 (deftest test-disk-schema
   (let [disk {:capacity 1024 :format "ext4" :initialLocation "/dev/hda"}]
-    (is (empty? (validation-errors Disk disk)))
-    (is (empty? (validation-errors Disk (dissoc disk :initialLocation))))
-    (is (not (empty? (validation-errors Disk (dissoc disk :capacity)))))
-    (is (not (empty? (validation-errors Disk (dissoc disk :format)))))
-    (is (not (empty? (validation-errors Disk {})))))
-  )
+
+    (are [v pred] (pred (validation-errors Disk v))
+                  disk empty?
+                  (dissoc disk :initialLocation) empty?
+                  (dissoc disk :capacity) (complement empty?)
+                  (dissoc disk :format) (complement empty?)
+                  {} (complement empty?))))
 
 (deftest test-disks-schema
   (let [disks [{:capacity 1024 :format "ext4" :initialLocation "/dev/hda"}
                {:capacity 2048 :format "swap" :initialLocation "/dev/hdb"}]]
-    (is (empty? (validation-errors Disks disks)))
-    (is (empty? (validation-errors Disks (rest disks))))
-    (is (not (empty? (validation-errors Disks []))))))
+
+    (are [v pred] (pred (validation-errors Disks v))
+                  disks empty?
+                  (rest disks) empty?
+                  [] (complement empty?))))
 
 (deftest test-machine-configuration-schema
   (let [mc (assoc valid-mc-entry
@@ -264,31 +286,32 @@
              :updated "1964-08-25T10:00:00.0Z"
              :disks [{:capacity 1024
                       :format "ext4"}])]
-    (is (empty? (validation-errors MachineConfiguration mc)))
-    (is (empty? (validation-errors MachineConfiguration (dissoc mc :disks))))
-    (is (not (empty? (validation-errors MachineConfiguration (dissoc mc :cpu)))))
-    (is (not (empty? (validation-errors MachineConfiguration (dissoc mc :memory)))))
-    (is (not (empty? (validation-errors MachineConfiguration (dissoc mc :cpuArch)))))
-    (is (not (empty? (validation-errors MachineConfiguration (dissoc mc :cpu)))))))
+
+    (are [v pred] (pred (validation-errors MachineConfiguration v))
+                  mc empty?
+                  (dissoc mc :disks) empty?
+                  (dissoc mc :cpu) (complement empty?)
+                  (dissoc mc :memory) (complement empty?)
+                  (dissoc mc :cpuArch) (complement empty?)
+                  (dissoc mc :cpu) (complement empty?))))
 
 ;;
 ;; Service Message
 ;;
 
-(def valid-sm-entry
-  {:name "title"
-   :description "description"})
-
 (deftest test-schema
   (let [timestamp "1964-08-25T10:00:00.0Z"
         uri (sm/uuid->uri timestamp)
-        service-message {:id uri
+        service-message {:acl {:owner "me"}
+                         :id uri
                          :resourceURI sm/type-uri
                          :created timestamp
                          :updated timestamp
                          :name "title"
                          :description "description"}]
-    (is (empty? (validation-errors ServiceMessage service-message)))
-    (is (not (empty? (validation-errors ServiceMessage (dissoc service-message :name)))))
-    (is (not (empty? (validation-errors ServiceMessage (dissoc service-message :description)))))))
+
+    (are [v pred] (pred (validation-errors ServiceMessage v))
+                  service-message empty?
+                  (dissoc service-message :name) (complement empty?)
+                  (dissoc service-message :description) (complement empty?))))
 

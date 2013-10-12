@@ -54,6 +54,9 @@
 ;;
 ;; Ownership and access control
 ;;
+;; These are additions to the standard CIMI schema for the
+;; StratusLab implementation.
+;;
 
 (def-map-schema AccessControlRule
                 [[:principal] NonEmptyString
@@ -70,7 +73,8 @@
 ;; :operations will be replaced by the service-generated values.
 ;;
 (def-map-schema CommonAttrs
-                [[:id] NonEmptyString
+                [[:acl] AccessControlList  ;; StratusLab addition
+                 [:id] NonEmptyString
                  [:resourceURI] NonEmptyString
                  (optional-path [:name]) NonEmptyString
                  (optional-path [:description]) NonEmptyString
