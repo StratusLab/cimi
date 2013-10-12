@@ -2,6 +2,7 @@
   (:require
     [eu.stratuslab.cimi.resources.cloud-entry-point :refer :all]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
+    [eu.stratuslab.cimi.resources.utils :as u]
     [clojure.test :refer :all]
     [clojure.data.json :as json]
     [peridot.core :refer :all]))
@@ -11,7 +12,7 @@
 (use-fixtures :once t/temp-bucket-fixture)
 
 (defn ring-app []
-  (t/make-ring-app resource-routes))
+  (t/make-ring-app routes))
 
 (deftest lifecycle
 
@@ -49,16 +50,14 @@
       (t/is-resource-uri type-uri)
       (t/is-key-value :name "dummy")))
 
-(deftest unsupported-methods
-
-  ;; delete is not supported on the CEP
-  (-> (session (ring-app))
-      (request "/" :request-method :delete)
-      (t/is-status 405))
-
-  ;; post is not supported either
-  (-> (session (ring-app))
-      (request "/"
-               :request-method :post
-               :body (json/write-str {:name "dummy"}))
-      (t/is-status 405)))
+(deftest bad-methods
+  (doall
+    (for [[uri method] [[base-uri :options]
+                        [base-uri :delete]
+                        [base-uri :post]]]
+      (do
+        (-> (session (ring-app))
+            (request uri
+                     :request-method method
+                     :body (json/write-str {:dummy "value"}))
+            (t/is-status 405))))))

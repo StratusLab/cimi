@@ -8,8 +8,10 @@
     [clojure.string :as str]
     [clj-time.core :as time]
     [clj-time.format :as time-fmt]
-    [clj-schema.validation :refer [validation-errors]])
-  (:import [java.util UUID Date]))
+    [clj-schema.validation :refer [validation-errors]]
+    [ring.util.response :as r])
+  (:import
+    [java.util UUID Date]))
 
 (defn create-uuid
   "Provides the string representation of a pseudo-random UUID."
@@ -95,3 +97,9 @@
    are also removed from the map."
   [cb-client v]
   (w/prewalk (partial resolve-href cb-client) v))
+
+(defn bad-method
+  "Returns a ring reponse with a 405 error -- invalid method."
+  []
+  (-> (r/response nil)
+      (r/status 405)))

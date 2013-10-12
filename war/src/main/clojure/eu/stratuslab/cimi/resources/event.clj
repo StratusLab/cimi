@@ -6,10 +6,10 @@
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.schema :as schema]
-    [eu.stratuslab.cimi.resources.utils :as utils]
+    [eu.stratuslab.cimi.resources.utils :as u]
     [eu.stratuslab.cimi.cb.views :as views]
-    [compojure.core :refer :all]
-    [ring.util.response :as rresp]
+    [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
+    [ring.util.response :as r]
     [clojure.tools.logging :as log]))
 
 (def ^:const resource-type "Event")
@@ -22,7 +22,7 @@
 
 (def ^:const base-uri (str "/" resource-type))
 
-(def validate (utils/create-validation-fn schema/Event))
+(def validate (u/create-validation-fn schema/Event))
 
 (defn uuid->uri
   "Convert the uuid into a URI for the Event resource."
@@ -46,24 +46,24 @@
 (defn add
   "Add a new Event to the database."
   [cb-client entry]
-  (let [uri (uuid->uri (utils/create-uuid))
+  (let [uri (uuid->uri (u/create-uuid))
         entry (-> entry
-                  (utils/strip-service-attrs)
+                  (u/strip-service-attrs)
                   (merge {:id uri
                           :resourceURI type-uri})
-                  (utils/set-time-attributes)
+                  (u/set-time-attributes)
                   (validate))]
     (if (cbc/add-json cb-client uri entry)
-      (rresp/created uri)
-      (rresp/status (rresp/response (str "cannot create " uri)) 400))))
+      (r/created uri)
+      (r/status (r/response (str "cannot create " uri)) 400))))
 
 (defn retrieve
   "Returns the data associated with the requested Job
    entry (identified by the uuid)."
   [cb-client uuid]
   (if-let [json (cbc/get-json cb-client (uuid->uri uuid))]
-    (rresp/response (add-rops json))
-    (rresp/not-found nil)))
+    (r/response (add-rops json))
+    (r/not-found nil)))
 
 ;; FIXME: Implementation should use CAS functions to avoid update conflicts.
 (defn edit
@@ -73,22 +73,22 @@
   (let [uri (uuid->uri uuid)]
     (if-let [current (cbc/get-json cb-client uri)]
       (let [updated (->> entry
-                         (utils/strip-service-attrs)
+                         (u/strip-service-attrs)
                          (merge current)
-                         (utils/set-time-attributes)
+                         (u/set-time-attributes)
                          (add-rops)
                          (validate))]
         (if (cbc/set-json cb-client uri updated)
-          (rresp/response updated)
-          (rresp/status (rresp/response nil) 409))) ;; conflict
-      (rresp/not-found nil))))
+          (r/response updated)
+          (r/status (r/response nil) 409))) ;; conflict
+      (r/not-found nil))))
 
 (defn delete
   "Deletes the named event."
   [cb-client uuid]
   (if (cbc/delete cb-client (uuid->uri uuid))
-    (rresp/response nil)
-    (rresp/not-found nil)))
+    (r/response nil)
+    (r/not-found nil)))
 
 (defn query
   "Searches the database for resources of this type, taking into
@@ -108,21 +108,32 @@
         collection (add-cops {:resourceURI collection-type-uri
                               :id base-uri
                               :count (count configs)})]
-    (rresp/response (if (empty? configs)
-                      collection
-                      (assoc collection :events configs)))))
+    (r/response (if (empty? configs)
+                  collection
+                  (assoc collection :events configs)))))
 
-(defroutes resource-routes
+(defroutes collection-routes
            (POST base-uri {:keys [cb-client body]}
-                 (let [json (utils/body->json body)]
+                 (let [json (u/body->json body)]
                    (add cb-client json)))
            (GET base-uri {:keys [cb-client body]}
-                (let [json (utils/body->json body)]
+                (let [json (u/body->json body)]
                   (query cb-client json)))
-           (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-                (retrieve cb-client uuid))
-           (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
-                (let [json (utils/body->json body)]
-                  (edit cb-client uuid json)))
-           (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-                   (delete cb-client uuid)))
+           (ANY base-uri []
+                (u/bad-method)))
+
+(def resource-routes
+  (let-routes [uri (str base-uri "/:uuid")]
+              (GET uri [uuid :as {cb-client :cb-client}]
+                   (retrieve cb-client uuid))
+              (PUT uri [uuid :as {cb-client :cb-client body :body}]
+                   (let [json (u/body->json body)]
+                     (edit cb-client uuid json)))
+              (DELETE uri [uuid :as {cb-client :cb-client}]
+                      (delete cb-client uuid))
+              (ANY uri []
+                   (u/bad-method))))
+
+(defroutes routes
+           collection-routes
+           resource-routes)

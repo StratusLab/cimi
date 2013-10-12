@@ -14,7 +14,7 @@
     [eu.stratuslab.cimi.resources.volume-configuration :as volume-configuration]
     [eu.stratuslab.cimi.resources.volume-image :as volume-image]
 
-    [compojure.core :refer :all]
+    [compojure.core :refer [defroutes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]
     [cemerick.friend :as friend]))
 
@@ -93,16 +93,12 @@
         (r/status (r/response nil) 409)))
     (r/not-found nil)))
 
-(defroutes resource-routes
+(defroutes routes
            (GET base-uri {:keys [cb-client base-uri] :as request}
                 (retrieve cb-client base-uri))
            (PUT base-uri {:keys [cb-client base-uri body] :as request}
                 (friend/authorize #{:eu.stratuslab.cimi.authn/admin}
                                   (let [json (u/body->json body)]
                                     (edit cb-client base-uri json))))
-           (DELETE base-uri request
-                   (-> (r/response nil)
-                       (r/status 405)))
-           (POST base-uri request
-                 (-> (r/response nil)
-                     (r/status 405))))
+           (ANY base-uri request
+                (u/bad-method)))

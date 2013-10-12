@@ -7,7 +7,7 @@
     [eu.stratuslab.cimi.resources.utils :as u]
     [eu.stratuslab.cimi.resources.job :as job]
     [eu.stratuslab.cimi.cb.views :as views]
-    [compojure.core :refer :all]
+    [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]
     [clojure.tools.logging :as log]))
 
@@ -153,17 +153,28 @@
                   collection
                   (assoc collection :volumes volumes)))))
 
-(defroutes resource-routes
+(defroutes collection-routes
            (POST base-uri {:keys [cb-client body]}
                  (let [json (u/body->json body)]
                    (add cb-client json)))
            (GET base-uri {:keys [cb-client body]}
                 (let [json (u/body->json body)]
                   (query cb-client json)))
-           (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-                (retrieve cb-client uuid))
-           (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
-                (let [json (u/body->json body)]
-                  (edit cb-client uuid json)))
-           (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-                   (delete cb-client uuid)))
+           (ANY base-uri []
+                (u/bad-method)))
+
+(def resource-routes
+  (let-routes [uri (str base-uri "/:uuid")]
+              (GET uri [uuid :as {cb-client :cb-client}]
+                   (retrieve cb-client uuid))
+              (PUT uri [uuid :as {cb-client :cb-client body :body}]
+                   (let [json (u/body->json body)]
+                     (edit cb-client uuid json)))
+              (DELETE uri [uuid :as {cb-client :cb-client}]
+                      (delete cb-client uuid))
+              (ANY uri []
+                   (u/bad-method))))
+
+(defroutes routes
+           collection-routes
+           resource-routes)

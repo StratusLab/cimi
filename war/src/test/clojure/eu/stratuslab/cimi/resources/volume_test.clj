@@ -1,7 +1,7 @@
 (ns eu.stratuslab.cimi.resources.volume-test
   (:require
     [eu.stratuslab.cimi.resources.volume :refer :all]
-    [eu.stratuslab.cimi.resources.utils :as utils]
+    [eu.stratuslab.cimi.resources.utils :as u]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
     [clj-schema.validation :refer [validation-errors]]
     [ring.util.response :as rresp]
@@ -12,7 +12,7 @@
 (use-fixtures :each t/temp-bucket-fixture)
 
 (defn ring-app []
-  (t/make-ring-app resource-routes))
+  (t/make-ring-app routes))
 
 (def valid-entry
   {:state "CREATING"
@@ -67,3 +67,18 @@
                 :request-method :delete)
        (t/is-status 202)
        (t/has-job))))
+
+(deftest bad-methods
+  (let [resource-uri (str base-uri "/" (u/create-uuid))]
+    (doall
+      (for [[uri method] [[base-uri :options]
+                          [base-uri :delete]
+                          [base-uri :put]
+                          [resource-uri :options]
+                          [resource-uri :post]]]
+        (do
+          (-> (session (ring-app))
+              (request uri
+                       :request-method method
+                       :body (json/write-str {:dummy "value"}))
+              (t/is-status 405)))))))

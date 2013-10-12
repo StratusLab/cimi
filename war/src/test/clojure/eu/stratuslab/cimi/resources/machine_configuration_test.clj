@@ -1,7 +1,7 @@
 (ns eu.stratuslab.cimi.resources.machine-configuration-test
   (:require
     [eu.stratuslab.cimi.resources.machine-configuration :refer :all]
-    [eu.stratuslab.cimi.resources.utils :as utils]
+    [eu.stratuslab.cimi.resources.utils :as u]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
     [clojure.test :refer :all]
     [clojure.data.json :as json]
@@ -12,7 +12,7 @@
 (use-fixtures :once t/temp-bucket-fixture)
 
 (defn ring-app []
-  (t/make-ring-app resource-routes))
+  (t/make-ring-app routes))
 
 (def valid-entry
   {:name "valid"
@@ -68,20 +68,20 @@
 
 
 (deftest read-non-existing-resource-fails
-  (let [resource-uri (str base-uri "/" (utils/create-uuid))]
+  (let [resource-uri (str base-uri "/" (u/create-uuid))]
     (-> (session (ring-app))
         (request resource-uri)
         (t/is-status 404))))
 
 (deftest delete-non-existing-resource-fails
-  (let [resource-uri (str base-uri "/" (utils/create-uuid))]
+  (let [resource-uri (str base-uri "/" (u/create-uuid))]
     (-> (session (ring-app))
         (request resource-uri
                  :request-method :delete)
         (t/is-status 404))))
 
 (deftest update-non-existing-resource-fails
-  (let [resource-uri (str base-uri "/" (utils/create-uuid))]
+  (let [resource-uri (str base-uri "/" (u/create-uuid))]
     (-> (session (ring-app))
         (request resource-uri
                  :request-method :put
@@ -132,3 +132,18 @@
                    (t/is-count (partial = limit))
                    (get-in [:response :body :machineConfigurations]))]
       (is (= limit (count docs))))))
+
+(deftest bad-methods
+  (let [resource-uri (str base-uri "/" (u/create-uuid))]
+    (doall
+      (for [[uri method] [[base-uri :options]
+                          [base-uri :delete]
+                          [base-uri :put]
+                          [resource-uri :options]
+                          [resource-uri :post]]]
+        (do
+          (-> (session (ring-app))
+              (request uri
+                       :request-method method
+                       :body (json/write-str {:dummy "value"}))
+              (t/is-status 405)))))))

@@ -11,10 +11,10 @@
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.schema :as schema]
-    [eu.stratuslab.cimi.resources.utils :as utils]
+    [eu.stratuslab.cimi.resources.utils :as u]
     [eu.stratuslab.cimi.resources.job :as job]
     [eu.stratuslab.cimi.cb.views :as views]
-    [compojure.core :refer :all]
+    [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as rresp]
     [clojure.tools.logging :as log]))
 
@@ -28,7 +28,7 @@
 
 (def ^:const base-uri (str "/" resource-type))
 
-(def validate (utils/create-validation-fn schema/ServiceMessage))
+(def validate (u/create-validation-fn schema/ServiceMessage))
 
 (defn uuid->uri
   "Convert a uuid into the URI for a ServiceMessage resource.
@@ -64,9 +64,9 @@
   "Add a new ServiceMessage to the database."
   [cb-client entry]
   (let [entry (-> entry
-                  (utils/strip-service-attrs)
+                  (u/strip-service-attrs)
                   (assoc :resourceURI type-uri)
-                  (utils/set-time-attributes)
+                  (u/set-time-attributes)
                   (add-id)
                   (validate))
         uri (:id entry)]
@@ -90,9 +90,9 @@
   (let [uri (uuid->uri uuid)]
     (if-let [current (cbc/get-json cb-client uri)]
       (let [updated (->> entry
-                         (utils/strip-service-attrs)
+                         (u/strip-service-attrs)
                          (merge current)
-                         (utils/set-time-attributes)
+                         (u/set-time-attributes)
                          (validate))]
         (if (cbc/set-json cb-client uri updated)
           (rresp/response updated)
@@ -128,17 +128,28 @@
                       collection
                       (assoc collection :serviceMessages messages)))))
 
-(defroutes resource-routes
+(defroutes collection-routes
            (POST base-uri {:keys [cb-client body]}
-                 (let [json (utils/body->json body)]
+                 (let [json (u/body->json body)]
                    (add cb-client json)))
            (GET base-uri {:keys [cb-client body]}
-                (let [json (utils/body->json body)]
+                (let [json (u/body->json body)]
                   (query cb-client json)))
-           (GET (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-                (retrieve cb-client uuid))
-           (PUT (str base-uri "/:uuid") [uuid :as {cb-client :cb-client body :body}]
-                (let [json (utils/body->json body)]
-                  (edit cb-client uuid json)))
-           (DELETE (str base-uri "/:uuid") [uuid :as {cb-client :cb-client}]
-                   (delete cb-client uuid)))
+           (ANY base-uri []
+                (u/bad-method)))
+
+(def resource-routes
+  (let-routes [uri (str base-uri "/:uuid")]
+              (GET uri [uuid :as {cb-client :cb-client}]
+                   (retrieve cb-client uuid))
+              (PUT uri [uuid :as {cb-client :cb-client body :body}]
+                   (let [json (u/body->json body)]
+                     (edit cb-client uuid json)))
+              (DELETE uri [uuid :as {cb-client :cb-client}]
+                      (delete cb-client uuid))
+              (ANY uri []
+                   (u/bad-method))))
+
+(defroutes routes
+           collection-routes
+           resource-routes)

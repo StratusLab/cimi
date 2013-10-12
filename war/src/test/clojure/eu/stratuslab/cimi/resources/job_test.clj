@@ -2,6 +2,7 @@
   (:require
     [eu.stratuslab.cimi.resources.job :refer :all]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
+    [eu.stratuslab.cimi.resources.utils :as u]
     [clojure.data.json :as json]
     [clojure.test :refer :all]
     [peridot.core :refer :all]))
@@ -11,7 +12,7 @@
 (use-fixtures :once t/temp-bucket-fixture)
 
 (defn ring-app []
-  (t/make-ring-app resource-routes))
+  (t/make-ring-app routes))
 
 (def valid-entry
   {:state "QUEUED"
@@ -77,3 +78,17 @@
     (-> (session (ring-app))
         (request abs-uri)
         (t/is-status 404))))
+
+(deftest bad-methods
+  (let [resource-uri (str base-uri "/" (u/create-uuid))]
+    (doall
+      (for [[uri method] [[base-uri :options]
+                          [base-uri :delete]
+                          [base-uri :put]
+                          [resource-uri :options]]]
+        (do
+          (-> (session (ring-app))
+              (request uri
+                       :request-method method
+                       :body (json/write-str {:dummy "value"}))
+              (t/is-status 405)))))))
