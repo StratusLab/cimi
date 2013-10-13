@@ -83,12 +83,21 @@
              (first)
              (keyword))))))
 
-(defn can-view? [authn acl]
-  (#{:VIEW :MODIFY :ALL} (access-right authn acl)))
+(defn can-view?
+  ([acl]
+   (can-view? (friend/current-authentication) acl))
+  ([authn acl]
+  (#{:VIEW :MODIFY :ALL} (access-right authn acl))))
 
-(defn can-modify? [authn acl]
-  (#{:MODIFY :ALL} (access-right authn acl)))
+(defn can-modify?
+  ([acl]
+   (can-modify? (friend/current-authentication) acl))
+  ([authn acl]
+  (#{:MODIFY :ALL} (access-right authn acl))))
 
-(defn can-modify-acl? [authn acl]
-  (#{:ALL} (access-right authn acl)))
+(defn can-modify-acl?
+  ([acl]
+   (can-modify-acl? (friend/current-authentication) acl))
+  ([authn acl]
+  (#{:ALL} (access-right authn acl))))
 

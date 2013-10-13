@@ -31,8 +31,7 @@
     [eu.stratuslab.cimi.resources.volume-image :as volume-image]
 
     [compojure.core :refer [defroutes GET POST PUT DELETE ANY]]
-    [ring.util.response :as r]
-    [cemerick.friend :as friend]))
+    [ring.util.response :as r]))
 
 (def ^:const resource-type "CloudEntryPoint")
 
@@ -57,7 +56,7 @@
 (defn add-rops
   "Adds the resource operations to the given resource."
   [resource]
-  (if (a/can-modify? (friend/current-authentication) (:acl resource))
+  (if (a/can-modify? (:acl resource))
     (let [ops [{:rel (:edit schema/action-uri) :href base-uri}]]
       (assoc resource :operations ops))
     resource))
@@ -115,11 +114,11 @@
 
 (defroutes routes
            (GET base-uri {:keys [cb-client base-uri] :as request}
-                (if (a/can-view? (friend/current-authentication) resource-acl)
+                (if (a/can-view? resource-acl)
                   (retrieve cb-client base-uri)
                   (u/unauthorized)))
            (PUT base-uri {:keys [cb-client base-uri body] :as request}
-                (if (a/can-modify? (friend/current-authentication) resource-acl)
+                (if (a/can-modify? resource-acl)
                   (let [json (u/body->json body)]
                     (edit cb-client base-uri json))
                   (u/unauthorized)))
