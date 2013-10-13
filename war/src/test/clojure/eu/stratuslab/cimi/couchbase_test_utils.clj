@@ -23,10 +23,10 @@
 
 (def test-users {"root" {:username "root"
                          :password (creds/hash-bcrypt "admin_password")
-                         :roles #{:eu.stratuslab.cimi.authn/admin}}
+                         :roles #{"::ADMIN"}}
                  "jane" {:username "jane"
                          :password (creds/hash-bcrypt "user_password")
-                         :roles #{:eu.stratuslab.cimi.authn/user}}})
+                         :roles #{"test-role"}}})
 
 (defn is-status [m status]
   (is (= status (get-in m [:response :status])))
@@ -38,6 +38,18 @@
 
 (defn is-resource-uri [m type-uri]
   (is-key-value m :resourceURI type-uri))
+
+(defn is-operation-present [m op]
+  (let [operations (get-in m [:response :body :operations])
+        op (some #(= op %) (map :rel operations))]
+    (is op))
+  m)
+
+(defn is-operation-absent [m op]
+  (let [operations (get-in m [:response :body :operations])
+        op (some #(= op %) (map :rel operations))]
+    (is (nil? op)))
+  m)
 
 (defn is-id [m id]
   (is-key-value m :id id))

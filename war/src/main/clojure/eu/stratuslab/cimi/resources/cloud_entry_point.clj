@@ -21,6 +21,7 @@
     [couchbase-clj.client :as cbc]
     [eu.stratuslab.cimi.resources.schema :as schema]
     [eu.stratuslab.cimi.resources.utils :as u]
+    [eu.stratuslab.cimi.resources.auth-utils :as a]
     [eu.stratuslab.cimi.resources.machine-configuration :as mc]
     [eu.stratuslab.cimi.resources.job :as job]
 
@@ -39,6 +40,9 @@
 
 (def ^:const base-uri "/")
 
+(def resource-acl {:owner {:principal "::ADMIN" :type "ROLE"}
+                   :rules [{:principal "::ANON" :type "ROLE" :right "VIEW"}]})
+
 ;; FIXME: Generate these automatically.
 (def resource-links
   {:machineConfigs {:href mc/resource-type}
@@ -53,9 +57,7 @@
 (defn add-rops
   "Adds the resource operations to the given resource."
   [resource]
-  (println friend/*identity*)
-  (println resource)
-  (if (friend/authorized? #{:eu.stratuslab.cimi.authn/admin} friend/*identity*)
+  (if (a/can-modify? (friend/current-authentication) (:acl resource))
     (let [ops [{:rel (:edit schema/action-uri) :href base-uri}]]
       (assoc resource :operations ops))
     resource))
@@ -69,7 +71,7 @@
    rather than the relative URI for the resource."
   [cb-client]
 
-  (let [record (-> {:acl {:owner ":eu.stratuslab.cimi.authn/admin"}
+  (let [record (-> {:acl resource-acl
                     :id resource-type
                     :resourceURI type-uri}
                    (u/set-time-attributes))]
@@ -113,10 +115,13 @@
 
 (defroutes routes
            (GET base-uri {:keys [cb-client base-uri] :as request}
-                (retrieve cb-client base-uri))
+                (if (a/can-view? (friend/current-authentication) resource-acl)
+                  (retrieve cb-client base-uri)
+                  (u/unauthorized)))
            (PUT base-uri {:keys [cb-client base-uri body] :as request}
-                (friend/authorize #{:eu.stratuslab.cimi.authn/admin}
-                                  (let [json (u/body->json body)]
-                                    (edit cb-client base-uri json))))
+                (if (a/can-modify? (friend/current-authentication) resource-acl)
+                  (let [json (u/body->json body)]
+                    (edit cb-client base-uri json))
+                  (u/unauthorized)))
            (ANY base-uri request
                 (u/bad-method)))

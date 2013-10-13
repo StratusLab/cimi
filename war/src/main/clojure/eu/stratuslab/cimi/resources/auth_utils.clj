@@ -82,3 +82,13 @@
              (remove nil?)
              (first)
              (keyword))))))
+
+(defn can-view? [authn acl]
+  (#{:VIEW :MODIFY :ALL} (access-right authn acl)))
+
+(defn can-modify? [authn acl]
+  (#{:MODIFY :ALL} (access-right authn acl)))
+
+(defn can-modify-acl? [authn acl]
+  (#{:ALL} (access-right authn acl)))
+

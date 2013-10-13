@@ -23,7 +23,8 @@
   (-> (session (ring-app))
       (request "/")
       (t/is-status 200)
-      (t/is-resource-uri type-uri))
+      (t/is-resource-uri type-uri)
+      (t/is-operation-absent "edit"))
 
   ;; updating CEP as user should fail
   (-> (session (ring-app))
@@ -33,6 +34,14 @@
                :request-method :put
                :body (json/write-str {:name "dummy"}))
       (t/is-status 403))
+
+  ;; retrieve cloud entry point as root
+  (-> (session (ring-app))
+      (authorize "root" "admin_password")
+      (request "/")
+      (t/is-status 200)
+      (t/is-resource-uri type-uri)
+      (t/is-operation-present "edit"))
 
   ;; update the entry, verify updated doc is returned
   ;; must be done as administrator
@@ -44,13 +53,16 @@
                :body (json/write-str {:name "dummy"}))
       (t/is-status 200)
       (t/is-resource-uri type-uri)
+      (t/is-operation-present "edit")
       (t/is-key-value :name "dummy"))
 
   ;; verify that subsequent reads find the right data
   (-> (session (ring-app))
+      (authorize "jane" "user_password")
       (request "/")
       (t/is-status 200)
       (t/is-resource-uri type-uri)
+      (t/is-operation-absent "edit")
       (t/is-key-value :name "dummy")))
 
 (deftest bad-methods

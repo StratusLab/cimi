@@ -118,3 +118,10 @@
   []
   (-> (r/response nil)
       (r/status 405)))
+
+(defn unauthorized
+  "Returns a ring reponse with a 403 error -- unauthorized."
+  []
+  (-> (r/response nil)
+      (r/status 403)))
+
