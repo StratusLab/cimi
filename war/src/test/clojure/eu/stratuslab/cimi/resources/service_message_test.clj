@@ -15,13 +15,37 @@
   (t/make-ring-app routes))
 
 (def valid-entry
-  {:name "title"
+  {:acl {:owner {:principal "::ADMIN" :type "ROLE"}}
+   :name "title"
    :description "description"})
 
 (deftest lifecycle
 
+  ;; anonymous create should fail
+  (-> (session (ring-app))
+      (request base-uri
+               :request-method :post
+               :body (json/write-str valid-entry))
+      (t/is-status 403))
+
+  ;; user create should also fail
+  (-> (session (ring-app))
+      (authorize "jane" "user_password")
+      (request base-uri
+               :request-method :post
+               :body (json/write-str valid-entry))
+      (t/is-status 403))
+
+  ;; anonymous query should succeed
+  (-> (session (ring-app))
+      (request base-uri)
+      (t/is-status 200)
+      (t/is-resource-uri collection-type-uri)
+      (t/is-count zero?))
+
   ;; add a new entry
   (let [uri (-> (session (ring-app))
+                (authorize "root" "admin_password")
                 (request base-uri
                          :request-method :post
                          :body (json/write-str valid-entry))
@@ -47,6 +71,7 @@
 
     ;; update entry with new title
     (-> (session (ring-app))
+        (authorize "root" "admin_password")
         (request abs-uri
                  :request-method :put
                  :body (json/write-str {:name "new title"}))
@@ -61,6 +86,7 @@
 
     ;; delete the entry
     (-> (session (ring-app))
+        (authorize "root" "admin_password")
         (request abs-uri
                  :request-method :delete)
         (t/is-status 200))
