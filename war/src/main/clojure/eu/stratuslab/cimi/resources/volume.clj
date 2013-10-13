@@ -20,6 +20,7 @@
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.schema :as schema]
     [eu.stratuslab.cimi.resources.utils :as u]
+    [eu.stratuslab.cimi.resources.auth-utils :as a]
     [eu.stratuslab.cimi.resources.job :as job]
     [eu.stratuslab.cimi.cb.views :as views]
     [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
@@ -38,6 +39,9 @@
 
 (def ^:const base-uri (str "/" resource-type))
 
+(def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}
+                     :rules [{:principal "::USER" :type "ROLE" :right "MODIFY"}]})
+
 (def validate (u/create-validation-fn schema/Volume))
 
 (def validate-create (u/create-validation-fn schema/VolumeCreate))
@@ -51,8 +55,10 @@
 (defn add-cops
   "Adds the collection operations to the given resource."
   [resource]
-  (let [ops [{:rel (:add schema/action-uri) :href base-uri}]]
-    (assoc resource :operations ops)))
+  (if (a/can-modify? collection-acl)
+    (let [ops [{:rel (:add schema/action-uri) :href base-uri}]]
+      (assoc resource :operations ops))
+    resource))
 
 (defn add-rops
   "Adds the resource operations to the given resource."
@@ -84,6 +90,7 @@
                              :created :updated :properties
                              :state :type :capacity
                              :bootable :images :meters :eventLog])
+      (assoc :acl {:owner {:principal "::ADMIN" :type "ROLE"}}) ;; FIXME: Add real user ACL!
       (validate)))
 
 (defn template->params [template]
@@ -170,11 +177,15 @@
 
 (defroutes collection-routes
            (POST base-uri {:keys [cb-client body]}
-                 (let [json (u/body->json body)]
-                   (add cb-client json)))
+                 (if (a/can-modify? collection-acl)
+                   (let [json (u/body->json body)]
+                     (add cb-client json))
+                   (u/unauthorized)))
            (GET base-uri {:keys [cb-client body]}
-                (let [json (u/body->json body)]
-                  (query cb-client json)))
+                (if (a/can-view? collection-acl)
+                  (let [json (u/body->json body)]
+                    (query cb-client json))
+                  (u/unauthorized)))
            (ANY base-uri []
                 (u/bad-method)))
 
