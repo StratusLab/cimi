@@ -28,29 +28,58 @@
     [clj-schema.validation :refer [validation-errors]]
     [clojure.test :refer :all]))
 
+
+(def valid-acl {:owner {:principal "me" :type "USER"}})
+
+(deftest test-access-control-id
+  (let [rule {:principal "::ADMIN"
+              :type "ROLE"}]
+    (are [v pred] (pred (validation-errors AccessControlId v))
+                  rule empty?
+                  (assoc rule :bad "MODIFY") (complement empty?)
+                  (dissoc rule :principal) (complement empty?)
+                  (dissoc rule :type) (complement empty?)
+                  (assoc rule :type "USER") empty?
+                  (assoc rule :type "BAD") (complement empty?))))
+
 (deftest test-access-control-rule
-  (let [rule {:principal ":eu.stratuslab.cimi.authn/admin"
-              :level "VIEW"}]
+  (let [rule {:principal "::ADMIN"
+              :type "ROLE"
+              :right "VIEW"}]
     (are [v pred] (pred (validation-errors AccessControlRule v))
                   rule empty?
-                  (assoc rule :level "MODIFY") empty?
-                  (assoc rule :level "BAD") (complement empty?)
-                  (assoc rule :principal "author") empty?
-                  (assoc rule :principal "") (complement empty?)
-                  (dissoc rule :principal) (complement empty?)
-                  (dissoc rule :level) (complement empty?))))
+                  (assoc rule :right "MODIFY") empty?
+                  (assoc rule :right "ALL") empty?
+                  (assoc rule :right "BAD") (complement empty?)
+                  (dissoc rule :right) (complement empty?))))
+
+(deftest test-access-control-rules
+  (let [rules [{:principal "::ADMIN"
+                :type "ROLE"
+                :right "VIEW"}
+
+               {:principal "ALPHA"
+                :type "USER"
+                :right "ALL"}]]
+    (are [v pred] (pred (validation-errors AccessControlRules v))
+                  rules empty?
+                  (next rules) empty?
+                  (next (next rules)) (complement empty?))))
 
 (deftest test-access-control-list
-  (let [acl {:owner ":eu.stratuslab.cimi.authn/admin"
+  (let [acl {:owner {:principal "::ADMIN"
+                     :type "ROLE"}
              :rules [{:principal ":group1"
-                      :level "VIEW"}
+                      :type "ROLE"
+                      :right "VIEW"}
                      {:principal "group2"
-                      :level "MODIFY"}]}]
+                      :type "ROLE"
+                      :right "MODIFY"}]}]
     (are [v pred] (pred (validation-errors AccessControlList v))
                   acl empty?
                   (dissoc acl :rules) empty?
+                  (assoc acl :rules []) (complement empty?)
                   (assoc acl :owner "") (complement empty?)
-                  (assoc acl :rules []) empty?
                   (assoc acl :bad "value") (complement empty?))))
 
 (deftest test-resource-link-schema
@@ -84,7 +113,7 @@
 
 (deftest test-common-attrs-schema
   (let [date "1964-08-25T10:00:00.0Z"
-        minimal {:acl {:owner "me"}
+        minimal {:acl valid-acl
                  :id "a"
                  :resourceURI "http://example.org/data"
                  :created date
@@ -116,7 +145,7 @@
 ;;
 
 (def valid-vc-entry
-  {:acl {:owner "me"}
+  {:acl valid-acl
    :type "http://stratuslab.eu/cimi/1/raw"
    :format "ext4"
    :capacity 1000})
@@ -139,7 +168,7 @@
 ;;
 
 (def valid-vi-entry
-  {:acl {:owner "me"}
+  {:acl valid-acl
    :state "CREATING"
    :imageLocation {:href "GWE_nifKGCcXiFk42XaLrS8LQ-J"}
    :bootable true})
@@ -163,7 +192,7 @@
 ;;
 
 (def valid-vt-entry
-  {:acl {:owner "me"}
+  {:acl valid-acl
    :volumeConfig {:href "VolumeConfiguration/uuid"}
    :volumeImage {:href "VolumeImage/mkplaceid"}})
 
@@ -185,7 +214,7 @@
 ;;
 
 (def valid-v-entry
-  {:acl {:owner "me"}
+  {:acl valid-acl
    :state "CREATING"
    :type "http://schemas.cimi.stratuslab.eu/normal"
    :capacity 1024
@@ -212,7 +241,7 @@
 ;;
 
 (def valid-job-entry
-  {:acl {:owner "me"}
+  {:acl valid-acl
    :state "QUEUED"
    :targetResource "Machine/uuid-1"
    :affectedResources ["Machine/uuid-2"]
@@ -249,7 +278,7 @@
 ;;
 
 (def valid-mc-entry
-  {:acl {:owner "me"}
+  {:acl valid-acl
    :name "valid"
    :description "valid machine configuration"
    :cpu 1
@@ -302,7 +331,7 @@
 (deftest test-schema
   (let [timestamp "1964-08-25T10:00:00.0Z"
         uri (sm/uuid->uri timestamp)
-        service-message {:acl {:owner "me"}
+        service-message {:acl valid-acl
                          :id uri
                          :resourceURI sm/type-uri
                          :created timestamp

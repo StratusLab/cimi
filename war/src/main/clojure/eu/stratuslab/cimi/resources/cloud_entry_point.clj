@@ -53,6 +53,8 @@
 (defn add-rops
   "Adds the resource operations to the given resource."
   [resource]
+  (println friend/*identity*)
+  (println resource)
   (if (friend/authorized? #{:eu.stratuslab.cimi.authn/admin} friend/*identity*)
     (let [ops [{:rel (:edit schema/action-uri) :href base-uri}]]
       (assoc resource :operations ops))
@@ -67,7 +69,8 @@
    rather than the relative URI for the resource."
   [cb-client]
 
-  (let [record (-> {:id resource-type
+  (let [record (-> {:acl {:owner ":eu.stratuslab.cimi.authn/admin"}
+                    :id resource-type
                     :resourceURI type-uri}
                    (u/set-time-attributes))]
     (cbc/add-json cb-client resource-type record {:observe true

@@ -16,6 +16,9 @@
 
 (deftest lifecycle
 
+  ;; initialize the cloud entry point
+  (add t/*test-cb-client*)
+
   ;; retrieve cloud entry point anonymously
   (-> (session (ring-app))
       (request "/")

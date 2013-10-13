@@ -58,13 +58,25 @@
 ;; StratusLab implementation.
 ;;
 
-(def-map-schema AccessControlRule
+(def access-control-types #{"USER" "ROLE"})
+
+(def access-control-rights #{"ALL" "VIEW" "MODIFY"})
+
+(def-map-schema AccessControlId
                 [[:principal] NonEmptyString
-                 [:level] #{"VIEW", "MODIFY"}])
+                 [:type] access-control-types])
+
+(def-map-schema AccessControlRule
+                AccessControlId
+                [[:right] access-control-rights])
+
+(def-seq-schema AccessControlRules
+                (constraints (fn [s] (pos? (count s))))
+                AccessControlRule)
 
 (def-map-schema AccessControlList
-                [[:owner] NonEmptyString
-                 (optional-path [:rules]) (sequence-of AccessControlRule)])
+                [[:owner] AccessControlId
+                 (optional-path [:rules]) AccessControlRules])
 
 ;;
 ;; These attributes are common to all resources except the 
