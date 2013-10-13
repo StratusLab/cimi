@@ -17,13 +17,34 @@
   (t/make-ring-app routes))
 
 (def valid-entry
-  {:volumeConfig {:href "VolumeConfiguration/uuid"}
+  {:acl {:owner {:principal "::ADMIN" :type "ROLE"}}
+   :volumeConfig {:href "VolumeConfiguration/uuid"}
    :volumeImage {:href "VolumeImage/mkplaceid"}})
 
 (deftest lifecycle
 
+  ;; anonymous create will fail
+  (-> (session (ring-app))
+      (request base-uri
+               :request-method :post
+               :body (json/write-str valid-entry))
+      (t/is-status 403))
+
+  ;; anonymous query will also fail
+  (-> (session (ring-app))
+      (request base-uri)
+      (t/is-status 403))
+
+  ;; user query will succeed
+  (-> (session (ring-app))
+      (authorize "jane" "user_password")
+      (request base-uri)
+      (t/is-status 200)
+      (t/is-count zero?))
+
   ;; add a new entry
   (let [uri (-> (session (ring-app))
+                (authorize "jane" "user_password")
                 (request base-uri
                          :request-method :post
                          :body (json/write-str valid-entry))
@@ -35,13 +56,16 @@
 
     ;; verify that the new entry is accessible
     (-> (session (ring-app))
+        (authorize "jane" "user_password")
         (request abs-uri)
         (t/is-status 200)
         (t/does-body-contain valid-entry))
 
     ;; query to see that entry is listed
     (let [entries (-> (session (ring-app))
+                      (authorize "jane" "user_password")
                       (request base-uri)
+                      (t/is-status 200)
                       (t/is-resource-uri collection-type-uri)
                       (t/is-count pos?)
                       (t/entries :volumeTemplates))]
@@ -49,12 +73,14 @@
 
     ;; delete the entry
     (-> (session (ring-app))
+        (authorize "jane" "user_password")
         (request abs-uri
                  :request-method :delete)
         (t/is-status 200))
 
     ;; ensure that it really is gone
     (-> (session (ring-app))
+        (authorize "jane" "user_password")
         (request abs-uri)
         (t/is-status 404))))
 
