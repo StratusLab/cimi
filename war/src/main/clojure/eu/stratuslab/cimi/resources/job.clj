@@ -40,6 +40,9 @@
 (def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}
                      :rules [{:principal "::USER" :type "ROLE" :right "VIEW"}]})
 
+;; FIXME: This ACL should depend on who is accessing the object
+(def job-acl {:owner {:principal "::ADMIN" :type "ROLE"}})
+
 (def validate (u/create-validation-fn schema/Job))
 
 (defn uuid->uri
@@ -180,7 +183,7 @@
    keys and values in the properties will by transformed to strings."
   [cb-client uri action & [props]]
   (let [job-map (merge
-                  {:targetResource uri :action action}
+                  {:acl job-acl :targetResource uri :action action}
                   (properties-map props))]
     (if-let [job-resp (add cb-client job-map)]
       (let [job-uri (get-in job-resp [:headers "Location"])]
