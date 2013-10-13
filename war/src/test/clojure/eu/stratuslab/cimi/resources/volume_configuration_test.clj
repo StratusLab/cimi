@@ -17,14 +17,28 @@
   (t/make-ring-app routes))
 
 (def valid-entry
-  {:type "http://stratuslab.eu/cimi/1/raw"
+  {:acl {:owner {:principal "::ADMIN" :type "ROLE"}}
+   :type "http://stratuslab.eu/cimi/1/raw"
    :format "ext4"
    :capacity 1000})
 
 (deftest lifecycle
 
+  ;; anonymous create should fail
+  (-> (session (ring-app))
+      (request base-uri
+               :request-method :post
+               :body (json/write-str valid-entry))
+      (t/is-status 403))
+
+  ;; anonymous query should also fail
+  (-> (session (ring-app))
+      (request base-uri)
+      (t/is-status 403))
+
   ;; add a new entry
   (let [uri (-> (session (ring-app))
+                (authorize "jane" "user_password")
                 (request base-uri
                          :request-method :post
                          :body (json/write-str valid-entry))
@@ -36,13 +50,16 @@
 
     ;; verify that the new entry is accessible
     (-> (session (ring-app))
+        (authorize "jane" "user_password")
         (request abs-uri)
         (t/is-status 200)
         (t/does-body-contain valid-entry))
 
     ;; query to see that entry is listed
     (let [entries (-> (session (ring-app))
+                      (authorize "jane" "user_password")
                       (request base-uri)
+                      (t/is-status 200)
                       (t/is-resource-uri collection-type-uri)
                       (t/is-count pos?)
                       (t/entries :volumeConfigurations))]
@@ -50,12 +67,14 @@
 
     ;; delete the entry
     (-> (session (ring-app))
+        (authorize "jane" "user_password")
         (request abs-uri
                  :request-method :delete)
         (t/is-status 200))
 
     ;; ensure that it really is gone
     (-> (session (ring-app))
+        (authorize "jane" "user_password")
         (request abs-uri)
         (t/is-status 404))))
 
