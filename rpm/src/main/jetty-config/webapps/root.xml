@@ -10,4 +10,23 @@
   <Set name="copyWebDir">false</Set>
   <Set name="defaultsDescriptor"><SystemProperty name="jetty.home" default="."/>/etc/webdefault.xml</Set>
 
+  <!-- Require SSL connections.  This will force redirect from port 80. -->
+  <Set name="securityHandler">
+    <New class="org.eclipse.jetty.security.ConstraintSecurityHandler">
+      <Call name="addConstraintMapping">
+        <Arg>
+          <New class="org.eclipse.jetty.security.ConstraintMapping">
+            <Set name="pathSpec">/*</Set>
+            <Set name="constraint">
+              <New class="org.eclipse.jetty.util.security.Constraint">
+                <!-- 2 means CONFIDENTIAL. 1 means INTEGRITY -->
+                <Set name="dataConstraint">2</Set>
+              </New>
+            </Set>
+          </New>
+        </Arg>
+      </Call>
+    </New>
+</Set>
+
 </Configure>
