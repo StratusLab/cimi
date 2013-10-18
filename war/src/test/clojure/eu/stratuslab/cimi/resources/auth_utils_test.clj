@@ -100,6 +100,35 @@
                                     :type "ROLE"}})))
 
 
+(deftest check-default-acl
+  (are [authn correct] (= correct (default-acl authn))
+                       nil
+                       nil
+
+                       {:identity "bob"}
+                       {:owner {:principal "bob" :type "USER"}}
+
+                       {:identity "bob" :roles ["::ADMIN"]}
+                       {:owner {:principal "::ADMIN" :type "ROLE"}}
+
+                       {:identity "bob" :roles ["group1"]}
+                       {:owner {:principal "bob" :type "USER"}}))
+
+(deftest check-add-acl
+  (let [resource {:value "dummy"}]
+    (are [authn correct] (= correct (add-acl resource authn))
+                         nil
+                         resource
+
+                         {:identity "bob"}
+                         (assoc resource :acl {:owner {:principal "bob" :type "USER"}})
+
+                         {:identity "bob" :roles ["::ADMIN"]}
+                         (assoc resource :acl {:owner {:principal "::ADMIN" :type "ROLE"}})
+
+                         {:identity "bob" :roles ["group1"]}
+                         (assoc resource :acl {:owner {:principal "bob" :type "USER"}}))))
+
 (deftest check-authn-ids
   (are [authn correct] (= correct (authn->ids authn))
                        nil

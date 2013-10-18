@@ -13,11 +13,15 @@
 ; See the License for the specific language governing permissions and
 ; limitations under the License.
 ;
+
 (ns eu.stratuslab.cimi.resources.utils
   "General utilities for dealing with resources."
   (:require
+    [eu.stratuslab.cimi.cb.views :as views]
     [clojure.walk :as w]
+    [clojure.set :as set]
     [couchbase-clj.client :as cbc]
+    [couchbase-clj.query :as cbq]
     [clojure.data.json :as json]
     [clojure.java.io :as io]
     [clojure.string :as str]
@@ -90,6 +94,28 @@
       json
       (throw (Exception. (str "non-existent resource: " uri))))
     {}))
+
+(defn viewable-doc-ids
+  "Returns a set of the document IDs of the given type of resource that are
+   viewable by the given principal."
+  [cb-client resource-type principal & [opts]]
+  (let [default-opts {:include-docs false
+                      :key [resource-type principal]
+                      :limit 100
+                      :stale false
+                      :on-error :continue}
+        opts (merge default-opts opts)
+        q (cbq/create-query opts)
+        v (views/get-view cb-client :resource-type)]
+    (set (map cbc/view-id (cbc/query cb-client v q)))))
+
+(defn viewable-resources
+  [cb-client resource-type principals & [opts]]
+  (->> principals
+       (map #(viewable-doc-ids cb-client resource-type % opts))
+       (reduce (fn [s1 s2] (set/union s1 s2)))
+       (cbc/get-multi-json cb-client)
+       (vals)))
 
 (defn resolve-href
   "If the given value is a map and contains the key :href, then the referenced

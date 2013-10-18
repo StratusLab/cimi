@@ -13,18 +13,21 @@
 ; See the License for the specific language governing permissions and
 ; limitations under the License.
 ;
+
 (ns eu.stratuslab.cimi.resources.machine-configuration
   "Utilities for managing the CRUD features for machine configurations."
   (:require
     [clojure.string :as str]
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
+    [clojure.data.json :as json]
     [eu.stratuslab.cimi.resources.schema :as schema]
     [eu.stratuslab.cimi.resources.utils :as u]
     [eu.stratuslab.cimi.resources.auth-utils :as a]
     [eu.stratuslab.cimi.cb.views :as views]
     [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as rresp]
+    [cemerick.friend :as friend]
     [clojure.tools.logging :as log]))
 
 (def ^:const resource-type "MachineConfiguration")
@@ -59,10 +62,12 @@
 (defn add-rops
   "Adds the resource operations to the given resource."
   [resource]
-  (let [href (:id resource)
-        ops [{:rel (:edit schema/action-uri) :href href}
-             {:rel (:delete schema/action-uri) :href href}]]
-    (assoc resource :operations ops)))
+  (if (a/can-modify? (:acl resource))
+    (let [href (:id resource)
+          ops [{:rel (:edit schema/action-uri) :href href}
+               {:rel (:delete schema/action-uri) :href href}]]
+      (assoc resource :operations ops))
+    resource))
 
 (defn add
   "Add a new MachineConfiguration to the database.  The entry contains
@@ -78,7 +83,7 @@
                    (assoc :id uri)
                    (assoc :resourceURI type-uri)
                    (u/set-time-attributes)
-                   (assoc :acl {:owner {:principal "dummy" :type "USER"}})
+                   (a/add-acl (friend/current-authentication))
                    (validate))]
      (if (cbc/add-json cb-client uri entry)
        (rresp/created uri)
@@ -89,7 +94,9 @@
    entry (identified by the uuid)."
   [cb-client uuid]
   (if-let [json (cbc/get-json cb-client (uuid->uri uuid))]
-    (rresp/response (add-rops json))
+    (if (a/can-view? (friend/current-authentication) (:acl json))
+      (rresp/response (add-rops json))
+      (u/unauthorized))
     (rresp/not-found nil)))
 
 ;; FIXME: Implementation should use CAS functions to avoid update conflicts.
@@ -99,39 +106,38 @@
   [cb-client uuid entry]
   (let [uri (uuid->uri uuid)]
     (if-let [current (cbc/get-json cb-client uri)]
-      (let [updated (->> entry
-                         (u/strip-service-attrs)
-                         (merge current)
-                         (u/set-time-attributes)
-                         (add-rops)
-                         (validate))]
-        (if (cbc/set-json cb-client uri updated)
-          (rresp/response updated)
-          (rresp/status (rresp/response nil) 409))) ;; conflict
+      (if (a/can-modify? (friend/current-authentication) (:acl current))
+        (let [updated (->> entry
+                           (u/strip-service-attrs)
+                           (merge current)
+                           (u/set-time-attributes)
+                           (add-rops)
+                           (validate))]
+          (if (cbc/set-json cb-client uri updated)
+            (rresp/response updated)
+            (rresp/status (rresp/response nil) 409))) ;; conflict
+        (u/unauthorized))
       (rresp/not-found nil))))
 
 (defn delete
   "Deletes the named machine configuration."
   [cb-client uuid]
-  (if (cbc/delete cb-client (uuid->uri uuid))
-    (rresp/response nil)
-    (rresp/not-found nil)))
+  (let [uri (uuid->uri uuid)]
+    (if-let [current (cbc/get-json cb-client uri)]
+      (if (a/can-modify? (friend/current-authentication) (:acl current))
+        (if (cbc/delete cb-client uri)
+          (rresp/response nil)
+          (rresp/not-found nil))
+        (u/unauthorized))
+      (rresp/not-found nil))))
 
 (defn query
   "Searches the database for resources of this type, taking into
    account the given options."
   [cb-client & [opts]]
-  (let [q (cbq/create-query (merge {:include-docs true
-                                    :key type-uri
-                                    :limit 100
-                                    :stale false
-                                    :on-error :continue}
-                                   opts))
-        v (views/get-view cb-client :resource-uri)
-
-        configs (->> (cbc/query cb-client v q)
-                     (map cbc/view-doc-json)
-                     (map add-rops))
+  (let [principals (a/authn->principals (friend/current-authentication))
+        configs (u/viewable-resources cb-client resource-type principals opts)
+        configs (map add-rops configs)
         collection (add-cops {:resourceURI collection-type-uri
                               :id base-uri
                               :count (count configs)})]

@@ -41,6 +41,38 @@
       :ROLE ((or (set (:roles authn)) #{}) owner)
       nil)))
 
+(defn default-acl
+  "Provides a default ACL based on the authentication information.
+   The ACL will have the identity as the owner with no other ACL
+   rules.  The only exception is if the user is in the ::ADMIN
+   group, then the owner will be ::ADMIN.  If there is no identity
+   then returns nil."
+  [authn]
+  (if-let [id (:identity authn)]
+    (if (first (filter #{"::ADMIN"} (:roles authn)))
+      {:owner {:principal "::ADMIN"
+               :type "ROLE"}}
+      {:owner {:principal id
+               :type "USER"}})))
+
+(defn add-acl
+  "Adds the default ACL to the given resource."
+  [resource authn]
+  (if-let [acl (default-acl authn)]
+    (assoc resource :acl acl)
+    resource))
+
+(defn authn->principals
+  "Provides a list of principals that can be used when searching
+   the database.  These have the form 'USER_username'."
+  [authn]
+  (if-let [id (:identity authn)]
+    (set (-> (or (map #(str "ROLE_" %) (:roles authn)) [])
+             (conj (str "USER_" id))
+             (conj "ROLE_::USER")
+             (conj "ROLE_::ANON")))
+    (set ["ROLE_::ANON"])))
+
 (defn authn->ids
   "Provides a list of IDs suitable for comparing against a set
    of rules.  The IDs are maps with the :principal and :type
@@ -87,17 +119,17 @@
   ([acl]
    (can-view? (friend/current-authentication) acl))
   ([authn acl]
-  (#{:VIEW :MODIFY :ALL} (access-right authn acl))))
+   (#{:VIEW :MODIFY :ALL} (access-right authn acl))))
 
 (defn can-modify?
   ([acl]
    (can-modify? (friend/current-authentication) acl))
   ([authn acl]
-  (#{:MODIFY :ALL} (access-right authn acl))))
+   (#{:MODIFY :ALL} (access-right authn acl))))
 
 (defn can-modify-acl?
   ([acl]
    (can-modify-acl? (friend/current-authentication) acl))
   ([authn acl]
-  (#{:ALL} (access-right authn acl))))
+   (#{:ALL} (access-right authn acl))))
 

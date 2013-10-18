@@ -1,3 +1,19 @@
+;
+; Copyright 2013 Centre National de la Recherche Scientifique (CNRS)
+;
+; Licensed under the Apache License, Version 2.0 (the "License")
+; you may not use this file except in compliance with the License.
+; You may obtain a copy of the License at
+;
+;     http://www.apache.org/licenses/LICENSE-2.0
+;
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS,
+; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+; See the License for the specific language governing permissions and
+; limitations under the License.
+;
+
 (ns eu.stratuslab.cimi.resources.machine-configuration-test
   (:require
     [eu.stratuslab.cimi.resources.machine-configuration :refer :all]
@@ -73,6 +89,24 @@
     ;; query to ensure that resource is visible
     (let [entries (-> (session (ring-app))
                       (authorize "jane" "user_password")
+                      (request base-uri)
+                      (t/is-resource-uri collection-type-uri)
+                      (t/is-count pos?)
+                      (t/entries :machineConfigurations))]
+      (is ((set (map :id entries)) uri)))
+
+    ;; query to ensure that resource is NOT visible to different user
+    (let [entries (-> (session (ring-app))
+                      (authorize "tarzan" "me,tarzan,you,jane")
+                      (request base-uri)
+                      (t/is-resource-uri collection-type-uri)
+                      (t/is-count zero?)
+                      (t/entries :machineConfigurations))]
+      (is (empty? (map :id entries))))
+
+    ;; query to ensure that resource is visible to ::ADMIN
+    (let [entries (-> (session (ring-app))
+                      (authorize "root" "admin_password")
                       (request base-uri)
                       (t/is-resource-uri collection-type-uri)
                       (t/is-count pos?)
