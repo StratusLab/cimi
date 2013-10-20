@@ -26,7 +26,7 @@
     [eu.stratuslab.cimi.resources.auth-utils :as a]
     [eu.stratuslab.cimi.cb.views :as views]
     [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
-    [ring.util.response :as rresp]
+    [ring.util.response :as r]
     [cemerick.friend :as friend]
     [clojure.tools.logging :as log]))
 
@@ -86,8 +86,8 @@
                    (a/add-acl (friend/current-authentication))
                    (validate))]
      (if (cbc/add-json cb-client uri entry)
-       (rresp/created uri)
-       (rresp/status (rresp/response (str "cannot create " uri)) 400)))))
+       (r/created uri)
+       (r/status (r/response (str "cannot create " uri)) 400)))))
 
 (defn retrieve
   "Returns the data associated with the requested MachineConfiguration
@@ -95,9 +95,9 @@
   [cb-client uuid]
   (if-let [json (cbc/get-json cb-client (uuid->uri uuid))]
     (if (a/can-view? (friend/current-authentication) (:acl json))
-      (rresp/response (add-rops json))
+      (r/response (add-rops json))
       (u/unauthorized))
-    (rresp/not-found nil)))
+    (r/not-found nil)))
 
 ;; FIXME: Implementation should use CAS functions to avoid update conflicts.
 (defn edit
@@ -114,10 +114,10 @@
                            (add-rops)
                            (validate))]
           (if (cbc/set-json cb-client uri updated)
-            (rresp/response updated)
-            (rresp/status (rresp/response nil) 409))) ;; conflict
+            (r/response updated)
+            (r/status (r/response nil) 409))) ;; conflict
         (u/unauthorized))
-      (rresp/not-found nil))))
+      (r/not-found nil))))
 
 (defn delete
   "Deletes the named machine configuration."
@@ -126,10 +126,10 @@
     (if-let [current (cbc/get-json cb-client uri)]
       (if (a/can-modify? (friend/current-authentication) (:acl current))
         (if (cbc/delete cb-client uri)
-          (rresp/response nil)
-          (rresp/not-found nil))
+          (r/response nil)
+          (r/not-found nil))
         (u/unauthorized))
-      (rresp/not-found nil))))
+      (r/not-found nil))))
 
 (defn query
   "Searches the database for resources of this type, taking into
@@ -141,9 +141,8 @@
         collection (add-cops {:resourceURI collection-type-uri
                               :id base-uri
                               :count (count configs)})]
-    (rresp/response (if (empty? configs)
-                      collection
-                      (assoc collection :machineConfigurations configs)))))
+                  collection
+                  (assoc collection :machineConfigurations configs)))))
 
 (defroutes collection-routes
            (POST base-uri {:keys [cb-client body]}
