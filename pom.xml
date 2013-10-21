@@ -63,11 +63,11 @@ StratusLab services.
         <enabled>true</enabled>
       </releases>
       <snapshots>
-        <enabled>false</enabled>
+        <enabled>true</enabled>
       </snapshots>
       <id>POMReleases</id>
       <name>POM Releases</name>
-      <url>http://repo.stratuslab.eu:8081/content/repositories/releases</url>
+      <url>http://repo.stratuslab.eu:8081/content/repositories/centos-6.2-releases</url>
     </repository>
 
     <repository>
@@ -79,7 +79,7 @@ StratusLab services.
       </snapshots>
       <id>POMSnapshots</id>
       <name>POM Snapshots</name>
-      <url>http://repo.stratuslab.eu:8081/content/repositories/snapshots</url>
+      <url>http://repo.stratuslab.eu:8081/content/repositories/centos-6.2-snapshots</url>
     </repository>
 
     <repository>
