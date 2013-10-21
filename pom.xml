@@ -99,7 +99,7 @@ StratusLab services.
       <dependency>
         <groupId>eu.stratuslab.authn</groupId>
         <artifactId>authn-ssl</artifactId>
-        <version>13.10.0-SNAPSHOT</version>
+        <version>${project.version}</version>
         <classifier>jar-with-dependencies</classifier>
       </dependency>
 
