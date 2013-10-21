@@ -7,7 +7,7 @@
 <!-- and either jetty-https.xml or jetty-spdy.xml (but not both)   -->
 <!-- ============================================================= -->
 
-<New id="sslContextFactory" class="eu.stratuslab.ssl.GridSslContextFactory">
+<Configure id="sslContextFactory" class="eu.stratuslab.ssl.GridSslContextFactory">
     <Arg></Arg><!-- CA directory (/etc/grid-security/certificates) -->
     <Arg></Arg><!-- CA namespace validation (EUGRIDPMA_AND_GLOBUS) --> 
     <Arg></Arg><!-- update interval in ms (60000 = 10 min) -->
@@ -44,4 +44,4 @@
     </Call>
   </New>
 
-</New>
+</Configure>
