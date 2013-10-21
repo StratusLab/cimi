@@ -1,13 +1,10 @@
-<project
-  xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>eu.stratuslab.cimi</groupId>
   <artifactId>cimi</artifactId>
-  <version>13.10.0-SNAPSHOT</version>
+  <version>13.10.0</version>
   <name>StratusLab CIMI (POM)</name>
 
   <url>http://github.com/StratusLab/cimi</url>
@@ -54,6 +51,7 @@ StratusLab services.
   <scm>
     <connection>scm:git:ssh://git@github.com/StratusLab/cimi.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/StratusLab/cimi.git</developerConnection>
+    <tag>cimi-13.10.0</tag>
   </scm>
 
   <repositories>
@@ -303,7 +301,7 @@ StratusLab services.
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore></ignore>
+                    <ignore />
                   </action>
                 </pluginExecution>
               </pluginExecutions>
