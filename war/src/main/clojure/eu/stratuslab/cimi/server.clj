@@ -52,7 +52,7 @@
   (if-let [workflows (aw/get-workflows cb-client)]
     (-> (handler/site routes/main-routes)
         (friend/authenticate {:credential-fn nil
-                              :workflows [(aw/get-workflows cb-client)]})
+                              :workflows workflows})
         (wrap-base-uri)
         (wrap-servlet-paths)
         (wrap-cb-client cb-client)
