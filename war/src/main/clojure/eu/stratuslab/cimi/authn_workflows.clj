@@ -38,7 +38,6 @@
 (defn basic-workflow [json-cfg]
   (if json-cfg
     (try
-      (valid-basic-authn? json-cfg)
       (let [cfg (into {} (map (fn [[k v]] [(name k) v]) json-cfg))]
         (valid-basic-authn? cfg)
         (->> cfg
