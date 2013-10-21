@@ -22,7 +22,7 @@
            vt/routes
            vc/routes
            vi/routes
-           (GET "/debug" request
+           (ANY "/debug" request
                 (log/error "REQUEST:" request)
                 (r/response request))
            (route/not-found "unknown resource"))
