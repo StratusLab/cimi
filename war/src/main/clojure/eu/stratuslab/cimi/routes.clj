@@ -2,6 +2,7 @@
   "Primary routing table for CIMI application."
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
+            [ring.util.response :as r]
             [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
             [eu.stratuslab.cimi.resources.job :as job]
             [eu.stratuslab.cimi.resources.machine-configuration :as mc]
@@ -20,5 +21,5 @@
            vt/routes
            vc/routes
            vi/routes
-           (GET "/debug" {:as req} {:body req})
-           (route/not-found "Page not found"))
+           (GET "/debug" request (r/response request))
+           (route/not-found "unknown resource"))
