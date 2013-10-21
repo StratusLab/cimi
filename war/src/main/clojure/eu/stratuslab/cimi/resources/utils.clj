@@ -142,12 +142,12 @@
 (defn bad-method
   "Returns a ring reponse with a 405 error -- invalid method."
   []
-  (-> (r/response nil)
+  (-> (r/response {:status 405 :message "invalid method"})
       (r/status 405)))
 
 (defn unauthorized
   "Returns a ring reponse with a 403 error -- unauthorized."
   []
-  (-> (r/response nil)
+  (-> (r/response {:status 403 :message "unauthorized"})
       (r/status 403)))
 

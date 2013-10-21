@@ -15,7 +15,8 @@
   (t/make-ring-app routes))
 
 (def valid-entry
-  {:acl {:owner {:principal "::ADMIN" :type "ROLE"}}
+  {:acl {:owner {:principal "::ADMIN" :type "ROLE"}
+         :rules [{:principal "::ANON" :type "ROLE" :right "VIEW"}]}
    :name "title"
    :description "description"})
 

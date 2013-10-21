@@ -10,7 +10,8 @@
             [eu.stratuslab.cimi.resources.volume :as v]
             [eu.stratuslab.cimi.resources.volume-template :as vt]
             [eu.stratuslab.cimi.resources.volume-configuration :as vc]
-            [eu.stratuslab.cimi.resources.volume-image :as vi]))
+            [eu.stratuslab.cimi.resources.volume-image :as vi]
+            [clojure.tools.logging :as log]))
 
 (defroutes main-routes
            cep/routes
@@ -21,5 +22,7 @@
            vt/routes
            vc/routes
            vi/routes
-           (GET "/debug" request (r/response request))
+           (GET "/debug" request
+                (log/error "REQUEST:" request)
+                (r/response request))
            (route/not-found "unknown resource"))
