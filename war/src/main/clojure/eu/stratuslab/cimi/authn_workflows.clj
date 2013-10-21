@@ -61,7 +61,10 @@
         (workflows/http-basic :credential-fn cred-fn))
       (catch Exception e
         (log/error "error creating basic authn workflow:" (.getMessage e))
-        nil))))
+        nil))
+    (do
+      (log/warn "basic authn workflow configuration missing: ServiceCfg/authn/basic")
+      nil)))
 
 (defn get-workflows [cb-client]
   [(basic-workflow (cbc/get-json cb-client "ServiceCfg/authn/basic"))])
