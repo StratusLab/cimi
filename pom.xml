@@ -4,7 +4,7 @@
 
   <groupId>eu.stratuslab.cimi</groupId>
   <artifactId>cimi</artifactId>
-  <version>13.10.0</version>
+  <version>13.10.1-SNAPSHOT</version>
   <name>StratusLab CIMI (POM)</name>
 
   <url>http://github.com/StratusLab/cimi</url>
@@ -51,7 +51,7 @@ StratusLab services.
   <scm>
     <connection>scm:git:ssh://git@github.com/StratusLab/cimi.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/StratusLab/cimi.git</developerConnection>
-    <tag>cimi-13.10.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <repositories>
