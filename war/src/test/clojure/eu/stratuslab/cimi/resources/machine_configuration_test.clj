@@ -58,6 +58,7 @@
   (-> (session (ring-app))
       (authorize "jane" "user_password")
       (request base-uri)
+      (t/dump)
       (t/is-status 200)
       (t/is-count zero?))
 

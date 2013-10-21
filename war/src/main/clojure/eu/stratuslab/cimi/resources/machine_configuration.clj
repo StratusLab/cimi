@@ -141,8 +141,9 @@
         collection (add-cops {:resourceURI collection-type-uri
                               :id base-uri
                               :count (count configs)})]
-    collection
-    (assoc collection :machineConfigurations configs)))
+    (r/response (if (empty? collection)
+                  collection
+                  (assoc collection :machineConfigurations configs)))))
 
 (defroutes collection-routes
            (POST base-uri {:keys [cb-client body]}

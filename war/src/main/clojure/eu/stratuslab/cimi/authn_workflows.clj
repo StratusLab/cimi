@@ -35,30 +35,15 @@
 
 (def valid-basic-authn? (u/create-validation-fn BasicAuthnMap))
 
-(defn convert-special-roles
-  [s]
-  (let [special-roles {"::admin" :eu.stratuslab.cimi.authn/admin
-                       "::user" :eu.stratuslab.cimi.authn/user}]
-    (or (get special-roles s) s)))
-
-(defn transform-roles
-  "Transforms the :roles in the user entry from a sequence of strings
-   to a set of roles, where the role is the string or converted to
-   a keyword if it starts with '::'."
-  [m]
-  (->> m
-       (:roles)
-       (map convert-special-roles)
-       (set)
-       (assoc m :roles)))
-
 (defn basic-workflow [json-cfg]
   (if json-cfg
     (try
       (valid-basic-authn? json-cfg)
-      (let [cfg (into {} (map (fn [[k v]] [k (transform-roles v)]) json-cfg))
-            cred-fn (partial creds/bcrypt-credential-fn cfg)]
-        (workflows/http-basic :credential-fn cred-fn))
+      (let [cfg (into {} (map (fn [[k v]] [(name k) v]) json-cfg))]
+        (valid-basic-authn? cfg)
+        (->> cfg
+             (partial creds/bcrypt-credential-fn)
+             (workflows/http-basic :credential-fn)))
       (catch Exception e
         (log/error "error creating basic authn workflow:" (.getMessage e))
         nil))
