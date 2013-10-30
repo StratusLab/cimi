@@ -18,22 +18,27 @@ Building and Installing
 -----------------------
 
 The code and be built via the standard maven commands.  To build
-everything, execute the following from the top-level directory:
+everything and to run the tests, execute the following from the
+top-level directory:
 
     $ mvn clean install
 
 On machines where the `rpmbuild` command is available, the RPM package
-will also be generated.  If you wish to run the build without the
-tests, add the option `-DNO_DB_TESTS` to the above command.
+will also be generated.
+
+Running the full tests requires having a Couchbase server running on
+the build machine with administrator credentials of "admin/ADMIN4".
+To execute the build without a Couchbase server, add the option
+`-DNO_DB_TESTS` to the above command.
 
 To run the service, you must have [Couchbase][couchbase] already
 installed, configured, and running.  The CIMI server will use the
 `default` bucket without authentication by default.
 
 **NOTE**: There is a known problem with the Couchbase Java API when
-  using Java 1.7.  If you see failures when reading the database
-  views, switch to a version of Java 1.6 instead.  More details can be
-  found in the [bug report][cb-bug].  
+using Java 1.7.  If you see failures when reading the database views,
+switch to a version of Java 1.6 instead.  More details can be found in
+the [bug report][cb-bug].
 
 
 Feedback and Bug Reports
