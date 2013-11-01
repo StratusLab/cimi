@@ -11,6 +11,14 @@ function page_uri() {
   }
 }
 
+function page_fragments() {
+  if (window.location.hash) {
+      return window.location.href.split('#')[1].split('/');
+  } else {
+      return [];
+  }
+}
+
 function base_uri() {
   uri = page_uri();
   i = uri.lastIndexOf('webui');
@@ -34,19 +42,18 @@ window.onload = function() {
 window.onpopstate = function(event) {
   if (event.state) {
       url = base_uri() + event.state['resource'];
-      console.log("ONPOPSTATE URL: " + url);
       d3.json(url, callback);
   }
 }
 
 function callback(request, json) {
   if (json) {
-      console.log("CALLBACK GOT JSON");
       render_metadata(d3.select('#metadata'), metadata(json));
       render_contents(d3.select('#content'), content(json));
+      render_navigation(d3.select('nav'));
+      render_operations(d3.select('#operations'), json['operations'])
       clear_error();
   } else {
-      console.log("CALLBACK GOT ERROR");
       render_error(request);
   }
 }
@@ -58,12 +65,40 @@ function clear_error() {
 }
 
 function render_error(request) {
-  var msg = request.statusText + '(' + request.status + ') ::' + base_uri() + ' :: ' + page_uri();
+  var msg = request.statusText + '(' + request.status + ')';
 
   clear_error();
   d3.select('#message')
       .append('p')
       .text(msg);
+}
+
+function render_operations(o, ops) {
+  if (ops) {
+      o.append('ul');
+      for (var i=0; i<ops.length; i++) {
+          format_operation(o, ops[i]);
+      }
+  }
+  return o;
+}
+
+function render_navigation(o) {
+
+  o.selectAll('*').remove();
+
+  var crumbs = o.append('ul');
+  crumbs.append('li').append('a').text('CloudEntryPoint').attr('href', page_uri());
+
+  var root = page_uri() + '#';
+  var fragments = page_fragments();
+  for (var i=0; i < fragments.length; i++) {
+      root = root + fragments[i];
+      crumbs.append('li').append('a').text(fragments[i]).attr('href', root);
+      root = root + '/';
+  }
+
+  return o;
 }
 
 function render_metadata(o, m) {
@@ -120,6 +155,14 @@ function content(json) {
       }
   }
   return result;
+}
+
+function format_operation(o, op) {
+   if (op.href && op.rel) {
+       uri = base_uri();
+       o.append('li').append('a').text(op.rel).attr('href', uri + op.href);
+   }
+   return o;
 }
 
 function format_entry(entry) {
