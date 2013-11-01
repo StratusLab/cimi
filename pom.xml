@@ -124,17 +124,17 @@ StratusLab services.
       <dependency>
         <groupId>ring</groupId>
         <artifactId>ring-core</artifactId>
-        <version>1.2.0</version>
+        <version>1.2.1</version>
       </dependency>
       <dependency>
         <groupId>ring</groupId>
         <artifactId>ring-jetty-adapter</artifactId>
-        <version>1.2.0</version>
+        <version>1.2.1</version>
       </dependency>
       <dependency>
         <groupId>compojure</groupId>
         <artifactId>compojure</artifactId>
-        <version>1.1.5</version>
+        <version>1.1.6</version>
       </dependency>
       <dependency>
         <groupId>ring-middleware-format</groupId>
@@ -209,7 +209,7 @@ StratusLab services.
       <dependency>
         <groupId>instaparse</groupId>
         <artifactId>instaparse</artifactId>
-        <version>1.2.3</version>
+        <version>1.2.8</version>
       </dependency>
 
       <dependency>
