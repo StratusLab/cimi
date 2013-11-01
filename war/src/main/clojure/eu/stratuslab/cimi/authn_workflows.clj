@@ -1,54 +1,38 @@
 (ns eu.stratuslab.cimi.authn-workflows
   (:require
     [clojure.tools.logging :as log]
-    [clojure.edn :as edn]
-    [clojure.string :as s]
-    [clojure-ini.core :refer [read-ini]]
     [couchbase-clj.client :as cbc]
-    [compojure.handler :as handler]
-    [eu.stratuslab.cimi.couchbase-cfg :refer [read-cfg]]
-    [ring.middleware.format-params :refer [wrap-restful-params]]
-    [eu.stratuslab.cimi.cb.bootstrap :refer [bootstrap]]
-    [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
-    [eu.stratuslab.cimi.resources.utils :as u]
-    [eu.stratuslab.cimi.middleware.format-response :refer [wrap-restful-response]]
-    [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
-    [eu.stratuslab.cimi.middleware.servlet-request :refer [wrap-servlet-paths wrap-base-uri]]
-    [eu.stratuslab.cimi.routes :as routes]
-    [cemerick.friend :as friend]
     [cemerick.friend.workflows :as workflows]
-    [cemerick.friend.credentials :as creds]
-    [clj-schema.schema :refer :all]
-    [clj-schema.simple-schemas :refer :all]
-    [clj-schema.validation :refer :all]
-    )
-  (:import
-    [java.net URI]))
+    [cemerick.friend.credentials :as creds]))
 
-(def-map-schema UserEntry
-                [[:username] NonEmptyString
-                 [:password] NonEmptyString
-                 [:roles] (sequence-of NonEmptyString)])
+(defn cb-users-fn
+  "Returns a function that returns a user record with a
+   document id of 'User/identity' in the database.  If
+   the document doesn't exist or the :active flag is not
+   set, then the function returns nil."
+  [cb-client]
+  (fn [identity]
+    (log/debug "trying to authenticate user:" identity)
+    (if-let [user-map (->> identity
+                           (str "User/")
+                           (cbc/get-json cb-client))]
+      (do
+        (log/debug "found user information for: " identity "->" user-map)
+        (if (:active user-map)
+          user-map)))))
 
-(def-map-schema BasicAuthnMap
-                [[(wild NonEmptyString)] UserEntry])
+(defn form-workflow
+  "Returns the an interactive form workflow for friend that
+   is configured to find user information in Couchbase."
+  [cb-client]
+  (->> cb-client
+       (cb-users-fn)
+       (partial creds/bcrypt-credential-fn)
+       (workflows/interactive-form :credential-fn)))
 
-(def valid-basic-authn? (u/create-validation-fn BasicAuthnMap))
+(defn get-workflows
+  "Returns a list of the active workflows for authenticating
+   users for the cloud instance."
+  [cb-client]
+  [(form-workflow cb-client)])
 
-(defn basic-workflow [json-cfg]
-  (if json-cfg
-    (try
-      (let [cfg (into {} (map (fn [[k v]] [(name k) v]) json-cfg))]
-        (valid-basic-authn? cfg)
-        (->> cfg
-             (partial creds/bcrypt-credential-fn)
-             (workflows/http-basic :credential-fn)))
-      (catch Exception e
-        (log/error "error creating basic authn workflow:" (.getMessage e))
-        nil))
-    (do
-      (log/warn "basic authn workflow configuration missing: ServiceCfg/authn/basic")
-      nil)))
-
-(defn get-workflows [cb-client]
-  [(basic-workflow (cbc/get-json cb-client "ServiceCfg/authn/basic"))])

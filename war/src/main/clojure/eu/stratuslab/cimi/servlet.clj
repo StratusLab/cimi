@@ -18,8 +18,10 @@
 (def ^:const default-cb-cfg "/etc/stratuslab/couchbase.cfg")
 
 (defn- servlet-params [this]
-  (let [cb-cfg (or (.getInitParameter this "couchbase.cfg") default-cb-cfg)]
-    {:cb-cfg cb-cfg}))
+  (let [cb-cfg (or (.getInitParameter this "couchbase.cfg") default-cb-cfg)
+        context (or (.. this (getServletContext) (getContextPath)) "")]
+    {:cb-cfg cb-cfg
+     :context context}))
 
 (defn -update-state [this params]
   (swap! (.state this) merge params))
@@ -34,7 +36,7 @@
     (require n) ;; this dynamically loads the server impl.
     (-update-state this
                    {:handler-fn (ns-resolve (the-ns n) handler-fn)
-                    :init-fn (ns-resolve (the-ns n) init-fn)
+                    :init-fn    (ns-resolve (the-ns n) init-fn)
                     :destroy-fn (ns-resolve (the-ns n) destroy-fn)}))
 
   (let [init-fn (-> this .state deref :init-fn)

@@ -3,8 +3,6 @@
    servlet instance for a web application container."
   (:require
     [clojure.tools.logging :as log]
-    [clojure.edn :as edn]
-    [clojure.string :as s]
     [couchbase-clj.client :as cbc]
     [compojure.handler :as handler]
     [eu.stratuslab.cimi.couchbase-cfg :refer [read-cfg]]
@@ -15,6 +13,7 @@
     [eu.stratuslab.cimi.middleware.format-response :refer [wrap-restful-response]]
     [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
     [eu.stratuslab.cimi.middleware.servlet-request :refer [wrap-servlet-paths wrap-base-uri]]
+    [eu.stratuslab.cimi.middleware.couchbase-store :refer [couchbase-store]]
     [eu.stratuslab.cimi.routes :as routes]
     [cemerick.friend :as friend]
     [cemerick.friend.workflows :as workflows]
@@ -46,13 +45,17 @@
   "Creates a ring handler that wraps all of the service routes
    in the necessary ring middleware to handle authentication,
    header treatment, and message formatting."
-  [{:keys [cb-client]}]
-  (log/info "creating servlet ring handler")
+  [{:keys [cb-client context]}]
+  (log/info "creating servlet ring handler with context" context)
 
   (if-let [workflows (aw/get-workflows cb-client)]
-    (-> (handler/site routes/main-routes)
-        (friend/authenticate {:credential-fn nil
+    (-> (friend/authenticate routes/main-routes
+                             {:allow-anon? true
+                              :login-uri (str nil "/login")
+                              :default-landing-uri (str nil "/webui")
+                              :credential-fn (constantly nil)
                               :workflows workflows})
+        (handler/site {:session {:store (couchbase-store cb-client)}})
         (wrap-base-uri)
         (wrap-servlet-paths)
         (wrap-cb-client cb-client)
@@ -67,14 +70,15 @@
    bootstraps the database.  It returns a map containing the
    service state.  This map must be saved and then provided
    to the destroy function when tearing down the service."
-  [{:keys [cb-cfg]}]
+  [{:keys [cb-cfg context]}]
 
   (log/info "initializing servlet implementation from" cb-cfg)
 
   (let [cb-params (read-cfg cb-cfg)
         cb-client (create-cb-client cb-params)]
     (bootstrap cb-client)
-    {:cb-client cb-client}))
+    {:cb-client cb-client
+     :context context}))
 
 (defn destroy
   "Cleans up resources before shutting down the service. The argument

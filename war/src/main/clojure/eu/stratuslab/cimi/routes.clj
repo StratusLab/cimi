@@ -11,6 +11,7 @@
             [eu.stratuslab.cimi.resources.volume-template :as vt]
             [eu.stratuslab.cimi.resources.volume-configuration :as vc]
             [eu.stratuslab.cimi.resources.volume-image :as vi]
+            [eu.stratuslab.cimi.webui.routes :as webui]
             [clojure.tools.logging :as log]))
 
 (defroutes main-routes
@@ -22,6 +23,8 @@
            vt/routes
            vc/routes
            vi/routes
+           webui/routes
+           (route/resources "/")
            (ANY "/debug" request
                 (log/error "REQUEST:" request)
                 (r/response request))

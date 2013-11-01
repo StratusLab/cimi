@@ -3,6 +3,7 @@
    only live for the TTL (in seconds) given.  Reading or writing
    the session will update the expiration time."
   (:require
+    [clojure.edn :as edn]
     [ring.middleware.session.store :refer [SessionStore]]
     [couchbase-clj.client :as cbc])
   (:import java.util.UUID))
@@ -15,7 +16,8 @@
 (deftype CouchbaseStore [cb-client ttl]
   SessionStore
   (read-session [_ key]
-    (cbc/get-touch cb-client (key->docid key) {:expiry ttl}))
+    (if-let [cas-value (cbc/get-touch cb-client (key->docid key) {:expiry ttl})]
+      (cbc/cas-val cas-value)))
   (write-session [_ key data]
     (let [key (or key (str (UUID/randomUUID)))]
       (cbc/set cb-client (key->docid key) data {:expiry ttl})
