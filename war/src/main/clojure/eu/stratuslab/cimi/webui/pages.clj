@@ -44,8 +44,8 @@
   [request]
   (let [context (:context request "")]
     [:main
+     [:div {:id "operations"}]
      [:section {:id "metadata"}]
-     [:section {:id "operations"}]
      [:section {:id "content"}]
      [:section {:id "acl"}]
      [:script {:src (str context "/js/cimi-browser.js") :charset "utf-8"}]]))
@@ -68,7 +68,7 @@
 (defn login-form
   [request]
   (let [context (:context request "")]
-    [:section
+    [:main
      [:section
       [:form {:method "POST" :action (str context "/login") :class "login"}
        [:div "Username" [:input {:type "text" :name "username"}]]

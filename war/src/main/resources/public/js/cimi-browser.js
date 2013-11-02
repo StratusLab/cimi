@@ -11,15 +11,6 @@ var metadata_keys = {
 	'baseURI': true
 };
 
-/*
-window.onpopstate = function(event) {
-	if (event.state) {
-		url = base_uri() + event.state['resource'];
-		d3.json(url, callback);
-	}
-}
-*/
-
 window.onload = function() {
 	url = base_uri();
 	if (window.location.hash) {
@@ -70,6 +61,11 @@ function clear_error() {
 function render_error(request) {
 	var msg = request.statusText + '(' + request.status + ')';
 
+	clear_error();
+	d3.select('#message').append('p').text(msg);
+}
+
+function render_message(msg) {
 	clear_error();
 	d3.select('#message').append('p').text(msg);
 }
@@ -233,6 +229,7 @@ function content(json) {
 
 function format_operation(o, op) {
 	if (op.href && op.rel) {
+
 		var uri = base_uri_no_slash();
 		var href = base_uri_no_slash();
 		if (op.href.match(/^\//)) {
@@ -241,10 +238,26 @@ function format_operation(o, op) {
 			href = href + "/" + op.href;
 		}
 		opname = op.rel.split('/').pop();
+
+		var func = '';
+		
+		if (op.rel=='delete') {
+			
+			var elements = page_fragments();
+			elements.pop();
+			var parent = page_uri() + '#' + elements.join('/');
+			
+			func = 'delete_resource("' + op.href + '", "' + href + '", "' + parent + '")';
+						
+		} else {
+			func = 'alert("' + uri + op.href + '")';
+		}	
+
 		o.append('li')
-		.append('a')
+		.append('button')
 		.text(opname)
-		.attr('href', uri + op.href);
+		.attr('type', 'button')
+		.attr('onclick', func);
 	}
 	return o;
 }
@@ -294,6 +307,26 @@ function base_uri_no_slash() {
 		return uri.substring(0, i-1);
 	} else {
 		return uri;
+	}
+}
+
+function delete_resource(id, url, return_url) {
+	var resp = confirm('Delete resource ' + id + ' ?');
+	if (resp==true) {
+		console.info(id);
+		console.info(url);
+		console.info(return_url);
+		xhr = d3.xhr(url, 'application/json');
+		xhr.send('DELETE', '',
+		function(error, json) {
+			if (error) {
+				render_message('Delete of resource ' + id + ' failed!');
+			} else {
+				window.location = return_url;
+			}
+		});
+	} else {
+		render_message('Delete cancelled.');
 	}
 }
 

@@ -26,15 +26,17 @@ border: 0.5ex solid #66767c;
 }
 
 .wrapper main h1 {
+display: inline-block;
+float: left;
 font-size: x-large;
 font-weight: bold;
-text-align: center;
 margin: 0;
 padding-top: 0.5ex;
 padding-bottom: 0.5ex;
 }
 
 .wrapper main section {
+clear: both;
 border-style: solid;
 border-radius: 0px;
 border-width: 1px;
@@ -44,7 +46,7 @@ padding-bottom: 20px;
 }
 
 .logo:before {
-content: "stratuslab";
+content: url(stratuslab-logo-white.png);
 letter-spacing: 0.1ex;
 float: left;
 font-style: italic;
@@ -145,6 +147,7 @@ min-height: 1em;
 
 #operations ul {
 display: block;
+float: right;
 list-style-type: none;
 padding: 0;
 padding-left: 1ex;
@@ -162,6 +165,13 @@ display: inline-block;
 #message {
 background-color: #66767c;
 min-height: 2ex;
+padding-top: 0.5ex
+padding-bottom: 0.5ex;
+}
+
+#message p {
+padding: 0;
+margin: 0;
 }
 
 footer {
