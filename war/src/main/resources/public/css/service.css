@@ -9,88 +9,171 @@ Colors:
 */
 
 body {
-    font-family: Arial, Helvetica, sans-serif;
-	color: black;
-	background-color: white;
+font-family: Arial, Helvetica, sans-serif;
+color: black;
+background-color: white;
 }
 
 .wrapper {
-	margin: auto;
-	max-width: 900px;
-	background-color: white;
+margin: auto;
+max-width: 900px;
+background-color: white;
 }
 
-.wrapper section {
-	background-color: #e8e8e8;
-	border: 0.5ex solid #66767c;
+.wrapper main {
+background-color: #e8e8e8;
+border: 0.5ex solid #66767c;
 }
 
-.wrapper section section {
-	border-style: solid;
-	border-radius: 0px;
-	border-width: 1px;
-	border-color: black;
-	background-color: white;
-	padding-bottom: 20px;
+.wrapper main h1 {
+font-size: x-large;
+font-weight: bold;
+text-align: center;
+margin: 0;
+padding-top: 0.5ex;
+padding-bottom: 0.5ex;
+}
+
+.wrapper main section {
+border-style: solid;
+border-radius: 0px;
+border-width: 1px;
+border-color: black;
+background-color: white;
+padding-bottom: 20px;
 }
 
 .logo:before {
-	content: "stratuslab";
-	letter-spacing: 0.1ex;
-	float: left;
-	font-style: italic;
-	font-weight: bold;
-	color: white;
-	padding: 1ex;
+content: "stratuslab";
+letter-spacing: 0.1ex;
+float: left;
+font-style: italic;
+font-weight: bold;
+color: white;
+padding: 1ex;
 }
 
 .user-info {
-	float: right;
-	color: white;
-	padding: 1ex;
+float: right;
+color: white;
+padding: 1ex;
 }
 
 .user-info a:link {
-    color: white;
-    text-decoration: none;
+color: white;
+text-decoration: none;
 }
 
 .user-info a:visited {
-    color: white;
-    text-decoration: none;
+color: white;
+text-decoration: none;
 }
 
 .user-info a:hover {
-    color: white;
-    text-decoration: underline;
+color: white;
+text-decoration: underline;
 }
 
 .user-info a:active {
-    color: white;
-    text-decoration: underline;
+color: white;
+text-decoration: underline;
 }
 
 header {
-	background-color: #66767c;
-	border-radius: 20px 20px 0 0;
-	font-size: large;
+background-color: #66767c;
+border-radius: 20px 20px 0 0;
+font-size: large;
 }
 
 nav {
-    clear: both;
-    min-height: 1em;
+clear: both;
+min-height: 1em;
+font-size: medium;
+padding-bottom: 0ex;
+border-bottom: solid whitesmoke;
+}
+
+nav a:link {
+color: white;
+text-decoration: none;
+}
+
+nav a:visited {
+color: white;
+text-decoration: none;
+}
+
+nav a:hover {
+color: white;
+text-decoration: underline;
+}
+
+nav a:active {
+color: white;
+text-decoration: underline;
+}
+
+nav ul {
+display: block;
+list-style-type: none;
+padding: 0;
+padding-left: 1ex;
+left: 0;
+top: 0;
+}
+
+nav ul li {
+margin: 0;
+padding: 0;
+display: inline-block;
+}
+
+nav ul li:before {
+content: "\a0\2666\a0";
+color: white;
+}
+
+nav ul li:first-child:before {
+content: none;
+}
+
+#operations {
+padding: 0;
+margin: 0;
+min-height: 1em;
+}
+
+#operations ul {
+display: block;
+list-style-type: none;
+padding: 0;
+padding-left: 1ex;
+left: 0;
+top: 0;
+}
+
+#operations ul li {
+margin: 0;
+padding-left: 1ex;
+padding-right: 1ex;
+display: inline-block;
+}
+
+#message {
+background-color: #66767c;
+min-height: 2ex;
 }
 
 footer {
-	background-color: #66767c;
-	border-radius: 0 0 20px 20px;
-	font-size: small;
-    color: white;
+background-color: #66767c;
+border-radius: 0 0 20px 20px;
+font-size: small;
+color: white;
 }
 
 footer p {
-	margin: auto;
-	padding-top: 1em;
-	padding-bottom: 1em;
-	text-align: center;
+margin: auto;
+padding-top: 1em;
+padding-bottom: 1em;
+text-align: center;
 }

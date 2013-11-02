@@ -43,7 +43,7 @@
 (defn content
   [request]
   (let [context (:context request "")]
-    [:section
+    [:main
      [:section {:id "metadata"}]
      [:section {:id "operations"}]
      [:section {:id "content"}]
