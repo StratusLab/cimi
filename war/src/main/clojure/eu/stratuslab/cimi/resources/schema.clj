@@ -49,7 +49,7 @@
 
 (def-map-schema Properties
                 (constraints (fn [m] (pos? (count (keys m)))))
-                [[(wild NonEmptyString)] String])
+                [[(wild Anything)] String])
 
 ;;
 ;; Ownership and access control

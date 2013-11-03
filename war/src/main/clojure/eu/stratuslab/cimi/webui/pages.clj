@@ -10,11 +10,16 @@
   (let [context (:context request "")]
     [:head
      [:meta {:charset "utf-8"}]
+     [:link {:href (str context "/js/codemirror/lib/codemirror.css") :rel "stylesheet" :type "text/css"}]
+     [:link {:href (str context "/js/codemirror/addon/lint/lint.css") :rel "stylesheet" :type "text/css"}]
      [:link {:href (str context "/css/service.css") :rel "stylesheet" :type "text/css"}]
      [:script {:src (str context "/js/d3/d3.v3.min.js") :charset "utf-8"}]
-     ;; [:script {:src (str context "/js/codemirror/lib/codemirror.js") :charset "utf-8"}]
-     ;; [:link {:href (str context "/js/codemirror/lib/codemirror.css") :rel "stylesheet" :type "text/css"}]
-     ;; [:script {:src (str context "/js/codemirror/mode/javascript/javascript.js") :charset "utf-8"}]
+     [:script {:src (str context "/js/codemirror/lib/codemirror.js") :charset "utf-8"}]
+     [:script {:src (str context "/js/codemirror/mode/javascript/javascript.js") :charset "utf-8"}]
+     [:script {:src (str context "/js/codemirror/addon/lint/lint.js") :charset "utf-8"}]
+     [:script {:src (str context "/js/jsonlint/jsonlint.js") :charset "utf-8"}]
+     [:script {:src (str context "/js/codemirror/addon/lint/json-lint.js") :charset "utf-8"}]
+     [:script {:src (str context "/js/cimi-browser.js") :charset "utf-8"}]
      [:title "StratusLab"]]))
 
 (defn user-info
@@ -45,10 +50,11 @@
   (let [context (:context request "")]
     [:main
      [:div {:id "operations"}]
-     [:section {:id "metadata"}]
-     [:section {:id "content"}]
-     [:section {:id "acl"}]
-     [:script {:src (str context "/js/cimi-browser.js") :charset "utf-8"}]]))
+     [:section {:id "metadata" :class "normal-section"}]
+     [:section {:id "content" :class "normal-section"}]
+     [:section {:id "acl" :class "normal-section"}]
+     [:section {:id "editor-panel" :class "editor-section"}
+      [:textarea {:id "editor" :rows 25}]]]))
 
 (def footer
   [:footer
@@ -69,11 +75,14 @@
   [request]
   (let [context (:context request "")]
     [:main
+     [:h1 "Login"]
+     [:div {:id "operations"}
+      ]
      [:section
-      [:form {:method "POST" :action (str context "/login") :class "login"}
+      [:form {:id "userform" :method "POST" :action (str context "/login") :class "login"}
        [:div "Username" [:input {:type "text" :name "username"}]]
        [:div "Password" [:input {:type "password" :name "password"}]]
-       [:div [:input {:type "submit" :class "button" :value "Login"}]]]]]))
+       [:div [:input {:type "submit" :class "button" :value "login"}]]]]]))
 
 (defn login-page
   [request]

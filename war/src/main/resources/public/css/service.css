@@ -151,14 +151,15 @@ float: right;
 list-style-type: none;
 padding: 0;
 padding-left: 1ex;
+margin: 0;
+margin-top: 0.5ex;
+margin-bottom: 0.5ex;
 left: 0;
 top: 0;
 }
 
 #operations ul li {
 margin: 0;
-padding-left: 1ex;
-padding-right: 1ex;
 display: inline-block;
 }
 
@@ -186,4 +187,12 @@ margin: auto;
 padding-top: 1em;
 padding-bottom: 1em;
 text-align: center;
+}
+
+#editor {
+width: 90%;
+}
+
+.CodeMirror {
+border: 1px solid black;
 }
