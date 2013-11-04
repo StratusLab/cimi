@@ -143,6 +143,56 @@
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>full-compile-and-docs</id>
+      <activation>
+        <property>
+          <name>!skipTests</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.theoryinpractise</groupId>
+            <artifactId>clojure-maven-plugin</artifactId>
+            
+            <executions>
+
+              <execution>
+                <id>syntax-check</id>
+                <goals>
+                  <goal>compile</goal>
+                </goals>
+                <phase>compile</phase>
+                <configuration>
+                  <temporaryOutputDirectory>true</temporaryOutputDirectory>
+                  <sourceDirectories>
+                    <sourceDirectory>src/main/clojure</sourceDirectory>
+                  </sourceDirectories>
+                </configuration>
+              </execution>
+              
+              <execution>
+                <id>run-codox</id>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <phase>package</phase>
+                <configuration>
+                  <runWithTests>true</runWithTests>
+                  <includePluginDependencies>true</includePluginDependencies>
+                  <script>${basedir}/target/run_codox.clj</script>
+                </configuration>
+              </execution>
+              
+            </executions>
+            
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <build>
@@ -209,20 +259,6 @@
         <executions>
 
           <execution>
-            <id>syntax-check</id>
-            <goals>
-              <goal>compile</goal>
-            </goals>
-            <phase>compile</phase>
-            <configuration>
-              <temporaryOutputDirectory>true</temporaryOutputDirectory>
-              <sourceDirectories>
-                <sourceDirectory>src/main/clojure</sourceDirectory>
-              </sourceDirectories>
-            </configuration>
-          </execution>
-
-          <execution>
             <id>minimal-compile</id>
             <goals>
               <goal>compile</goal>
@@ -234,19 +270,6 @@
                 <namespace>eu.stratuslab.cimi.main</namespace>
               </namespaces>
               <compileDeclaredNamespaceOnly>true</compileDeclaredNamespaceOnly>
-            </configuration>
-          </execution>
-
-          <execution>
-            <id>run-codox</id>
-            <goals>
-              <goal>run</goal>
-            </goals>
-            <phase>package</phase>
-            <configuration>
-              <runWithTests>true</runWithTests>
-              <includePluginDependencies>true</includePluginDependencies>
-              <script>${basedir}/target/run_codox.clj</script>
             </configuration>
           </execution>
 
