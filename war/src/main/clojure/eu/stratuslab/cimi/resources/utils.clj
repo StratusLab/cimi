@@ -95,15 +95,28 @@
       (throw (Exception. (str "non-existent resource: " uri))))
     {}))
 
+(defn user-record
+  "Finds a user record associated with a given identifier."
+  [cb-client identifier]
+  ;; FIXME: If there is more than one entry then code should fail.
+  (let [opts {:include-docs true
+              :key          identifier
+              :limit        1
+              :stale        false
+              :on-error     :continue}
+        q (cbq/create-query opts)
+        v (views/get-view cb-client :user-ids)]
+    (first (map cbc/view-doc-json (cbc/query cb-client v q)))))
+
 (defn viewable-doc-ids
   "Returns a set of the document IDs of the given type of resource that are
    viewable by the given principal."
   [cb-client resource-type principal & [opts]]
   (let [default-opts {:include-docs false
-                      :key [resource-type principal]
-                      :limit 100
-                      :stale false
-                      :on-error :continue}
+                      :key          [resource-type principal]
+                      :limit        100
+                      :stale        false
+                      :on-error     :continue}
         opts (merge default-opts opts)
         q (cbq/create-query opts)
         v (views/get-view cb-client :resource-type)]

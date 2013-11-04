@@ -3,7 +3,8 @@
     [clojure.tools.logging :as log]
     [couchbase-clj.client :as cbc]
     [cemerick.friend.workflows :as workflows]
-    [cemerick.friend.credentials :as creds]))
+    [cemerick.friend.credentials :as creds]
+    [eu.stratuslab.cimi.resources.utils :as u]))
 
 (defn cb-users-fn
   "Returns a function that returns a user record with a
@@ -13,9 +14,7 @@
   [cb-client]
   (fn [identity]
     (log/debug "trying to authenticate user:" identity)
-    (if-let [user-map (->> identity
-                           (str "User/")
-                           (cbc/get-json cb-client))]
+    (if-let [user-map (u/user-record cb-client identity)]
       (do
         (log/debug "found user information for: " identity "->" user-map)
         (if (:active user-map)

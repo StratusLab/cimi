@@ -6,7 +6,9 @@
   (:require
     [clojure.tools.logging :as log]
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
-    [eu.stratuslab.cimi.cb.views :as views]))
+    [eu.stratuslab.cimi.cb.views :as views]
+    [couchbase-clj.client :as cbc]
+    [cemerick.friend.credentials :as creds]))
 
 (defn create-views
   "Ensure that the views necessary for searching the database
@@ -32,9 +34,38 @@
         (catch Exception e
           (log/error "problem retrieving CloudEntryPoint:" (.getMessage e)))))))
 
+(defn random-password
+  "A random password of 12 characters consisting of the ASCII
+   characters between 40 '(' and 95 '_'."
+  []
+  (let [valid-chars (map char (concat (range 48 58)
+                                      (range 65 91)
+                                      (range 97 123)))]
+    (reduce str (for [_ (range 12)] (rand-nth valid-chars)))))
+
+(defn create-admin
+  "Checks to see if the User/admin entry exists in the database;
+   if not, it will create one with a randomized password.  The
+   clear text password will be written to the service log."
+  [cb-client]
+  (try
+    (let [password (random-password)
+          admin {:first-name "cloud"
+                 :last-name  "administrator"
+                 :username   "admin"
+                 :password   (creds/hash-bcrypt password)
+                 :active     true
+                 :roles      ["::ADMIN"]}]
+      (if (cbc/add-json cb-client "User/admin" admin)
+        (log/error "User/admin entry created; initial password is" password)
+        (log/info "User/admin entry NOT created")))
+    (catch Exception e
+      (log/error "Error occurred while trying to create User/admin entry"))))
+
 (defn bootstrap
   "Bootstraps the Couchbase database by creating the CloudEntryPoint
    and inserting the design document with views, as necessary."
   [cb-client]
+  (create-admin cb-client)
   (create-cep cb-client)
   (create-views cb-client))

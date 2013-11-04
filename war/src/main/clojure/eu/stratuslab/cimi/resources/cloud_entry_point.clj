@@ -46,12 +46,12 @@
 
 ;; FIXME: Generate these automatically.
 (def resource-links
-  {:machineConfigs {:href mc/resource-type}
-   :jobs {:href job/resource-type}
-   :volumes {:href volume/resource-type}
+  {:machineConfigs  {:href mc/resource-type}
+   :jobs            {:href job/resource-type}
+   :volumes         {:href volume/resource-type}
    :volumeTemplates {:href volume-template/resource-type}
-   :volumeConfigs {:href volume-configuration/resource-type}
-   :volumeImages {:href volume-image/resource-type}
+   :volumeConfigs   {:href volume-configuration/resource-type}
+   :volumeImages    {:href volume-image/resource-type}
    :serviceMessages {:href sm/resource-type}})
 
 (def validate (u/create-validation-fn schema/CloudEntryPoint))
@@ -73,12 +73,12 @@
    rather than the relative URI for the resource."
   [cb-client]
 
-  (let [record (-> {:acl resource-acl
-                    :id resource-type
+  (let [record (-> {:acl         resource-acl
+                    :id          resource-type
                     :resourceURI type-uri}
                    (u/set-time-attributes))]
-    (cbc/add-json cb-client resource-type record {:observe true
-                                                  :persist :master
+    (cbc/add-json cb-client resource-type record {:observe   true
+                                                  :persist   :master
                                                   :replicate :zero})))
 
 (defn retrieve
@@ -101,10 +101,9 @@
   have been previously initialized.  Returns nil."
   [cb-client baseURI entry]
   (if-let [current (cbc/get-json cb-client resource-type)]
-    (let [db-doc (-> entry
-                     (select-keys [:name :description :properties])
-                     (merge current)
-                     (u/set-time-attributes))
+    (let [db-doc (->> (select-keys entry [:name :description :properties])
+                      (merge current)
+                      (u/set-time-attributes))
           doc (-> db-doc
                   (assoc :baseURI baseURI)
                   (merge resource-links)
