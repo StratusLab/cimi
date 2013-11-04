@@ -31,6 +31,9 @@
     </Array>
   </Set>
 
+  <Set name="WantClientAuth">true</Set>
+  <Set name="NeedClientAuth">false</Set>
+
   <!-- =========================================================== -->
   <!-- Create a TLS specific HttpConfiguration based on the        -->
   <!-- common HttpConfiguration defined in jetty.xml               -->
