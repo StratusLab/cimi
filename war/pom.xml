@@ -207,7 +207,7 @@
         </configuration>
 
         <executions>
-
+<!--
           <execution>
             <id>syntax-check</id>
             <goals>
@@ -221,7 +221,7 @@
               </sourceDirectories>
             </configuration>
           </execution>
-
+-->
           <execution>
             <id>minimal-compile</id>
             <goals>
@@ -236,7 +236,7 @@
               <compileDeclaredNamespaceOnly>true</compileDeclaredNamespaceOnly>
             </configuration>
           </execution>
-
+<!--
           <execution>
             <id>run-codox</id>
             <goals>
@@ -249,7 +249,7 @@
               <script>${basedir}/target/run_codox.clj</script>
             </configuration>
           </execution>
-
+-->
         </executions>
 
       </plugin>

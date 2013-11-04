@@ -22,7 +22,11 @@ background-color: white;
 
 .wrapper main {
 background-color: #e8e8e8;
-border: 0.5ex solid #66767c;
+border-style: none;
+margin 0;
+padding: 0;
+border-left: 2px solid #66767c;
+border-right: 2px solid #66767c;
 }
 
 .wrapper main h1 {
@@ -37,13 +41,19 @@ padding-bottom: 0.5ex;
 
 .wrapper main section {
 clear: both;
-border-style: solid;
+border-style: none;
+border-top: 2px solid whitesmoke;
+border-bottom: 2px solid whitesmoke;
 border-radius: 0px;
-border-width: 1px;
-border-color: black;
 background-color: white;
-padding-bottom: 20px;
+padding: 5px;
+margin: 0;
 }
+
+.wrapper main section:first-of-type {
+border-top: 4px solid black;
+}
+
 
 .logo:before {
 content: url(stratuslab-logo-white.png);
@@ -194,5 +204,5 @@ width: 90%;
 }
 
 .CodeMirror {
-border: 1px solid black;
+border: none;
 }

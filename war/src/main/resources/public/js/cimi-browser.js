@@ -46,6 +46,7 @@ function page_callback(request, json) {
 		render_metadata(d3.select('#metadata'), metadata(json));
 		render_navigation(d3.select('nav'));
 		render_operations(d3.select('#operations'), json.operations)
+		render_acl(d3.select('#acl'), json.acl)
 		clear_message();
 
 		var content_element = d3.select('#content');
@@ -229,7 +230,7 @@ function render_collection(o, m) {
 
 			var row = table.append('tr');
 			row.append('td').append('a').text(tag).attr('href', link);
-			row.append('td').text(name)
+			row.append('td').text(name);
 			row.append('td').text(desc);			
 		}
 	}
@@ -347,6 +348,43 @@ function valid_json(s) {
         alert('invalid JSON: ' + e);
         return false;
     }
+}
+
+/*
+ * Functions and utilities to display the ACL information for a resource.
+ */
+
+
+function render_acl(o, acl) {
+	o.selectAll('*').remove();
+
+	if (acl) {
+		var table = o.append('table');
+
+        append_acl_row(table, 'ALL', 'OWNER', acl.owner.principal, acl.owner.type);
+
+        var rules = acl.rules;
+		for (var i=0; i<rules.length; i++) {
+			var rule = rules[i];
+			append_acl_row(table, rule.right, '', rule.principal, rule.type);
+		}
+	} else {
+		o.append('p').text('No explicit ACL.');
+	}
+
+	return o;
+}
+
+function append_acl_row(table, right, owner, identifier, type) {
+
+    var tag = identifier + ' (' + type + ')';
+
+    var row = table.append('tr');
+    row.append('td').text(right);
+    row.append('td').text(owner);
+    row.append('td').text(tag);
+
+    return table;
 }
 
 /*
