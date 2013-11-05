@@ -1,6 +1,7 @@
 (ns eu.stratuslab.authn.workflows.client-certificate
   (:require
     [clojure.tools.logging :as log]
+    [clojure.pprint :refer [pprint]]
     [cemerick.friend :as friend]
     [cemerick.friend.workflows :as workflows]
     [cemerick.friend.util :as futil]))
@@ -19,7 +20,9 @@
         (if-let [user-record (credential-fn (with-meta
                                               {:ssl-client-cert ssl-client-cert}
                                               {::friend/workflow :client-certificate}))]
-          (workflows/make-auth user-record {::friend/workflow :client-certificate}))))))
+          (do
+            (log/info (with-out-str (pprint request)))
+            (workflows/make-auth user-record {::friend/workflow :client-certificate})))))))
 
 (defn extract-subject-dn
   "Given a X509 certifcate, this will extract the DN of the subject
