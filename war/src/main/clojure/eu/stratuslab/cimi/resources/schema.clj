@@ -20,7 +20,9 @@
     [clojure.tools.logging :refer [debug info error]]
     [clj-schema.schema :refer :all]
     [clj-schema.simple-schemas :refer :all]
-    [clj-schema.validation :refer :all]))
+    [clj-schema.validation :refer :all])
+  (:import
+    clojure.lang.Keyword))
 
 (def ^:const resource-uri "http://schemas.dmtf.org/cimi/1/")
 
@@ -49,7 +51,7 @@
 
 (def-map-schema Properties
                 (constraints (fn [m] (pos? (count (keys m)))))
-                [[(wild Anything)] String])
+                [[(wild (:or Keyword String))] String])
 
 ;;
 ;; Ownership and access control
@@ -109,6 +111,26 @@
                  (optional-path [:properties]) Properties
                  (optional-path [:operations]) Operations])
 
+;;
+;; User records within the database.  (StratusLab extension.)
+;;
+(def-seq-schema Roles
+                (constraints (fn [s] (pos? (count s))))
+                [NonEmptyString])
+
+(def-map-schema Altnames
+                (constraints (fn [m] (pos? (count (keys m)))))
+                [[(wild Keyword)] NonEmptyString])
+
+(def-map-schema User :loose
+                CommonAttrs
+                [[:first-name] NonEmptyString
+                 [:last-name] NonEmptyString
+                 [:username] NonEmptyString
+                 (optional-path [:password]) NonEmptyString
+                 (optional-path [:active]) Boolean
+                 (optional-path [:roles]) Roles
+                 (optional-path [:altnames]) Altnames])
 
 ;;
 ;; Cloud Entry Point Schema

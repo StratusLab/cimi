@@ -18,6 +18,7 @@
   (:require
     [eu.stratuslab.cimi.resources.schema :refer :all]
     [eu.stratuslab.cimi.resources.utils :as utils]
+    [eu.stratuslab.cimi.resources.user :as user]
     [eu.stratuslab.cimi.resources.volume-configuration :as vc]
     [eu.stratuslab.cimi.resources.volume-template :as vt]
     [eu.stratuslab.cimi.resources.volume-image :as vi]
@@ -33,7 +34,7 @@
 
 (deftest test-access-control-id
   (let [rule {:principal "::ADMIN"
-              :type "ROLE"}]
+              :type      "ROLE"}]
     (are [v pred] (pred (validation-errors AccessControlId v))
                   rule empty?
                   (assoc rule :bad "MODIFY") (complement empty?)
@@ -44,8 +45,8 @@
 
 (deftest test-access-control-rule
   (let [rule {:principal "::ADMIN"
-              :type "ROLE"
-              :right "VIEW"}]
+              :type      "ROLE"
+              :right     "VIEW"}]
     (are [v pred] (pred (validation-errors AccessControlRule v))
                   rule empty?
                   (assoc rule :right "MODIFY") empty?
@@ -55,12 +56,12 @@
 
 (deftest test-access-control-rules
   (let [rules [{:principal "::ADMIN"
-                :type "ROLE"
-                :right "VIEW"}
+                :type      "ROLE"
+                :right     "VIEW"}
 
                {:principal "ALPHA"
-                :type "USER"
-                :right "ALL"}]]
+                :type      "USER"
+                :right     "ALL"}]]
     (are [v pred] (pred (validation-errors AccessControlRules v))
                   rules empty?
                   (next rules) empty?
@@ -68,13 +69,13 @@
 
 (deftest test-access-control-list
   (let [acl {:owner {:principal "::ADMIN"
-                     :type "ROLE"}
+                     :type      "ROLE"}
              :rules [{:principal ":group1"
-                      :type "ROLE"
-                      :right "VIEW"}
+                      :type      "ROLE"
+                      :right     "VIEW"}
                      {:principal "group2"
-                      :type "ROLE"
-                      :right "MODIFY"}]}]
+                      :type      "ROLE"
+                      :right     "MODIFY"}]}]
     (are [v pred] (pred (validation-errors AccessControlList v))
                   acl empty?
                   (dissoc acl :rules) empty?
@@ -113,11 +114,11 @@
 
 (deftest test-common-attrs-schema
   (let [date "1964-08-25T10:00:00.0Z"
-        minimal {:acl valid-acl
-                 :id "a"
+        minimal {:acl         valid-acl
+                 :id          "a"
                  :resourceURI "http://example.org/data"
-                 :created date
-                 :updated date}
+                 :created     date
+                 :updated     date}
         maximal (assoc minimal
                   :name "name"
                   :description "description"
@@ -141,13 +142,45 @@
   (is (= valid-actions (set (keys action-uri)))))
 
 ;;
+;; User
+;;
+(def valid-user-entry
+  {:acl        valid-acl
+   :first-name "cloud"
+   :last-name  "user"
+   :username   "cloud-user"})
+
+(deftest test-user-schema
+  (let [uri (user/uuid->uri "cloud-user")
+        user (assoc valid-user-entry
+               :id uri
+               :resourceURI user/type-uri
+               :created "1964-08-25T10:00:00.0Z"
+               :updated "1964-08-25T10:00:00.0Z")]
+    (are [v pred] (pred (validation-errors User v))
+                  user empty?
+                  (assoc user :password "password") empty?
+                  (assoc user :active true) empty?
+                  (assoc user :active "BAD") (complement empty?)
+                  (assoc user :roles ["OK"]) empty?
+                  (assoc user :roles []) (complement empty?)
+                  (assoc user :roles "BAD") (complement empty?)
+                  (assoc user :altnames {:x500dn "certdn"}) empty?
+                  (assoc user :altnames {}) (complement empty?)
+                  (assoc user :email "OK@EXAMPLE.COM") empty?
+                  (dissoc user :acl) (complement empty?)
+                  (dissoc user :first-name) (complement empty?)
+                  (dissoc user :last-name) (complement empty?)
+                  (dissoc user :username) (complement empty?))))
+
+;;
 ;; VolumeConfiguration
 ;;
 
 (def valid-vc-entry
-  {:acl valid-acl
-   :type "http://stratuslab.eu/cimi/1/raw"
-   :format "ext4"
+  {:acl      valid-acl
+   :type     "http://stratuslab.eu/cimi/1/raw"
+   :format   "ext4"
    :capacity 1000})
 
 (deftest test-volume-configuration-schema
@@ -168,10 +201,10 @@
 ;;
 
 (def valid-vi-entry
-  {:acl valid-acl
-   :state "CREATING"
+  {:acl           valid-acl
+   :state         "CREATING"
    :imageLocation {:href "GWE_nifKGCcXiFk42XaLrS8LQ-J"}
-   :bootable true})
+   :bootable      true})
 
 (deftest test-volume-image-schema
   (let [volume-image (assoc valid-vi-entry
@@ -192,9 +225,9 @@
 ;;
 
 (def valid-vt-entry
-  {:acl valid-acl
+  {:acl          valid-acl
    :volumeConfig {:href "VolumeConfiguration/uuid"}
-   :volumeImage {:href "VolumeImage/mkplaceid"}})
+   :volumeImage  {:href "VolumeImage/mkplaceid"}})
 
 (deftest test-volume-template-schema
   (let [uri (vt/uuid->uri (utils/create-uuid))
@@ -214,9 +247,9 @@
 ;;
 
 (def valid-v-entry
-  {:acl valid-acl
-   :state "CREATING"
-   :type "http://schemas.cimi.stratuslab.eu/normal"
+  {:acl      valid-acl
+   :state    "CREATING"
+   :type     "http://schemas.cimi.stratuslab.eu/normal"
    :capacity 1024
    :bootable true
    :eventLog "EventLog/uuid"})
@@ -241,17 +274,17 @@
 ;;
 
 (def valid-job-entry
-  {:acl valid-acl
-   :state "QUEUED"
-   :targetResource "Machine/uuid-1"
-   :affectedResources ["Machine/uuid-2"]
-   :action "http://schemas.cimi.stratuslab.eu/create-volume"
-   :returnCode 0
-   :progress 0
-   :statusMessage "none"
+  {:acl                valid-acl
+   :state              "QUEUED"
+   :targetResource     "Machine/uuid-1"
+   :affectedResources  ["Machine/uuid-2"]
+   :action             "http://schemas.cimi.stratuslab.eu/create-volume"
+   :returnCode         0
+   :progress           0
+   :statusMessage      "none"
    :timeOfStatusChange "20130825T10:00:00.00Z"
-   :parentJob "Job/uuid-1"
-   :nestedJobs ["Job/uuid-2"]})
+   :parentJob          "Job/uuid-1"
+   :nestedJobs         ["Job/uuid-2"]})
 
 (deftest test-job-schema
   (let [job (assoc valid-job-entry
@@ -278,15 +311,15 @@
 ;;
 
 (def valid-mc-entry
-  {:acl valid-acl
-   :name "valid"
+  {:acl         valid-acl
+   :name        "valid"
    :description "valid machine configuration"
-   :cpu 1
-   :memory 512000
-   :cpuArch "x86_64"
-   :disks [{:capacity 1024
-            :format "ext4"
-            :initialLocation "/dev/hda"}]})
+   :cpu         1
+   :memory      512000
+   :cpuArch     "x86_64"
+   :disks       [{:capacity        1024
+                  :format          "ext4"
+                  :initialLocation "/dev/hda"}]})
 
 (deftest test-disk-schema
   (let [disk {:capacity 1024 :format "ext4" :initialLocation "/dev/hda"}]
@@ -314,7 +347,7 @@
              :created "1964-08-25T10:00:00.0Z"
              :updated "1964-08-25T10:00:00.0Z"
              :disks [{:capacity 1024
-                      :format "ext4"}])]
+                      :format   "ext4"}])]
 
     (are [v pred] (pred (validation-errors MachineConfiguration v))
                   mc empty?
@@ -331,12 +364,12 @@
 (deftest test-schema
   (let [timestamp "1964-08-25T10:00:00.0Z"
         uri (sm/uuid->uri timestamp)
-        service-message {:acl valid-acl
-                         :id uri
+        service-message {:acl         valid-acl
+                         :id          uri
                          :resourceURI sm/type-uri
-                         :created timestamp
-                         :updated timestamp
-                         :name "title"
+                         :created     timestamp
+                         :updated     timestamp
+                         :name        "title"
                          :description "description"}]
 
     (are [v pred] (pred (validation-errors ServiceMessage v))
