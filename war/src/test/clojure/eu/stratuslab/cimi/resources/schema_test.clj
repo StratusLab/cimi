@@ -23,6 +23,7 @@
     [eu.stratuslab.cimi.resources.volume-template :as vt]
     [eu.stratuslab.cimi.resources.volume-image :as vi]
     [eu.stratuslab.cimi.resources.volume :as v]
+    [eu.stratuslab.cimi.resources.service-configuration :as sc]
     [eu.stratuslab.cimi.resources.service-message :as sm]
     [eu.stratuslab.cimi.resources.machine-configuration :as mc]
     [eu.stratuslab.cimi.resources.job :as job]
@@ -172,6 +173,27 @@
                   (dissoc user :first-name) (complement empty?)
                   (dissoc user :last-name) (complement empty?)
                   (dissoc user :username) (complement empty?))))
+
+;;
+;; Service configuration
+;;
+(def valid-sc-entry
+  {:acl      valid-acl
+   :service  "authn"
+   :instance "first"})
+
+(deftest test-sc-schema
+  (let [uri (sc/uuid->uri "authn.first")
+        sc (assoc valid-sc-entry
+             :id uri
+             :resourceURI user/type-uri
+             :created "1964-08-25T10:00:00.0Z"
+             :updated "1964-08-25T10:00:00.0Z")]
+    (are [v pred] (pred (validation-errors ServiceConfiguration v))
+                  sc empty?
+                  (dissoc sc :instance "password") empty?
+                  (dissoc sc :service) (complement empty?)
+                  (assoc sc :dummy "dummy") empty?)))
 
 ;;
 ;; VolumeConfiguration

@@ -42,11 +42,11 @@
 
 (def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}})
 
-(def validate (u/create-validation-fn schema/User))
+(def validate (u/create-validation-fn schema/ServiceConfiguration))
 
 (defn uuid->uri
-  "Convert uuid to a ServiceConfiguration resource.  The UUID for
-   a user is the concatenation of the :service and :instance values.
+  "Convert uuid to a ServiceConfiguration resource.  The UUID
+   is the concatenation of the :service and :instance values.
    If the :instance isn't set (a general configuration file), then
    the UUID is just the value of the :service key."
   [uuid]

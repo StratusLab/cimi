@@ -133,6 +133,14 @@
                  (optional-path [:altnames]) Altnames])
 
 ;;
+;; Service configuration files.  (StratusLab extension.)
+;;
+(def-map-schema ServiceConfiguration :loose
+                CommonAttrs
+                [[:service] NonEmptyString
+                 (optional-path [:instance]) NonEmptyString])
+
+;;
 ;; Cloud Entry Point Schema
 ;;
 
