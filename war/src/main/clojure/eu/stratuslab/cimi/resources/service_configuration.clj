@@ -14,11 +14,8 @@
 ; limitations under the License.
 ;
 
-(ns eu.stratuslab.cimi.resources.user
-  "Management of users within the CIMI framework.  This is a StratusLab
-   extension.  It manages only user records within the database.  Users
-   from external sources (LDAP, VOMS proxies, etc.) are not managed by
-   these resources."
+(ns eu.stratuslab.cimi.resources.service-configuration
+  "Management of the configuration of the cloud services."
   (:require
     [clojure.string :as str]
     [couchbase-clj.client :as cbc]
@@ -33,9 +30,9 @@
     [cemerick.friend :as friend]
     [clojure.tools.logging :as log]))
 
-(def ^:const resource-type "User")
+(def ^:const resource-type "ServiceConfiguration")
 
-(def ^:const collection-resource-type "UserCollection")
+(def ^:const collection-resource-type "ServiceConfigurationCollection")
 
 (def ^:const type-uri (str "http://stratuslab.eu/cimi/1/" resource-type))
 
@@ -43,14 +40,15 @@
 
 (def ^:const base-uri (str "/" resource-type))
 
-(def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}
-                     :rules [{:principal "::USER" :type "ROLE" :right "VIEW"}]})
+(def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}})
 
 (def validate (u/create-validation-fn schema/User))
 
 (defn uuid->uri
-  "Convert uuid to User resource.  The UUID for a user is the user's
-   identifier, not a full UUID. The URI must not have a leading slash."
+  "Convert uuid to a ServiceConfiguration resource.  The UUID for
+   a user is the concatenation of the :service and :instance values.
+   If the :instance isn't set (a general configuration file), then
+   the UUID is just the value of the :service key."
   [uuid]
   (str resource-type "/" uuid))
 
@@ -73,30 +71,34 @@
     resource))
 
 (defn add-acl
-  "ACL allowing the users to view but not modify their entries."
-  [m authn-map]
-  {:owner {:principal "::ADMIN" :type "ROLE"}
-   :rules [{:principal (:identity authn-map) :type "USER" :right "VIEW"}]})
+  "ACL allowing only the administrators to view and modify
+  the service configurations."
+  [m]
+  {:owner {:principal "::ADMIN" :type "ROLE"}})
 
 (defn add
-  "Adds a new user to the database."
+  "Adds a new ServiceConfiguration to the database."
   ([cb-client] (add cb-client {}))
 
   ([cb-client entry]
-   (let [uri (uuid->uri (:username entry))
+   (let [uuid (->> entry
+                   (juxt :service :instance)
+                   (remove nil?)
+                   (str/join "."))
+         uri (uuid->uri uuid)
          entry (-> entry
                    (u/strip-service-attrs)
                    (assoc :id uri)
                    (assoc :resourceURI type-uri)
                    (u/set-time-attributes)
-                   (add-acl (friend/current-authentication))
+                   (add-acl)
                    (validate))]
      (if (cbc/add-json cb-client uri entry)
        (r/created uri)
        (r/status (r/response (str "cannot create " uri)) 400)))))
 
 (defn retrieve
-  "Returns the user record associated with the user's identity."
+  "Returns the ServiceConfiguration associated with this UUID."
   [cb-client uuid]
   (if-let [json (cbc/get-json cb-client (uuid->uri uuid))]
     (if (a/can-view? (friend/current-authentication) (:acl json))
@@ -125,7 +127,7 @@
       (r/not-found nil))))
 
 (defn delete
-  "Deletes the named user record."
+  "Deletes the named ServiceConfiguration."
   [cb-client uuid]
   (let [uri (uuid->uri uuid)]
     (if-let [current (cbc/get-json cb-client uri)]
@@ -144,11 +146,11 @@
         configs (u/viewable-resources cb-client resource-type principals opts)
         configs (map add-rops configs)
         collection (add-cops {:resourceURI collection-type-uri
-                              :id base-uri
-                              :count (count configs)})]
+                              :id          base-uri
+                              :count       (count configs)})]
     (r/response (if (empty? collection)
                   collection
-                  (assoc collection :users configs)))))
+                  (assoc collection :serviceConfigurations configs)))))
 
 (defroutes collection-routes
            (POST base-uri {:keys [cb-client body]}

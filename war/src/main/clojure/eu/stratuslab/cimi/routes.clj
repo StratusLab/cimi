@@ -6,7 +6,9 @@
             [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
             [eu.stratuslab.cimi.resources.job :as job]
             [eu.stratuslab.cimi.resources.machine-configuration :as mc]
+            [eu.stratuslab.cimi.resources.service-configuration :as sc]
             [eu.stratuslab.cimi.resources.service-message :as sm]
+            [eu.stratuslab.cimi.resources.user :as user]
             [eu.stratuslab.cimi.resources.volume :as v]
             [eu.stratuslab.cimi.resources.volume-template :as vt]
             [eu.stratuslab.cimi.resources.volume-configuration :as vc]
@@ -23,6 +25,8 @@
            vt/routes
            vc/routes
            vi/routes
+           user/routes
+           sc/routes
            webui/routes
            (route/resources "/")
            (ANY "/debug" request
