@@ -35,8 +35,7 @@ float: left;
 font-size: x-large;
 font-weight: bold;
 margin: 0;
-padding-top: 0.5ex;
-padding-bottom: 0.5ex;
+padding: 0.5ex;
 }
 
 .wrapper main section {
@@ -150,7 +149,7 @@ content: none;
 }
 
 #operations {
-padding: 0;
+padding: 0.5ex;
 margin: 0;
 min-height: 1em;
 }
