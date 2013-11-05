@@ -22,7 +22,8 @@
                                               {::friend/workflow :client-certificate}))]
           (do
             (log/info (with-out-str (pprint request)))
-            (workflows/make-auth user-record {::friend/workflow :client-certificate})))))))
+            (workflows/make-auth user-record {::friend/workflow :client-certificate
+                                              ::friend/redirect-on-auth? false})))))))
 
 (defn extract-subject-dn
   "Given a X509 certifcate, this will extract the DN of the subject
