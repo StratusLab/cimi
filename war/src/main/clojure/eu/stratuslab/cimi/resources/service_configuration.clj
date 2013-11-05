@@ -74,7 +74,8 @@
   "ACL allowing only the administrators to view and modify
   the service configurations."
   [m]
-  {:owner {:principal "::ADMIN" :type "ROLE"}})
+  (let [acl {:owner {:principal "::ADMIN" :type "ROLE"}}]
+    (assoc m :acl acl)))
 
 (defn add
   "Adds a new ServiceConfiguration to the database."
@@ -82,7 +83,7 @@
 
   ([cb-client entry]
    (let [uuid (->> entry
-                   (juxt :service :instance)
+                   ((juxt :service :instance))
                    (remove nil?)
                    (str/join "."))
          uri (uuid->uri uuid)

@@ -6,6 +6,7 @@
   (:require
     [clojure.tools.logging :as log]
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
+    [eu.stratuslab.cimi.resources.user :as user]
     [eu.stratuslab.cimi.cb.views :as views]
     [couchbase-clj.client :as cbc]
     [cemerick.friend.credentials :as creds]))
@@ -56,11 +57,12 @@
                  :password   (creds/hash-bcrypt password)
                  :active     true
                  :roles      ["::ADMIN"]}]
-      (if (cbc/add-json cb-client "User/admin" admin)
+      (println admin)
+      (if (= 201 (:status (user/add cb-client admin)))
         (log/error "User/admin entry created; initial password is" password)
         (log/info "User/admin entry NOT created")))
     (catch Exception e
-      (log/error "Error occurred while trying to create User/admin entry"))))
+      (log/error "Error occurred while trying to create User/admin entry" (str e)))))
 
 (defn bootstrap
   "Bootstraps the Couchbase database by creating the CloudEntryPoint

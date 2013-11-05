@@ -74,26 +74,32 @@
 
 (defn add-acl
   "ACL allowing the users to view but not modify their entries."
-  [m authn-map]
-  {:owner {:principal "::ADMIN" :type "ROLE"}
-   :rules [{:principal (:identity authn-map) :type "USER" :right "VIEW"}]})
+  [m]
+  (let [acl {:owner {:principal "::ADMIN" :type "ROLE"}
+             :rules [{:principal (:username m) :type "USER" :right "VIEW"}]}]
+    (assoc m :acl acl)))
+
+(defn dump-entry [m]
+  (println m)
+  m)
 
 (defn add
   "Adds a new user to the database."
-  ([cb-client] (add cb-client {}))
-
-  ([cb-client entry]
-   (let [uri (uuid->uri (:username entry))
-         entry (-> entry
-                   (u/strip-service-attrs)
-                   (assoc :id uri)
-                   (assoc :resourceURI type-uri)
-                   (u/set-time-attributes)
-                   (add-acl (friend/current-authentication))
-                   (validate))]
-     (if (cbc/add-json cb-client uri entry)
-       (r/created uri)
-       (r/status (r/response (str "cannot create " uri)) 400)))))
+  [cb-client entry]
+  (println entry)
+  (let [uri (uuid->uri (:username entry))
+        _ (println uri)
+        entry (-> entry
+                  (u/strip-service-attrs)
+                  (assoc :id uri)
+                  (assoc :resourceURI type-uri)
+                  (u/set-time-attributes)
+                  (add-acl)
+                  (dump-entry)
+                  (validate))]
+    (if (cbc/add-json cb-client uri entry)
+      (r/created uri)
+      (r/status (r/response (str "cannot create " uri)) 400))))
 
 (defn retrieve
   "Returns the user record associated with the user's identity."
@@ -144,8 +150,8 @@
         configs (u/viewable-resources cb-client resource-type principals opts)
         configs (map add-rops configs)
         collection (add-cops {:resourceURI collection-type-uri
-                              :id base-uri
-                              :count (count configs)})]
+                              :id          base-uri
+                              :count       (count configs)})]
     (r/response (if (empty? collection)
                   collection
                   (assoc collection :users configs)))))

@@ -49,11 +49,6 @@ padding: 5px;
 margin: 0;
 }
 
-.wrapper main section:first-of-type {
-border-top: 4px solid black;
-}
-
-
 .logo:before {
 content: url(stratuslab-logo-white.png);
 letter-spacing: 0.1ex;
@@ -182,6 +177,41 @@ padding-bottom: 0.5ex;
 #message p {
 padding: 0;
 margin: 0;
+}
+
+#metadata {
+background-color: #e8e8e8;
+border-bottom: 4px solid black;
+}
+
+dl {
+padding: 1ex;
+font-size: small;
+}
+
+dt {
+float: left;
+margin: 0 2px;
+font-weight: bold;
+}
+
+dt:after {
+content: ": ";
+font-weight: bold;
+}
+
+dt, dd {
+overflow: hidden;
+}
+
+dd {
+word-wrap: break-word;
+}
+
+#content ul {
+list-style-type: none;
+padding: 0;
+padding-left: 1ex;
 }
 
 footer {

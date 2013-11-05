@@ -168,7 +168,9 @@
                  (optional-path [:meterConfigs]) ResourceLink
                  (optional-path [:eventLogs]) ResourceLink
                  (optional-path [:eventLogTemplates]) ResourceLink
-                 (optional-path [:serviceMessages]) ResourceLink])
+                 (optional-path [:serviceConfigurations]) ResourceLink
+                 (optional-path [:serviceMessages]) ResourceLink
+                 (optional-path [:users]) ResourceLink])
 
 ;;
 ;; Volume Related Schemas

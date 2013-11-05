@@ -182,8 +182,9 @@ function render_metadata(o, m) {
 
 	if (m.properties) {
 		for (var k in m.properties) {
-		    var term = 'property[' + k + ']';
-	        append_term(info, term, m.properties[k]);
+		    var term = '"' + k + '" (property)';
+		    var value = '"' + m.properties[k] + '"';
+	        append_term(info, term, value);
 		}
 	}
 
