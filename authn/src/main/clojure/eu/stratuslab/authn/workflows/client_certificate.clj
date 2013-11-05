@@ -1,5 +1,6 @@
 (ns eu.stratuslab.authn.workflows.client-certificate
   (:require
+    [clojure.tools.logging :as log]
     [cemerick.friend :as friend]
     [cemerick.friend.workflows :as workflows]
     [cemerick.friend.util :as futil]))
@@ -21,10 +22,14 @@
           (workflows/make-auth user-record {::friend/workflow :client-certificate}))))))
 
 (defn extract-subject-dn
-  "Given a chain of X509 certificates, this method extracts
-   the subject DN as a String from the first of those certificates."
-  [chain]
-  (if-let [cert (first chain)]
-    (.. cert
+  "Given a X509 certifcate, this will extract the DN of the subject
+   in the standard RFC2253 format.  Any exceptions will be caught and
+   logged; nil will be returned in this case."
+  [x509]
+  (try
+    (.. x509
         (getSubjectX500Principal)
-        (getName))))
+        (getName))
+    (catch Exception e
+      (log/error "invalid certificate:" (str e))
+      nil)))
