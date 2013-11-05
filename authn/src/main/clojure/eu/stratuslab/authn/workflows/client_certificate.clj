@@ -19,3 +19,12 @@
                                               {:ssl-client-cert ssl-client-cert}
                                               {::friend/workflow :client-certificate}))]
           (workflows/make-auth user-record {::friend/workflow :client-certificate}))))))
+
+(defn extract-subject-dn
+  "Given a chain of X509 certificates, this method extracts
+   the subject DN as a String from the first of those certificates."
+  [chain]
+  (if-let [cert (first chain)]
+    (.. cert
+        (getSubjectX500Principal)
+        (getName))))

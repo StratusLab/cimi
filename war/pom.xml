@@ -15,6 +15,12 @@
   <dependencies>
 
     <dependency>
+      <groupId>eu.stratuslab.cimi</groupId>
+      <artifactId>cimi-authn</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>clojure</artifactId>
     </dependency>
