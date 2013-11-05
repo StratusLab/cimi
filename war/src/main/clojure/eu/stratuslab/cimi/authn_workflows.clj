@@ -63,6 +63,5 @@
    users for the cloud instance."
   [cb-client]
   [(cert-workflow cb-client)
-   ;;(form-workflow cb-client)
-   ])
+   (form-workflow cb-client)])
 
