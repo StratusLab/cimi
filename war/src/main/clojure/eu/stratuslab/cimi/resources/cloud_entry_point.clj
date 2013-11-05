@@ -24,9 +24,9 @@
     [eu.stratuslab.cimi.resources.auth-utils :as a]
     [eu.stratuslab.cimi.resources.machine-configuration :as mc]
     [eu.stratuslab.cimi.resources.job :as job]
-
+    [eu.stratuslab.cimi.resources.service-configuration :as sc]
     [eu.stratuslab.cimi.resources.service-message :as sm]
-
+    [eu.stratuslab.cimi.resources.user :as user]
     [eu.stratuslab.cimi.resources.volume :as volume]
     [eu.stratuslab.cimi.resources.volume-template :as volume-template]
     [eu.stratuslab.cimi.resources.volume-configuration :as volume-configuration]
@@ -46,13 +46,16 @@
 
 ;; FIXME: Generate these automatically.
 (def resource-links
-  {:machineConfigs  {:href mc/resource-type}
-   :jobs            {:href job/resource-type}
-   :volumes         {:href volume/resource-type}
-   :volumeTemplates {:href volume-template/resource-type}
-   :volumeConfigs   {:href volume-configuration/resource-type}
-   :volumeImages    {:href volume-image/resource-type}
-   :serviceMessages {:href sm/resource-type}})
+  {:machineConfigs        {:href mc/resource-type}
+   :jobs                  {:href job/resource-type}
+   :volumes               {:href volume/resource-type}
+   :volumeTemplates       {:href volume-template/resource-type}
+   :volumeConfigs         {:href volume-configuration/resource-type}
+   :volumeImages          {:href volume-image/resource-type}
+   :serviceMessages       {:href sm/resource-type}
+   :serviceConfigurations {:href sc/resource-type}
+   :users                 {:href user/resource-type}
+   })
 
 (def validate (u/create-validation-fn schema/CloudEntryPoint))
 
