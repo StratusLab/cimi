@@ -54,6 +54,11 @@
     </dependency>
 
     <dependency>
+      <groupId>org.italiangrid</groupId>
+      <artifactId>voms-api-java</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.clojars.pntblnk</groupId>
       <artifactId>clj-ldap</artifactId>
     </dependency>

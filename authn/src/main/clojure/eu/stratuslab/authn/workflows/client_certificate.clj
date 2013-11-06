@@ -22,11 +22,12 @@
     (try
       (let [chain (.getAttribute request "javax.servlet.request.X509Certificate")]
         (if (ProxyUtils/isProxy (first chain))
-          (log/info "TREATING PROXY CERTIFICATE")
-          (log/info "PROXY DN ORIGINAL DN" (ProxyUtils/getOriginalUserDN chain))
-          (let [validator (VOMSValidators/newValidator)
-                voms-attrs (.validate validator chain)]
-            (doall (map process-voms-attr voms-attrs)))))
+          (do
+            (log/info "TREATING PROXY CERTIFICATE")
+            (log/info "PROXY DN ORIGINAL DN" (ProxyUtils/getOriginalUserDN chain))
+            (let [validator (VOMSValidators/newValidator)
+                  voms-attrs (.validate validator chain)]
+              (doall (map process-voms-attr voms-attrs))))))
       (catch Exception e
         (log/info "GOT EXCEPTION:" (str e))))
     (log/info "SERVLET REQUEST IS NIL")))
