@@ -1,6 +1,7 @@
 (ns eu.stratuslab.cimi.authn-workflows
   (:require
     [clojure.tools.logging :as log]
+    [clojure.pprint :refer [pprint]]
     [couchbase-clj.client :as cbc]
     [cemerick.friend.workflows :as workflows]
     [cemerick.friend.credentials :as creds]
@@ -36,7 +37,9 @@
    called with a map with the key :ssl-client-cert containing
    the certificate chain."
   [cb-client]
-  (fn [{:keys [ssl-client-cert servlet-request]}]
+  (fn [{:keys [ssl-client-cert servlet-request] :as request}]
+    (log/info "DEBUG DEBUG DEBUG" (with-out-str (pprint request)))
+    (log/info "DEBUG DEBUG DEBUG NAMES" (enumeration-seq (.getAttributeNames request)))
     (let [dn (cwf/extract-subject-dn ssl-client-cert servlet-request)]
       (cb-lookup-user cb-client dn))))
 
