@@ -32,7 +32,7 @@
   (try
     (log/info "IS PROXY?" (ProxyUtils/isProxy x509))
     (try
-      (log/info "ORIGINAL DN" (ProxyUtils/getOriginalUserDN [x509]))
+      (log/info "ORIGINAL DN" (ProxyUtils/getOriginalUserDN (list x509)))
       (catch Exception e
         (log/info "GOT EXCEPTION" (str e))))
     (.. x509
