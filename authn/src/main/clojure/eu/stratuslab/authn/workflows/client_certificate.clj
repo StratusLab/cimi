@@ -1,6 +1,7 @@
 (ns eu.stratuslab.authn.workflows.client-certificate
   (:require
     [clojure.tools.logging :as log]
+    [clojure.pprint :refer [pprint]]
     [cemerick.friend :as friend]
     [cemerick.friend.workflows :as workflows]
     [cemerick.friend.util :as futil])
@@ -20,6 +21,17 @@
   (if request
     (.getAttribute request "javax.net.ssl.peer_certificates")))
 
+(defn debug-certificates
+  [^HttpServletRequest request]
+  (if request
+    (do
+      (log/info "DEBUG DEBUG DEBUG" (with-out-str (pprint request)))
+      (log/info "DEBUG CERTIFICATE(S):" (.getAttribute request "javax.servlet.request.X509Certificate"))
+      (log/info "DEBUG PEER CERTIFICATE(S):" (.getAttribute request "javax.net.ssl.peer_certificates")))
+    (log/info "DEBUG DEBUG DEBUG NAMES" (enumeration-seq (.getAttributeNames request)))
+
+    (log/info "SERVLET REQUEST IS NIL")))
+
 (defn client-certificate
   "Friend workflow that extracts a SSL client certificate and passed that to
    the credential function.  The credential function must be defined in the 
@@ -28,7 +40,7 @@
    which is a list of X509Certificates.  The ::friend/workflow key in the returned
    authentication map is set to :client-certificate."
   [& {:keys [credential-fn] :as form-config}]
-  (fn [{:keys [ssl-client-cert] :as request}]
+  (fn [{:keys [ssl-client-cert servlet-request] :as request}]
     (when ssl-client-cert
       (if-let [credential-fn (futil/gets :credential-fn form-config (::friend/auth-config request))]
         (if-let [user-record (credential-fn (with-meta
