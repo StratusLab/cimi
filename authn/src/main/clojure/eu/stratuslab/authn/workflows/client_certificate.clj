@@ -9,27 +9,14 @@
     eu.emi.security.authn.x509.proxy.ProxyUtils
     (javax.servlet.http HttpServletRequest)))
 
-(defn get-client-certs
-  "Returns the SSL client certificate of the request, if one exists."
-  [^HttpServletRequest request]
-  (if request
-    (.getAttribute request "javax.servlet.request.X509Certificate")))
-
-(defn get-peer-certs
-  "Returns the SSL client certificate of the request, if one exists."
-  [^HttpServletRequest request]
-  (if request
-    (.getAttribute request "javax.net.ssl.peer_certificates")))
-
 (defn debug-certificates
   [^HttpServletRequest request]
   (if request
     (do
       (log/info "DEBUG DEBUG DEBUG" (with-out-str (pprint request)))
       (log/info "DEBUG CERTIFICATE(S):" (.getAttribute request "javax.servlet.request.X509Certificate"))
-      (log/info "DEBUG PEER CERTIFICATE(S):" (.getAttribute request "javax.net.ssl.peer_certificates")))
-    (log/info "DEBUG DEBUG DEBUG NAMES" (enumeration-seq (.getAttributeNames request)))
-
+      (log/info "DEBUG PEER CERTIFICATE(S):" (.getAttribute request "javax.net.ssl.peer_certificates"))
+      (log/info "DEBUG DEBUG DEBUG NAMES" (enumeration-seq (.getAttributeNames request))))
     (log/info "SERVLET REQUEST IS NIL")))
 
 (defn client-certificate
@@ -41,6 +28,7 @@
    authentication map is set to :client-certificate."
   [& {:keys [credential-fn] :as form-config}]
   (fn [{:keys [ssl-client-cert servlet-request] :as request}]
+    (debug-certificates servlet-request)
     (when ssl-client-cert
       (if-let [credential-fn (futil/gets :credential-fn form-config (::friend/auth-config request))]
         (if-let [user-record (credential-fn (with-meta
@@ -55,21 +43,6 @@
    logged; nil will be returned in this case."
   [x509 servlet-request]
   (try
-    (log/info "IS PROXY?" (ProxyUtils/isProxy x509))
-    (log/info "CERTS" (get-client-certs servlet-request))
-    (log/info "PEER CERTS" (get-peer-certs servlet-request))
-    (try
-      (log/info "ORIGINAL DN" (ProxyUtils/getOriginalUserDN (list x509)))
-      (catch Exception e
-        (log/info "GOT EXCEPTION" (str e))))
-    (try
-      (log/info "ORIGINAL DN 2" (ProxyUtils/getOriginalUserDN (get-client-certs servlet-request)))
-      (catch Exception e
-        (log/info "GOT EXCEPTION" (str e))))
-    (try
-      (log/info "ORIGINAL DN 3" (ProxyUtils/getOriginalUserDN (get-peer-certs servlet-request)))
-      (catch Exception e
-        (log/info "GOT EXCEPTION" (str e))))
     (.. x509
         (getSubjectX500Principal)
         (getName))
