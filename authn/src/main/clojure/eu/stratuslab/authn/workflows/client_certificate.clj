@@ -5,7 +5,20 @@
     [cemerick.friend.workflows :as workflows]
     [cemerick.friend.util :as futil])
   (:import
-    eu.emi.security.authn.x509.proxy.ProxyUtils))
+    eu.emi.security.authn.x509.proxy.ProxyUtils
+    (javax.servlet.http HttpServletRequest)))
+
+(defn get-client-certs
+  "Returns the SSL client certificate of the request, if one exists."
+  [^HttpServletRequest request]
+  (if request
+    (.getAttribute request "javax.servlet.request.X509Certificate")))
+
+(defn get-peer-certs
+  "Returns the SSL client certificate of the request, if one exists."
+  [^HttpServletRequest request]
+  (if request
+    (.getAttribute request "javax.net.ssl.peer_certificates")))
 
 (defn client-certificate
   "Friend workflow that extracts a SSL client certificate and passed that to
@@ -28,11 +41,21 @@
   "Given a X509 certifcate, this will extract the DN of the subject
    in the standard RFC2253 format.  Any exceptions will be caught and
    logged; nil will be returned in this case."
-  [x509]
+  [x509 servlet-request]
   (try
     (log/info "IS PROXY?" (ProxyUtils/isProxy x509))
+    (log/info "CERTS" (get-client-certs servlet-request))
+    (log/info "PEER CERTS" (get-peer-certs servlet-request))
     (try
       (log/info "ORIGINAL DN" (ProxyUtils/getOriginalUserDN (list x509)))
+      (catch Exception e
+        (log/info "GOT EXCEPTION" (str e))))
+    (try
+      (log/info "ORIGINAL DN 2" (ProxyUtils/getOriginalUserDN (get-client-certs servlet-request)))
+      (catch Exception e
+        (log/info "GOT EXCEPTION" (str e))))
+    (try
+      (log/info "ORIGINAL DN 3" (ProxyUtils/getOriginalUserDN (get-peer-certs servlet-request)))
       (catch Exception e
         (log/info "GOT EXCEPTION" (str e))))
     (.. x509
@@ -41,3 +64,4 @@
     (catch Exception e
       (log/error "invalid certificate:" (str e))
       nil)))
+
