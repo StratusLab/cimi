@@ -3,7 +3,9 @@
     [clojure.tools.logging :as log]
     [cemerick.friend :as friend]
     [cemerick.friend.workflows :as workflows]
-    [cemerick.friend.util :as futil]))
+    [cemerick.friend.util :as futil])
+  (:import
+    eu.emi.security.authn.x509.proxy.ProxyUtils))
 
 (defn client-certificate
   "Friend workflow that extracts a SSL client certificate and passed that to
@@ -28,6 +30,11 @@
    logged; nil will be returned in this case."
   [x509]
   (try
+    (log/info "IS PROXY?" (ProxyUtils/isProxy x509))
+    (try
+      (log/info "ORIGINAL DN" (ProxyUtils/getOriginalUserDN [x509]))
+      (catch Exception e
+        (log/info "GOT EXCEPTION" (str e))))
     (.. x509
         (getSubjectX500Principal)
         (getName))
