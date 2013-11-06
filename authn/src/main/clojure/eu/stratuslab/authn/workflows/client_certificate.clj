@@ -6,20 +6,27 @@
     [cemerick.friend.workflows :as workflows]
     [cemerick.friend.util :as futil])
   (:import
-    eu.emi.security.authn.x509.proxy.ProxyUtils
-    (javax.servlet.http HttpServletRequest)))
+    [eu.emi.security.authn.x509.proxy ProxyUtils]
+    [javax.servlet.http HttpServletRequest]
+    [org.italiangrid.voms VOMSAttribute VOMSValidators]))
+
+(defn process-voms-attr [^VOMSAttribute result]
+  (log/info "VOMS PRIMARY FQAN" (.getPrimaryFQAN result))
+  (log/info "VOMS VO" (.getVO result))
+  (log/info "VOMS FQANs" (.getFQANs result))
+  (log/info "VOMS GAs" (.getGenericAttributes result)))
 
 (defn debug-certificates
   [^HttpServletRequest request]
   (if request
     (try
-      (let [attr-value (.getAttribute request "javax.servlet.request.X509Certificate")
-            chain (doall (map identity attr-value))]
-        (log/info "DEBUG CERTIFICATES:" attr-value)
-        (log/info "DEBUG CERTIFICATE CHAIN:" chain)
-        (log/info "PROXY?" (ProxyUtils/isProxy (first attr-value)))
-        (log/info "PROXY DN ATTR-VALUE" (ProxyUtils/getOriginalUserDN attr-value))
-        (log/info "PROXY DN CHAIN" (ProxyUtils/getOriginalUserDN chain)))
+      (let [chain (.getAttribute request "javax.servlet.request.X509Certificate")]
+        (if (ProxyUtils/isProxy (first chain))
+          (log/info "TREATING PROXY CERTIFICATE")
+          (log/info "PROXY DN ORIGINAL DN" (ProxyUtils/getOriginalUserDN chain))
+          (let [validator (VOMSValidators/newValidator)
+                voms-attrs (.validate validator chain)]
+            (doall (map process-voms-attr voms-attrs)))))
       (catch Exception e
         (log/info "GOT EXCEPTION:" (str e))))
     (log/info "SERVLET REQUEST IS NIL")))
@@ -45,7 +52,7 @@
       (let [cert-chain (extract-client-cert-chain servlet-request)]
         (if-let [credential-fn (futil/gets :credential-fn form-config (::friend/auth-config request))]
           (if-let [user-record (credential-fn (with-meta
-                                                {:ssl-client-cert ssl-client-cert
+                                                {:ssl-client-cert       ssl-client-cert
                                                  :ssl-client-cert-chain cert-chain}
                                                 {::friend/workflow :client-certificate}))]
             (workflows/make-auth user-record {::friend/workflow          :client-certificate
