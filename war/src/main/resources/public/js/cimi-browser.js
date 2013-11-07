@@ -378,12 +378,10 @@ function render_acl(o, acl) {
 
 function append_acl_row(table, right, owner, identifier, type) {
 
-    var tag = identifier + ' (' + type + ')';
-
     var row = table.append('tr');
+    row.append('td').text(identifier);
+    row.append('td').text(type);
     row.append('td').text(right);
-    row.append('td').text(owner);
-    row.append('td').text(tag);
 
     return table;
 }
