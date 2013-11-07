@@ -60,15 +60,19 @@
                                               ::friend/redirect-on-auth? false})))))))
 
 (defn extract-subject-dn
-  "Given a X509 certifcate, this will extract the DN of the subject
-   in the standard RFC2253 format.  Any exceptions will be caught and
-   logged; nil will be returned in this case."
-  [x509]
+  "Given a X509 certifcate chain, this will extract the DN of the subject
+   in the standard RFC2253 format.  If no certificates are provided or
+   an exception occurs, then nil is returned."
+  [chain]
   (try
-    (.. x509
-        (getSubjectX500Principal)
-        (getName))
+    (if-let [cert (first chain)]
+      (if (ProxyUtils/isProxy cert)
+        (.. chain
+            (ProxyUtils/getOriginalUserDN)
+            (getName))
+        (.. cert
+            (getSubjectX500Principal)
+            (getName))))
     (catch Exception e
-      (log/error "invalid certificate:" (str e))
-      nil)))
+      (log/warn "error while processing client certificate:" (str e)))))
 

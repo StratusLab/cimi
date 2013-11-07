@@ -37,8 +37,8 @@
    called with a map with the key :ssl-client-cert containing
    the certificate chain."
   [cb-client]
-  (fn [{:keys [ssl-client-cert]}]
-    (let [dn (cwf/extract-subject-dn ssl-client-cert)]
+  (fn [{:keys [ssl-client-cert-chain]}]
+    (let [dn (cwf/extract-subject-dn ssl-client-cert-chain)]
       (cb-lookup-user cb-client dn))))
 
 (defn cert-workflow
