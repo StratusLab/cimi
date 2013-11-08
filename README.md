@@ -26,6 +26,9 @@ top-level directory:
 On machines where the `rpmbuild` command is available, the RPM package
 will also be generated.
 
+Note that Maven 3.0.4 is required for the build; earlier versions
+(esp. Maven 2.2.1) will _not_ build the software.
+
 Running the full tests requires having a Couchbase server running on
 the build machine with administrator credentials of "admin/ADMIN4".
 To execute the build without a Couchbase server, add the option
