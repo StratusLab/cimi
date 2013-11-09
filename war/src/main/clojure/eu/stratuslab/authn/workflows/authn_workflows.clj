@@ -21,18 +21,18 @@
    contain :username, :password, and :ssl-client-cert-chain keys."
   [& {:keys [credential-fn login-failure-handler redirect-on-auth?] :as form-config
       :or   {redirect-on-auth? true}}]
-  (fn [{:keys [request-method params form-params ssl-client-cert-chain] :as request}]
-    (let [req-auth-config (::friend/auth-config request)]
-      (log/info "running authentication workflow" request-method (req/path-info request))
+  (fn [{:keys [request-method params form-params servlet-request] :as request}]
+    (let [ssl-client-cert-chain (cwf/extract-client-cert-chain servlet-request)
+          req-auth-config (::friend/auth-config request)]
       (when (and (= :post request-method)
                  (= (futil/gets :login-uri form-config req-auth-config) (req/path-info request)))
         (let [creds {:username              (get form-params "username" "")
                      :password              (:password params)
                      :ssl-client-cert-chain ssl-client-cert-chain}
               credential-fn (futil/gets :credential-fn form-config req-auth-config)]
-          (log/info "running credential function with credential map" creds)
+          (log/info "checking credential map" (assoc creds :password "********"))
           (when-let [user-record (credential-fn
-                                 (with-meta creds {::friend/workflow :form-workflow}))]
+                                   (with-meta creds {::friend/workflow :form-workflow}))]
             (workflows/make-auth user-record
                                  {::friend/workflow          :form-workflow
                                   ::friend/redirect-on-auth? redirect-on-auth?})))))))
