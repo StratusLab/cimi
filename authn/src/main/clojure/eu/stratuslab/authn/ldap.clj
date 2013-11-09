@@ -3,38 +3,48 @@
   (:require
     [clojure.string :as str]
     [clojure.set :as set]
-    [clj-ldap.client :as ldap]))
+    [clj-ldap.client :as ldap]
+    [clj-schema.schema :refer :all]
+    [clj-schema.simple-schemas :refer :all]
+    [clj-schema.validation :refer :all]))
 
 (def ^:dynamic *ldap-connection-pool* nil)
 
 (comment (def *ldap-connection-pool* (ldap/connect ldap-params)))
-(def ldap-params {:host {:address "localhost" :port 10389}
-                  :bind-dn "cn=admin,o=cloud"
-                  :password "secret"
-                  :ssl? false
+(def ldap-params {:host            {:address "localhost" :port 10389}
+                  :bind-dn         "cn=admin,o=cloud"
+                  :password        "secret"
+                  :ssl?            false
                   :connect-timeout 2000
-                  :timeout 2000})
+                  :timeout         2000})
 
 (def ^:const ldap-defaults
-  {:user-base-dn "ou=users,o=cloud"
+  {:user-base-dn      "ou=users,o=cloud"
    :user-object-class "inetOrgPerson"
-   :user-id-attr "uid"
+   :user-id-attr      "uid"
 
-   :role-base-dn "ou=groups,o=cloud"
+   :role-base-dn      "ou=groups,o=cloud"
    :role-object-class "groupOfUniqueNames"
-   :role-member-attr "uniqueMember"
-   :role-name-attr "cn"
+   :role-member-attr  "uniqueMember"
+   :role-name-attr    "cn"
 
-   :skip-bind? false
+   :skip-bind?        false
    })
 
-(def ^:const required-request-keys
-  #{:role-base-dn :role-object-class :role-member-attr :role-name-attr
-    :user-base-dn :user-object-class :user-id-attr
-    :username
-    :skip-bind?})
-
 (def ^:const filter-template "(&(objectClass=%s)(%s=%s))")
+
+(def-map-schema LdapRequestSchema :loose
+                [[:user-base-dn] NonEmptyString
+                 [:user-object-class] NonEmptyString
+                 [:user-id-attr] NonEmptyString
+                 [:role-base-dn] NonEmptyString
+                 [:role-object-class] NonEmptyString
+                 [:role-member-attr] NonEmptyString
+                 [:role-name-attr] NonEmptyString
+                 [:username] NonEmptyString
+                 [:skip-bind?] Boolean
+                 (optional-path [:password]) NonEmptyString
+                 (optional-path [:ldap-connection-pool]) Anything])
 
 (defn user-filter
   "create LDAP filter for user records from values for
@@ -45,7 +55,7 @@
     (throw (IllegalArgumentException. "user-object-class user-id-attr and username cannot be blank"))))
 
 (defn role-filter
-  "create LDAP filter for roles for a particular user DN from 
+  "create LDAP filter for roles for a particular user DN from
    values for :role-object-class, :role-member-attr, and :user-dn"
   [{:keys [role-object-class role-member-attr user-dn]}]
   (if (not-any? str/blank? [role-object-class role-member-attr user-dn])
@@ -85,10 +95,9 @@
       (select-keys params [:identity :roles :cemerick.friend/workflow]))))
 
 (defn valid-request? [m]
-  (when (map? m)
-    (when (set/subset? required-request-keys (set (keys m)))
-      (when (or (:skip-bind? m) (:password m))
-        m))))
+  (when (empty? (validation-errors LdapRequestSchema m))
+    (when (or (:skip-bind? m) (:password m))
+      m)))
 
 (defn ldap-credential-fn
   [ldap-params cred-map]

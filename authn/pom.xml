@@ -34,6 +34,12 @@
       <groupId>clj-http</groupId>
       <artifactId>clj-http</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.clojars.runa</groupId>
+      <artifactId>clj-schema</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>ring</groupId>
       <artifactId>ring-core</artifactId>

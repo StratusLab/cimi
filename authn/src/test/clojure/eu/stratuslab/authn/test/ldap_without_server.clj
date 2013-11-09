@@ -64,7 +64,7 @@
 (deftest invalid-requests
   (is (nil? (valid-request? 1))) ;; argument must be a map
   (is (nil? (valid-request? {}))) ;; missing keys
-  (let [request (into {} (map (fn [k] [k false]) required-request-keys))]
+  (let [request (assoc ldap-defaults :username "sluser")]
     (is (nil? (valid-request? request)))
     (is (valid-request? (assoc request :password "ok")))))
 
