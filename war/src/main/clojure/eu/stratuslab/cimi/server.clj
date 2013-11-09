@@ -7,7 +7,7 @@
     [compojure.handler :as handler]
     [eu.stratuslab.cimi.couchbase-cfg :refer [read-cfg]]
     [ring.middleware.format-params :refer [wrap-restful-params]]
-    [eu.stratuslab.cimi.authn-workflows :as aw]
+    [eu.stratuslab.authn.workflows.authn-workflows :as aw]
     [eu.stratuslab.cimi.cb.bootstrap :refer [bootstrap]]
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
     [eu.stratuslab.cimi.middleware.format-response :refer [wrap-restful-response]]

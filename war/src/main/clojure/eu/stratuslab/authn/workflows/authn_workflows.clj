@@ -1,4 +1,4 @@
-(ns eu.stratuslab.cimi.authn-workflows
+(ns eu.stratuslab.authn.workflows.authn-workflows
   (:require
     [clojure.tools.logging :as log]
     [clojure.pprint :refer [pprint]]
