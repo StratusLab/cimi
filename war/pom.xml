@@ -13,13 +13,6 @@
   </parent>
 
   <dependencies>
-
-    <dependency>
-      <groupId>eu.stratuslab.cimi</groupId>
-      <artifactId>cimi-authn</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>clojure</artifactId>
@@ -86,6 +79,21 @@
     </dependency>
 
     <dependency>
+      <groupId>eu.eu-emi.security</groupId>
+      <artifactId>canl</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.italiangrid</groupId>
+      <artifactId>voms-api-java</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.clojars.pntblnk</groupId>
+      <artifactId>clj-ldap</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.blancas</groupId>
       <artifactId>kern</artifactId>
     </dependency>
@@ -118,6 +126,24 @@
       <artifactId>codox.core</artifactId>
     </dependency>
     
+    <dependency>
+      <groupId>org.apache.directory.server</groupId>
+      <artifactId>apacheds-all</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>fs</groupId>
+      <artifactId>fs</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
   <profiles>

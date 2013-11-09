@@ -30,7 +30,6 @@
 
   <modules>
     <module>war</module>
-    <module>authn</module>
   </modules>
 
   <profiles>

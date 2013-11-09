@@ -29,11 +29,6 @@
     </dependency>
     <dependency>
       <groupId>eu.stratuslab.cimi</groupId>
-      <artifactId>cimi-authn</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>eu.stratuslab.cimi</groupId>
       <artifactId>cimi-war</artifactId>
       <version>${project.version}</version>
       <type>war</type>
