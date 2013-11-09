@@ -1,7 +1,7 @@
 (ns eu.stratuslab.cimi.webui.routes
   (:require
     [cemerick.friend :as friend]
-    [compojure.core :refer [GET defroutes]]
+    [compojure.core :refer [GET POST defroutes]]
     [ring.util.response :as resp]
     [hiccup.page :as h]
     [hiccup.element :as e]
