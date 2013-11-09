@@ -48,9 +48,9 @@
   (try
     (when-let [cert (first chain)]
       (if (ProxyUtils/isProxy cert)
-        (.. chain
-            (ProxyUtils/getOriginalUserDN)
-            (getName))
+        (->> chain
+             (ProxyUtils/getOriginalUserDN)
+             (.getName))
         (.. cert
             (getSubjectX500Principal)
             (getName))))
