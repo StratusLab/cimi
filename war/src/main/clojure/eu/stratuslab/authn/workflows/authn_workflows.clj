@@ -94,6 +94,6 @@
   "Returns a list of the active workflows for authenticating
    users for the cloud instance."
   [cb-client]
-  [(password-workflow cb-client)
+  [ ;; (password-workflow cb-client)
    (cert-workflow cb-client)])
 

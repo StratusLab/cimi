@@ -56,7 +56,8 @@
                  :username   "admin"
                  :password   (creds/hash-bcrypt password)
                  :active     true
-                 :roles      ["::ADMIN"]}]
+                 :roles      ["::ADMIN"]
+                 :altnames {:x500dn "CN=Charles Loomis,OU=LAL,O=CNRS,C=FR,O=GRID-FR"}}]
       (println admin)
       (if (= 201 (:status (user/add cb-client admin)))
         (log/error "User/admin entry created; initial password is" password)
