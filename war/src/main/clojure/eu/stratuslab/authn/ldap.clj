@@ -10,7 +10,6 @@
 
 (def ^:dynamic *ldap-connection-pool* nil)
 
-(comment (def *ldap-connection-pool* (ldap/connect ldap-params)))
 (def ldap-params {:host            {:address "localhost" :port 10389}
                   :bind-dn         "cn=admin,o=cloud"
                   :password        "secret"
