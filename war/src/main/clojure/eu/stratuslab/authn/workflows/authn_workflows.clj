@@ -1,6 +1,7 @@
 (ns eu.stratuslab.authn.workflows.authn-workflows
   (:require
     [clojure.tools.logging :as log]
+    [clojure.set :as set]
     [clojure.pprint :refer [pprint]]
     [couchbase-clj.client :as cbc]
     [cemerick.friend :as friend]
@@ -50,6 +51,25 @@
           user-map))
       (log/info "user record for" userkey "NOT found"))))
 
+(defn cb-user-by-vo-fn
+  "Returns a function that constructs the user record from the
+   information in a VOMS certificate chain."
+  [cb-client]
+  (fn [{:keys [ssl-client-cert-chain]}]
+    (let [dn (cwf/extract-subject-dn ssl-client-cert-chain)
+          voms-info (cwf/voms-vo-info ssl-client-cert-chain)
+          vo-names (->> voms-info
+                        (keys)
+                        (remove #(cb-lookup-user (str "vo:" %))))
+          all-roles (->> vo-names
+                         (map #(get voms-info %))
+                         (reduce concat))]
+      (log/info "looking up VOs for DN" dn)
+      (if (pos? (count vo-names))
+        {:identity dn
+         :vo-names vo-names
+         :roles all-roles}))))
+
 (defn cb-user-by-id-fn
   "Returns a function that returns a user record with a
    document id of 'User/identity' in the database.  If
@@ -72,13 +92,24 @@
       (log/info "looking up DN" dn)
       (cb-lookup-user cb-client dn))))
 
+(defn voms-workflow
+  "Returns a workflow that tests the VOMS proxy provided
+   with the request.  The proxy will have been validated by
+   the SSL interactions before the workflow receives the certificate.
+   The result contains the DN as the identity, the FQANs as the
+   roles, and the list of accepts VOs."
+  [cb-client]
+  (->> cb-client
+       (cb-user-by-dn-fn)
+       (form-workflow :credential-fn)))
+
 (defn cert-workflow
   "Returns a workflow that tests the client certificate provided
    with the request.  The certificate will have been validated by
    the SSL interactions before the workflow receives the certificate."
   [cb-client]
   (->> cb-client
-       (cb-user-by-dn-fn)
+       (cb-user-by-vo-fn)
        (form-workflow :credential-fn)))
 
 (defn password-workflow
@@ -94,6 +125,7 @@
   "Returns a list of the active workflows for authenticating
    users for the cloud instance."
   [cb-client]
-  [(cert-workflow cb-client)
-   (password-workflow cb-client)])
+  [(password-workflow cb-client)
+   (cert-workflow cb-client)
+   (voms-workflow cb-client)])
 

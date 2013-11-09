@@ -10,54 +10,35 @@
     [javax.servlet.http HttpServletRequest]
     [org.italiangrid.voms VOMSAttribute VOMSValidators]))
 
-(defn process-voms-attr [^VOMSAttribute result]
-  (log/info "VOMS PRIMARY FQAN" (.getPrimaryFQAN result))
-  (log/info "VOMS VO" (.getVO result))
-  (log/info "VOMS FQANs" (.getFQANs result))
-  (log/info "VOMS GAs" (.getGenericAttributes result)))
+(defn voms-name-and-roles
+  "Returns a vector with two values: the VO name and a list of roles
+   (actually the FQANs defined in the attribute)."
+  [^VOMSAttribute attr]
+  (let [vo-name (.getVO attr)
+        roles (list (.getFQANs attr))]
+    [vo-name, roles]))
 
-(defn debug-certificates
-  [^HttpServletRequest request]
-  (if request
+(defn voms-vo-info
+  "Returns a map containing key-value pairs where the key is the
+   VO name (as a string) and the value is a list of associated roles.
+   (The roles are the FQANs in the VOMS proxy."
+  [chain]
+  (when chain
     (try
-      (let [chain (.getAttribute request "javax.servlet.request.X509Certificate")]
-        (if (ProxyUtils/isProxy (first chain))
-          (do
-            (log/info "TREATING PROXY CERTIFICATE")
-            (log/info "PROXY DN ORIGINAL DN" (ProxyUtils/getOriginalUserDN chain))
-            (let [validator (VOMSValidators/newValidator)
-                  voms-attrs (.validate validator chain)]
-              (doall (map process-voms-attr voms-attrs))))))
+      (when (ProxyUtils/isProxy (first chain))
+        (let [voms-attrs (.. (VOMSValidators/newValidator)
+                             (validate chain))]
+          (into {} (map voms-name-and-roles voms-attrs))))
       (catch Exception e
-        (log/info "GOT EXCEPTION:" (str e))))
-    (log/info "SERVLET REQUEST IS NIL")))
+        (log/info "exception when treating voms proxy:" (str e))
+        nil))))
 
 (defn extract-client-cert-chain
   "Will pull the full certificate chain out of the HttpServletRequest.  The
    returned value is an X509Certificate array or nil if no value is found."
   [^HttpServletRequest request]
-  (if request
+  (when request
     (.getAttribute request "javax.servlet.request.X509Certificate")))
-
-(defn client-certificate
-  "Friend workflow that extracts a SSL client certificate and passed that to
-   the credential function.  The credential function must be defined in the 
-   configuration of this workflow or in the overall friend configuration.  The
-   credential function will receive a map with a single key :ssl-client-cert, 
-   which is a list of X509Certificates.  The ::friend/workflow key in the returned
-   authentication map is set to :client-certificate."
-  [& {:keys [credential-fn] :as form-config}]
-  (fn [{:keys [ssl-client-cert servlet-request] :as request}]
-    (debug-certificates servlet-request)
-    (when ssl-client-cert
-      (let [cert-chain (extract-client-cert-chain servlet-request)]
-        (if-let [credential-fn (futil/gets :credential-fn form-config (::friend/auth-config request))]
-          (if-let [user-record (credential-fn (with-meta
-                                                {:ssl-client-cert       ssl-client-cert
-                                                 :ssl-client-cert-chain cert-chain}
-                                                {::friend/workflow :client-certificate}))]
-            (workflows/make-auth user-record {::friend/workflow          :client-certificate
-                                              ::friend/redirect-on-auth? false})))))))
 
 (defn extract-subject-dn
   "Given a X509 certifcate chain, this will extract the DN of the subject
@@ -65,7 +46,7 @@
    an exception occurs, then nil is returned."
   [chain]
   (try
-    (if-let [cert (first chain)]
+    (when-let [cert (first chain)]
       (if (ProxyUtils/isProxy cert)
         (.. chain
             (ProxyUtils/getOriginalUserDN)

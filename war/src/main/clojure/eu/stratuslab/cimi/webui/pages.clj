@@ -1,6 +1,7 @@
 (ns eu.stratuslab.cimi.webui.pages
   (:require
     [clojure.tools.logging :as log]
+    [eu.stratuslab.authn.workflows.client-certificate :as cwf]
     [cemerick.friend :as friend]
     [hiccup.page :as h]
     [hiccup.element :as e]))
@@ -73,7 +74,12 @@
 
 (defn login-form
   [request]
-  (let [context (:context request "")]
+  (let [context (:context request "")
+        dn (or (-> request
+               (:servlet-request)
+               (cwf/extract-client-cert-chain)
+               (cwf/extract-subject-dn))
+               "")]
     [:main
      [:h1 "Login"]
      [:div {:id "operations"}
@@ -82,6 +88,10 @@
       [:form {:id "userform" :method "POST" :action (str context "/login") :class "login"}
        [:div "Username" [:input {:type "text" :name "username"}]]
        [:div "Password" [:input {:type "password" :name "password"}]]
+       [:div [:input {:type "submit" :class "button" :value "login"}]]]]
+     [:section
+      [:form {:id "certform" :method "POST" :action (str context "/login") :class "login"}
+       [:div "X500 DN" [:input {:type "text" :readonly true :name "x500dn" :value dn}]]
        [:div [:input {:type "submit" :class "button" :value "login"}]]]]]))
 
 (defn login-page
