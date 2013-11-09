@@ -61,7 +61,7 @@
           voms-info (cwf/voms-vo-info ssl-client-cert-chain)
           vo-names (->> voms-info
                         (keys)
-                        (remove #(cb-lookup-user cb-client (str "vo:" %))))
+                        (filter #(cb-lookup-user cb-client (str "vo:" %))))
           all-roles (->> vo-names
                          (map #(get voms-info %))
                          (reduce concat))]

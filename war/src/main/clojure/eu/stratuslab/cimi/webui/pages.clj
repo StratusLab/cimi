@@ -86,12 +86,12 @@
       ]
      [:section
       [:form {:id "userform" :method "POST" :action (str context "/login") :class "login"}
-       [:div "Username" [:input {:type "text" :name "username"}]]
-       [:div "Password" [:input {:type "password" :name "password"}]]
+       [:div [:label "Username:" [:input {:type "text" :name "username"}]]]
+       [:div [:label "Password:" [:input {:type "password" :name "password"}]]]
        [:div [:input {:type "submit" :class "button" :value "login"}]]]]
      [:section
       [:form {:id "certform" :method "POST" :action (str context "/login") :class "login"}
-       [:div "X500 DN" [:input {:type "text" :readonly true :name "x500dn" :value dn}]]
+       [:div [:span "X500 DN:"] [:span dn]]
        [:div [:input {:type "submit" :class "button" :value "login"}]]]]]))
 
 (defn login-page
