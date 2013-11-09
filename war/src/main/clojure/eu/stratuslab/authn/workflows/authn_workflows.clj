@@ -34,6 +34,7 @@
           (log/info "checking credential map" (assoc creds :password "********"))
           (when-let [user-record (credential-fn
                                    (with-meta creds {::friend/workflow :form-workflow}))]
+            (log/info "user-record is" user-record)
             (workflows/make-auth user-record
                                  {::friend/workflow          :form-workflow
                                   ::friend/redirect-on-auth? redirect-on-auth?})))))))
@@ -65,6 +66,8 @@
                          (map #(get voms-info %))
                          (reduce concat))]
       (log/info "looking up VOs for DN" dn)
+      (log/info "vo-names" vo-names)
+      (log/info "all-roles" all-roles)
       (if (pos? (count vo-names))
         {:identity dn
          :vo-names vo-names
