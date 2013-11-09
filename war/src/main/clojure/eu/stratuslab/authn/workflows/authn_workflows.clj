@@ -23,21 +23,19 @@
       :or   {redirect-on-auth? true}}]
   (fn [{:keys [request-method params form-params ssl-client-cert-chain] :as request}]
     (let [req-auth-config (::friend/auth-config request)]
+      (log/info "running authentication workflow" request-method (req/path-info request))
       (when (and (= :post request-method)
                  (= (futil/gets :login-uri form-config req-auth-config) (req/path-info request)))
         (let [creds {:username              (get form-params "username" "")
                      :password              (:password params)
                      :ssl-client-cert-chain ssl-client-cert-chain}
               credential-fn (futil/gets :credential-fn form-config req-auth-config)]
-          (if-let [user-record (credential-fn
+          (log/info "running credential function with credential map" creds)
+          (when-let [user-record (credential-fn
                                  (with-meta creds {::friend/workflow :form-workflow}))]
             (workflows/make-auth user-record
                                  {::friend/workflow          :form-workflow
-                                  ::friend/redirect-on-auth? redirect-on-auth?})
-            ((or
-               (futil/gets :login-failure-handler form-config req-auth-config)
-               #'workflows/interactive-login-redirect)
-             (update-in request [::friend/auth-config] merge form-config))))))))
+                                  ::friend/redirect-on-auth? redirect-on-auth?})))))))
 
 (defn cb-lookup-user
   "Looks up a user record (map) given a particular key.  This key
@@ -59,6 +57,7 @@
    set, then the function returns nil."
   [cb-client]
   (fn [identity]
+    (log/info "looking up identity" identity)
     (cb-lookup-user cb-client identity)))
 
 (defn cb-user-by-dn-fn
@@ -70,6 +69,7 @@
   [cb-client]
   (fn [{:keys [ssl-client-cert-chain]}]
     (let [dn (cwf/extract-subject-dn ssl-client-cert-chain)]
+      (log/info "looking up DN" dn)
       (cb-lookup-user cb-client dn))))
 
 (defn cert-workflow
@@ -94,6 +94,6 @@
   "Returns a list of the active workflows for authenticating
    users for the cloud instance."
   [cb-client]
-  [ ;; (password-workflow cb-client)
-   (cert-workflow cb-client)])
+  [(cert-workflow cb-client)
+   (password-workflow cb-client)])
 

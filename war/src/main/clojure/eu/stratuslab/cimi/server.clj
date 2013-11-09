@@ -51,8 +51,8 @@
   (if-let [workflows (aw/get-workflows cb-client)]
     (-> (friend/authenticate routes/main-routes
                              {:allow-anon? true
-                              :login-uri (str nil "/login")
-                              :default-landing-uri (str nil "/webui")
+                              :login-uri "/login"
+                              :default-landing-uri "/webui"
                               :credential-fn (constantly nil)
                               :workflows workflows})
         (handler/site {:session {:store (couchbase-store cb-client)}})
