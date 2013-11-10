@@ -31,7 +31,7 @@
                  [:cert-enabled] Boolean])
 
 (def-map-schema AuthnConfigurationSchema
-                schema/CommonAttrs
+                schema/ServiceConfiguration
                 [[:localdb] LocalDBSchema
                  (optional-path [:ldap]) NonEmptyString
                  (optional-path [:voms]) NonEmptyString])
