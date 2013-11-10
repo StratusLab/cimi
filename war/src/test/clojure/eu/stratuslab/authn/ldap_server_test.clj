@@ -1,4 +1,4 @@
-(ns eu.stratuslab.authn.test.ldap-server
+(ns eu.stratuslab.authn.ldap-server-test
   "An embedded ldap server for unit testing.  This file comes from 
    https://github.com/pauldorman/clj-ldap and is licensed under the
    Eclipse Public License.

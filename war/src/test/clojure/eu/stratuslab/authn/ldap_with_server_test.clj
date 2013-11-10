@@ -1,10 +1,10 @@
-(ns eu.stratuslab.authn.test.ldap-with-server
+(ns eu.stratuslab.authn.ldap-with-server-test
   (:use clojure.test
         eu.stratuslab.authn.ldap)
   (:require
     [clj-ldap.client :as ldap]
     [clojure.string :as str]
-    [eu.stratuslab.authn.test.ldap-server :as server]))
+    [eu.stratuslab.authn.ldap-server-test :as server]))
 
 ;; UTILITY FUNCTIONS
 

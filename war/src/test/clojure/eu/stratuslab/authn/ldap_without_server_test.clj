@@ -1,4 +1,4 @@
-(ns eu.stratuslab.authn.test.ldap-without-server
+(ns eu.stratuslab.authn.ldap-without-server-test
   (:use clojure.test
         eu.stratuslab.authn.ldap)
   (:require [clojure.string :as str]))

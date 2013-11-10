@@ -1,4 +1,4 @@
-(ns eu.stratuslab.authn.test.handler
+(ns eu.stratuslab.authn.handler-test
   (:use clojure.test
         kerodon.test
         kerodon.core
@@ -9,7 +9,7 @@
     [cemerick.friend.credentials :as credentials]
     [cemerick.friend.workflows :as workflows]
     [clj-ldap.client :as ldap-client]
-    [eu.stratuslab.authn.test.ldap-server :as server]))
+    [eu.stratuslab.authn.ldap-server-test :as server]))
 
 ;; will be rebound for each authentication workflow
 (def ^{:dynamic true :private true} *app* nil)
