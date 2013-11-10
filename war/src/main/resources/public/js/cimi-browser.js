@@ -227,7 +227,11 @@ function render_collection(o, m) {
 			var desc = entries[i].description || '';
 			
 			var link = resource_view_url(id);
-			var tag = id.split('/').pop().substring(0, 8);
+			var tag = id.split('/').pop();
+
+			if (tag.match(/^[\dabcdef-]{36}$/)) {
+			    tag = tag.substring(0, 8);
+			}
 
 			var row = table.append('tr');
 			row.append('td').append('a').text(tag).attr('href', link);
