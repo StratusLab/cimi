@@ -32,8 +32,8 @@
 (def-map-schema AuthnConfigurationSchema
                 schema/ServiceConfiguration
                 [[:localdb] LocalDBSchema
-                 (optional-path [:ldap]) NonEmptyString
-                 (optional-path [:voms]) NonEmptyString])
+                 (optional-path [:ldap]) LdapSchema
+                 (optional-path [:voms]) VomsSchema])
 
 (defn config-errors?
   [m]
