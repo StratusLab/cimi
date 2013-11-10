@@ -59,7 +59,7 @@
                  :roles      ["::ADMIN"]}]
       (println admin)
       (if (= 201 (:status (user/add cb-client admin)))
-        (log/error "User/admin entry created; initial password is" password)
+        (log/warn "User/admin entry created; initial password is" password)
         (log/info "User/admin entry NOT created")))
     (catch Exception e
       (log/error "Error occurred while trying to create User/admin entry" (str e)))))
