@@ -122,6 +122,12 @@
     </dependency>
 
     <dependency>
+      <groupId>peridot</groupId>
+      <artifactId>peridot</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>fs</groupId>
       <artifactId>fs</artifactId>
       <scope>test</scope>
