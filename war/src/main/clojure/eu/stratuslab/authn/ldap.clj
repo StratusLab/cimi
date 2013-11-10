@@ -97,8 +97,9 @@
       (select-keys params [:identity :roles :cemerick.friend/workflow]))))
 
 (defn config-errors? [m]
-  (when-let [errors (validation-errors LdapConfigurationSchema m)]
-    (str/join ", " errors)))
+  (let [errors (validation-errors LdapConfigurationSchema m)]
+    (if (pos? (count errors))
+      (str/join ", " errors))))
 
 (defn valid-request? [m]
   (when (empty? (validation-errors LdapRequestSchema m))
