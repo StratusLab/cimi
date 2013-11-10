@@ -186,12 +186,6 @@
       </dependency>
 
       <dependency>
-        <groupId>kerodon</groupId>
-        <artifactId>kerodon</artifactId>
-        <version>0.2.0</version>
-      </dependency>
-
-      <dependency>
         <groupId>peridot</groupId>
         <artifactId>peridot</artifactId>
         <version>0.2.2</version>
@@ -201,12 +195,6 @@
         <groupId>org.clojars.pntblnk</groupId>
         <artifactId>clj-ldap</artifactId>
         <version>0.0.9</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.blancas</groupId>
-        <artifactId>kern</artifactId>
-        <version>0.7.0</version>
       </dependency>
 
       <dependency>

@@ -94,19 +94,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.blancas</groupId>
-      <artifactId>kern</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>instaparse</groupId>
       <artifactId>instaparse</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>kerodon</groupId>
-      <artifactId>kerodon</artifactId>
-      <scope>test</scope>
     </dependency>
 
     <dependency>
