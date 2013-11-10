@@ -5,7 +5,7 @@
     [ring.util.response :as resp]
     [hiccup.page :as h]
     [hiccup.element :as e]
-    [eu.stratuslab.cimi.webui.pages :refer [browser login-page]]))
+    [eu.stratuslab.cimi.webui.pages :refer [browser login-page authn-page]]))
 
 (defroutes routes
            (GET "/webui" request
