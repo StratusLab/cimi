@@ -64,4 +64,5 @@
        :username username
        :password password})
     (catch Exception e
-      (log/error "error reading" cfg ": " (.getMessage e)))))
+      (log/warn "error reading" cfg "->" (.getMessage e))
+      nil)))

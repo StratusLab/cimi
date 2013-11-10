@@ -35,7 +35,7 @@
     (try
       (cbc/create-client cfg)
       (catch Exception e
-        (log/error "error creating couchbase client: " e)
+        (log/error "error creating couchbase client" (str e))
         (cbc/create-client cb-client-defaults)))
     (do
       (log/warn "using default couchbase configuration")
@@ -72,10 +72,9 @@
    to the destroy function when tearing down the service."
   [{:keys [cb-cfg context]}]
 
-  (log/info "initializing servlet implementation from" cb-cfg)
+  (log/info "initializing servlet implementation")
 
-  (let [cb-params (read-cfg cb-cfg)
-        cb-client (create-cb-client cb-params)]
+  (let [cb-client (create-cb-client cb-cfg)]
     (bootstrap cb-client)
     {:cb-client cb-client
      :context context}))

@@ -15,4 +15,6 @@
            (POST "/login" request
                 (resp/redirect (str (:context request) "/login?msg=login_failed")))
            (GET "/logout" request
-                (friend/logout* (resp/redirect (str (:context request) "/webui")))))
+                (friend/logout* (resp/redirect (str (:context request) "/webui"))))
+           (GET "/authn" request
+                (authn-page request)))

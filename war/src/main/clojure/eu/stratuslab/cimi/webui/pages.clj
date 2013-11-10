@@ -1,6 +1,6 @@
 (ns eu.stratuslab.cimi.webui.pages
   (:require
-    [clojure.tools.logging :as log]
+    [clojure.data.json :as json]
     [eu.stratuslab.authn.workflows.client-certificate :as cwf]
     [cemerick.friend :as friend]
     [hiccup.page :as h]
@@ -21,17 +21,15 @@
      [:script {:src (str context "/js/jsonlint/jsonlint.js") :charset "utf-8"}]
      [:script {:src (str context "/js/codemirror/addon/lint/json-lint.js") :charset "utf-8"}]
      [:script {:src (str context "/js/cimi-browser.js") :charset "utf-8"}]
-     [:title "StratusLab"]]))
+     [:title "StratusLab CIMI"]]))
 
 (defn user-info
   [request]
   (let [context (:context request "")]
     [:div {:class "user-info"}
-     (let [identity (friend/current-authentication request)]
-       (log/info "user identity:" identity)
-       (if identity
-         [:span (str (:identity identity) " (") (e/link-to (str context "/logout") "logout") ")"]
-         (e/link-to (str context "/login") "login")))]))
+     (if-let [identity (friend/current-authentication request)]
+       [:span (str (:identity identity) " (") (e/link-to (str context "/logout") "logout") ")"]
+       (e/link-to (str context "/login") "login"))]))
 
 (def navigation
   [:nav])
@@ -76,9 +74,9 @@
   [request]
   (let [context (:context request "")
         dn (or (-> request
-               (:servlet-request)
-               (cwf/extract-client-cert-chain)
-               (cwf/extract-subject-dn))
+                   (:servlet-request)
+                   (cwf/extract-client-cert-chain)
+                   (cwf/extract-subject-dn))
                "")]
     [:main
      [:h1 "Login"]
@@ -105,3 +103,22 @@
       (login-form request)
       footer]]))
 
+(defn get-authn-info [request]
+  (let [authn-map (friend/current-authentication request)]
+    (if authn-map
+      (with-out-str
+        (json/pprint authn-map))
+      "No authentication information in session.")))
+
+(defn authn-page
+  [request]
+  (h/html5
+    (head request)
+    [:body
+     [:div {:class "wrapper"}
+      (header request)
+      [:main
+       [:h1 "Authentication Information"]
+       [:section
+        [:textarea {:id "authn-info" :rows 25 :value (get-authn-info request)}]]]
+      footer]]))

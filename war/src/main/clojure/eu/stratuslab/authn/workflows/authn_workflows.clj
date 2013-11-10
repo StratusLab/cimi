@@ -52,7 +52,7 @@
   (if-let [cfg (u/service-configuration cb-client "authn")]
     (if-let [error-msg (config-errors? cfg)]
       (do
-        (log/error "ServiceConfiguration/authn error; using defaults: " error-msg)
+        (log/error "ServiceConfiguration/authn error; using defaults:" error-msg)
         default-cfg)
       (do
         (log/info "validated ServiceConfiguration/authn")
@@ -80,10 +80,9 @@
                      :password              (:password params)
                      :ssl-client-cert-chain ssl-client-cert-chain}
               credential-fn (futil/gets :credential-fn form-config req-auth-config)]
-          (log/info "checking credential map" (assoc creds :password "********"))
           (when-let [user-record (credential-fn
                                    (with-meta creds {::friend/workflow :form-workflow}))]
-            (log/info "user-record is" user-record)
+            (log/debug "user-record is" user-record)
             (workflows/make-auth user-record
                                  {::friend/workflow          :form-workflow
                                   ::friend/redirect-on-auth? redirect-on-auth?})))))))
@@ -96,10 +95,10 @@
   (when userkey
     (if-let [user-map (u/user-record cb-client userkey)]
       (do
-        (log/info "user record for" userkey "found; active?" (:active user-map))
+        (log/debug "user record for" userkey "found; active?" (:active user-map))
         (if (:active user-map)
           user-map))
-      (log/info "user record for" userkey "NOT found"))))
+      (log/debug "user record for" userkey "NOT found"))))
 
 (defn cb-user-by-vo-fn
   "Returns a function that constructs the user record from the
@@ -114,9 +113,9 @@
           all-roles (->> vo-names
                          (map #(get voms-info %))
                          (reduce concat))]
-      (log/info "looking up VOs for DN" dn)
-      (log/info "vo-names" vo-names)
-      (log/info "all-roles" all-roles)
+      (log/debug "looking up VOs for DN" dn)
+      (log/debug "vo-names" vo-names)
+      (log/debug "all-roles" all-roles)
       (if (pos? (count vo-names))
         {:identity dn
          :vo-names vo-names
@@ -129,7 +128,7 @@
    set, then the function returns nil."
   [cb-client]
   (fn [identity]
-    (log/info "looking up identity" identity)
+    (log/debug "looking up identity" identity)
     (cb-lookup-user cb-client identity)))
 
 (defn cb-user-by-dn-fn
@@ -141,7 +140,7 @@
   [cb-client]
   (fn [{:keys [ssl-client-cert-chain]}]
     (let [dn (cwf/extract-subject-dn ssl-client-cert-chain)]
-      (log/info "looking up DN" dn)
+      (log/debug "looking up DN" dn)
       (cb-lookup-user cb-client dn))))
 
 (defn voms-workflow
@@ -151,7 +150,7 @@
    The result contains the DN as the identity, the FQANs as the
    roles, and the list of accepts VOs."
   [cb-client cfg]
-  (if (:enabled cfg)
+  (when (:enabled cfg)
     (log/info "initializing voms proxy authn workflow")
     (->> cb-client
          (cb-user-by-dn-fn)
@@ -162,11 +161,11 @@
    with the request.  The certificate will have been validated by
    the SSL interactions before the workflow receives the certificate."
   [ldap-params]
-  (if true
-    (do
-      (log/error "ldap certificate authn workflow is NOT implemented")
-      nil)
-    (if (:cert-enabled ldap-params)
+  (when (:cert-enabled ldap-params)
+    (if true
+      (do
+        (log/error "ldap certificate authn workflow is NOT implemented")
+        nil)
       (when-let [pool (ldap/connection-pool (:connection ldap-params))]
         (log/info "initializing ldap certificate authn workflow")
         (->> pool
@@ -179,7 +178,7 @@
    with the request.  The certificate will have been validated by
    the SSL interactions before the workflow receives the certificate."
   [cb-client cfg]
-  (if (:cert-enabled cfg)
+  (when (:cert-enabled cfg)
     (log/info "initializing couchbase certificate authn workflow")
     (->> cb-client
          (cb-user-by-vo-fn)
@@ -189,7 +188,7 @@
   "Returns the an interactive form workflow for friend that
    is configured to find user information in Couchbase."
   [ldap-params]
-  (if (:password-enabled ldap-params)
+  (when (:password-enabled ldap-params)
     (when-let [pool (ldap/connection-pool (:connection ldap-params))]
       (log/info "initializing ldap password authn workflow")
       (->> pool
@@ -201,7 +200,7 @@
   "Returns the an interactive form workflow for friend that
    is configured to find user information in Couchbase."
   [cb-client cfg]
-  (if (:password-enabled cfg)
+  (when (:password-enabled cfg)
     (log/info "initializing couchbase password authn workflow")
     (->> cb-client
          (cb-user-by-id-fn)
