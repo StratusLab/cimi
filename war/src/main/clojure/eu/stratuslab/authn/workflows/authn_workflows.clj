@@ -2,6 +2,7 @@
   (:require
     [clojure.tools.logging :as log]
     [clojure.set :as set]
+    [clojure.string :as str]
     [clojure.pprint :refer [pprint]]
     [couchbase-clj.client :as cbc]
     [cemerick.friend :as friend]
@@ -11,7 +12,37 @@
     [ring.util.request :as req]
     [eu.stratuslab.cimi.resources.utils :as u]
     [eu.stratuslab.authn.workflows.client-certificate :as cwf]
-    [eu.stratuslab.authn.ldap :as ldap]))
+    [eu.stratuslab.authn.ldap :as ldap]
+    [clj-schema.schema :refer :all]
+    [clj-schema.simple-schemas :refer :all]
+    [clj-schema.validation :refer :all]))
+
+(def-map-schema LocalDBSchema
+                [[:password-enabled] Boolean
+                 [:cert-enabled] Boolean])
+
+(def-map-schema VomsSchema
+                [[:enabled] Boolean])
+
+(def-map-schema LdapSchema
+                ldap/LdapConfigurationSchema
+                [[:password-enabled] Boolean
+                 [:cert-enabled] Boolean])
+
+(def-map-schema AuthnConfigurationSchema
+                [[:localdb] LocalDBSchema
+                 (optional-path [:ldap]) NonEmptyString
+                 (optional-path [:voms]) NonEmptyString])
+
+(defn config-errors?
+  [m]
+  (let [errors (validation-errors AuthnConfigurationSchema m)]
+    (if (pos? (count errors))
+      (str/join ", " errors))))
+
+(def default-cfg
+  {:localdb {:password-enabled true
+             :cert-enabled     false}})
 
 (defn authn-cfg
   "Finds the configuration file for the authentication (docid in
@@ -19,14 +50,16 @@
    contains the validated configuration."
   [cb-client]
   (if-let [cfg (u/service-configuration cb-client "authn")]
-    (if-let [error-msg (ldap/config-errors? (:ldap cfg))]
+    (if-let [error-msg (config-errors? cfg)]
       (do
-        (log/error "ServiceConfiguration/authn error: " error-msg)
-        {})
+        (log/error "ServiceConfiguration/authn error; using defaults: " error-msg)
+        default-cfg)
       (do
         (log/info "validated ServiceConfiguration/authn")
-        (select-keys cfg [:ldap])))
-    (log/info "ServiceConfiguration/authn NOT found; using defaults")))
+        cfg))
+    (do
+      (log/info "ServiceConfiguration/authn NOT found; using defaults")
+      default-cfg)))
 
 (defn form-workflow
   "Creates a friend login workflow that redirects to a login page and
@@ -117,58 +150,69 @@
    the SSL interactions before the workflow receives the certificate.
    The result contains the DN as the identity, the FQANs as the
    roles, and the list of accepts VOs."
-  [cb-client]
-  (->> cb-client
-       (cb-user-by-dn-fn)
-       (form-workflow :credential-fn)))
+  [cb-client cfg]
+  (if (:enabled cfg)
+    (log/info "initializing voms proxy authn workflow")
+    (->> cb-client
+         (cb-user-by-dn-fn)
+         (form-workflow :credential-fn))))
 
 (defn cert-ldap-workflow
   "Returns a workflow that tests the client certificate provided
    with the request.  The certificate will have been validated by
    the SSL interactions before the workflow receives the certificate."
   [ldap-params]
-  (->> ldap-params
-       (partial ldap/ldap-cert-credential-fn)
-       (form-workflow :credential-fn)))
+  (if (:cert-enabled ldap-params)
+    (when-let [pool (ldap/connection-pool (:connection ldap-params))]
+      (log/info "initializing ldap certificate authn workflow")
+      (->> pool
+           (assoc ldap-params :ldap-connection-pool)
+           (partial ldap/ldap-cert-credential-fn)
+           (form-workflow :credential-fn)))))
 
 (defn cert-workflow
   "Returns a workflow that tests the client certificate provided
    with the request.  The certificate will have been validated by
    the SSL interactions before the workflow receives the certificate."
-  [cb-client]
-  (->> cb-client
-       (cb-user-by-vo-fn)
-       (form-workflow :credential-fn)))
+  [cb-client cfg]
+  (if (:cert-enabled cfg)
+    (log/info "initializing couchbase certificate authn workflow")
+    (->> cb-client
+         (cb-user-by-vo-fn)
+         (form-workflow :credential-fn))))
 
 (defn password-ldap-workflow
   "Returns the an interactive form workflow for friend that
    is configured to find user information in Couchbase."
   [ldap-params]
-  (->> ldap-params
-       (partial ldap/ldap-credential-fn)
-       (form-workflow :credential-fn)))
+  (if (:password-enabled ldap-params)
+    (when-let [pool (ldap/connection-pool (:connection ldap-params))]
+      (log/info "initializing ldap password authn workflow")
+      (->> pool
+           (assoc ldap-params :ldap-connection-pool)
+           (partial ldap/ldap-credential-fn)
+           (form-workflow :credential-fn)))))
 
 (defn password-workflow
   "Returns the an interactive form workflow for friend that
    is configured to find user information in Couchbase."
-  [cb-client]
-  (->> cb-client
-       (cb-user-by-id-fn)
-       (partial creds/bcrypt-credential-fn)
-       (form-workflow :credential-fn)))
+  [cb-client cfg]
+  (if (:password-enabled cfg)
+    (log/info "initializing couchbase password authn workflow")
+    (->> cb-client
+         (cb-user-by-id-fn)
+         (partial creds/bcrypt-credential-fn)
+         (form-workflow :credential-fn))))
 
 (defn get-workflows
   "Returns a list of the active workflows for authenticating
    users for the cloud instance."
   [cb-client]
   (let [cfg (authn-cfg cb-client)]
-    (if-let [ldap (:ldap cfg)]
-      [(password-workflow cb-client)
-       (password-ldap-workflow ldap)
-       (cert-workflow cb-client)
-       (cert-ldap-workflow ldap)
-       (voms-workflow cb-client)]
-      [(password-workflow cb-client)
-       (cert-workflow cb-client)
-       (voms-workflow cb-client)])))
+    (let [workflows [(password-workflow cb-client (:localdb cfg))
+                     (password-ldap-workflow (:ldap cfg))
+                     (cert-workflow cb-client (:localdb cfg))
+                     (cert-ldap-workflow (:ldap cfg))
+                     (voms-workflow cb-client (:voms cfg))]]
+      (remove nil? workflows))))
 

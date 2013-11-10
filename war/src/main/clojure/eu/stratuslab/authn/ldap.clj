@@ -1,6 +1,7 @@
 (ns eu.stratuslab.authn.ldap
   "Functions to allow Friend authentication against an LDAP database."
   (:require
+    [clojure.tools.logging :as log]
     [clojure.string :as str]
     [clojure.set :as set]
     [clj-ldap.client :as ldap]
@@ -32,7 +33,16 @@
 
 (def ^:const filter-template "(&(objectClass=%s)(%s=%s))")
 
-(def-map-schema LdapConfigurationSchema
+(def-map-schema LdapConfigurationHostSchema
+                [[:address] NonEmptyString
+                 [:port] PosIntegral])
+
+(def-map-schema LdapConfigurationConnectionSchema
+                [[:host] LdapConfigurationHostSchema
+                 [:ssl?] Boolean
+                 (optional-path [:num-connections]) PosIntegral])
+
+(def-map-schema LdapConfigurationCommonSchema
                 [[:user-base-dn] NonEmptyString
                  [:user-object-class] NonEmptyString
                  [:user-id-attr] NonEmptyString
@@ -42,11 +52,24 @@
                  [:role-name-attr] NonEmptyString
                  [:skip-bind?] Boolean])
 
+(def-map-schema LdapConfigurationSchema
+                LdapConfigurationCommonSchema
+                [[:connection] LdapConfigurationConnectionSchema])
+
 (def-map-schema LdapRequestSchema :loose
-                LdapConfigurationSchema
+                LdapConfigurationCommonSchema
                 [[:username] NonEmptyString
                  (optional-path [:password]) NonEmptyString
                  (optional-path [:ldap-connection-pool]) Anything])
+
+(defn connection-pool
+  [cfg]
+  (when-let [params (:connection cfg)]
+    (try
+      (ldap/connect params)
+      (catch Exception e
+        (log/error "could not initialize ldap connection pool: " (str e))
+        nil))))
 
 (defn user-filter
   "create LDAP filter for user records from values for
@@ -95,11 +118,6 @@
           r (roles pool params)
           params (assoc params :identity identity :roles r)]
       (select-keys params [:identity :roles :cemerick.friend/workflow]))))
-
-(defn config-errors? [m]
-  (let [errors (validation-errors LdapConfigurationSchema m)]
-    (if (pos? (count errors))
-      (str/join ", " errors))))
 
 (defn valid-request? [m]
   (when (empty? (validation-errors LdapRequestSchema m))

@@ -48,7 +48,10 @@
   [{:keys [cb-client context]}]
   (log/info "creating servlet ring handler with context" context)
 
-  (if-let [workflows (aw/get-workflows cb-client)]
+  (let [workflows (aw/get-workflows cb-client)]
+    (if (empty? workflows)
+      (log/warn "NO authn workflows configured"))
+
     (-> (friend/authenticate routes/main-routes
                              {:allow-anon? true
                               :login-uri "/login"
@@ -60,10 +63,7 @@
         (wrap-servlet-paths)
         (wrap-cb-client cb-client)
         (wrap-restful-params)
-        (wrap-restful-response))
-    (do
-      (log/error "no authn workflows defined")
-      (throw (Exception. "no authn workflows defined")))))
+        (wrap-restful-response))))
 
 (defn init
   "Creates a shared Couchbase client for the application and
