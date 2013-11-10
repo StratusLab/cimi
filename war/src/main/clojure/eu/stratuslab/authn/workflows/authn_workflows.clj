@@ -13,6 +13,7 @@
     [eu.stratuslab.cimi.resources.utils :as u]
     [eu.stratuslab.authn.workflows.client-certificate :as cwf]
     [eu.stratuslab.authn.ldap :as ldap]
+    [eu.stratuslab.cimi.resources.schema :as schema]
     [clj-schema.schema :refer :all]
     [clj-schema.simple-schemas :refer :all]
     [clj-schema.validation :refer :all]))
@@ -30,6 +31,7 @@
                  [:cert-enabled] Boolean])
 
 (def-map-schema AuthnConfigurationSchema
+                schema/CommonAttrs
                 [[:localdb] LocalDBSchema
                  (optional-path [:ldap]) NonEmptyString
                  (optional-path [:voms]) NonEmptyString])
