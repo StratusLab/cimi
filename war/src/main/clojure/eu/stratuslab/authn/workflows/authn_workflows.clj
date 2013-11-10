@@ -161,7 +161,7 @@
   "Returns a list of the active workflows for authenticating
    users for the cloud instance."
   [cb-client]
-  (let [cfg (authn-cfg)]
+  (let [cfg (authn-cfg cb-client)]
     (if-let [ldap (:ldap cfg)]
       [(password-workflow cb-client)
        (password-ldap-workflow ldap)
