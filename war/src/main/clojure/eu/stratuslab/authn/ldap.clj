@@ -32,7 +32,7 @@
 
 (def ^:const filter-template "(&(objectClass=%s)(%s=%s))")
 
-(def-map-schema LdapRequestSchema :loose
+(def-map-schema LdapConfigurationSchema
                 [[:user-base-dn] NonEmptyString
                  [:user-object-class] NonEmptyString
                  [:user-id-attr] NonEmptyString
@@ -40,8 +40,11 @@
                  [:role-object-class] NonEmptyString
                  [:role-member-attr] NonEmptyString
                  [:role-name-attr] NonEmptyString
-                 [:username] NonEmptyString
-                 [:skip-bind?] Boolean
+                 [:skip-bind?] Boolean])
+
+(def-map-schema LdapRequestSchema :loose
+                LdapConfigurationSchema
+                [[:username] NonEmptyString
                  (optional-path [:password]) NonEmptyString
                  (optional-path [:ldap-connection-pool]) Anything])
 
@@ -93,6 +96,10 @@
           params (assoc params :identity identity :roles r)]
       (select-keys params [:identity :roles :cemerick.friend/workflow]))))
 
+(defn config-errors? [m]
+  (when-let [errors (validation-errors LdapConfigurationSchema m)]
+    (str/join ", " errors)))
+
 (defn valid-request? [m]
   (when (empty? (validation-errors LdapRequestSchema m))
     (when (or (:skip-bind? m) (:password m))
@@ -105,4 +112,9 @@
       (let [pool (or (:ldap-connection-pool params) *ldap-connection-pool*)]
         (when (or (:skip-bind? params) (force-bind pool params))
           (authn-map pool params))))))
+
+(defn ldap-cert-credential-fn
+  [ldap-params cred-map]
+  ;; FIXME: Provide real implementation!
+  nil)
 

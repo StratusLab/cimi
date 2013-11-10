@@ -10,7 +10,23 @@
     [cemerick.friend.credentials :as creds]
     [ring.util.request :as req]
     [eu.stratuslab.cimi.resources.utils :as u]
-    [eu.stratuslab.authn.workflows.client-certificate :as cwf]))
+    [eu.stratuslab.authn.workflows.client-certificate :as cwf]
+    [eu.stratuslab.authn.ldap :as ldap]))
+
+(defn authn-cfg
+  "Finds the configuration file for the authentication (docid in
+   Couchbase is 'ServiceConfiguration/authn').  The returned value
+   contains the validated configuration."
+  [cb-client]
+  (if-let [cfg (u/service-configuration cb-client "authn")]
+    (if-let [error-msg (ldap/config-errors? (:ldap cfg))]
+      (do
+        (log/error "ServiceConfiguration/authn error: " error-msg)
+        {})
+      (do
+        (log/info "validated ServiceConfiguration/authn")
+        (select-keys cfg [:ldap])))
+    (log/info "ServiceConfiguration/authn NOT found; using defaults")))
 
 (defn form-workflow
   "Creates a friend login workflow that redirects to a login page and
@@ -71,7 +87,7 @@
       (if (pos? (count vo-names))
         {:identity dn
          :vo-names vo-names
-         :roles all-roles}))))
+         :roles    all-roles}))))
 
 (defn cb-user-by-id-fn
   "Returns a function that returns a user record with a
@@ -106,6 +122,15 @@
        (cb-user-by-dn-fn)
        (form-workflow :credential-fn)))
 
+(defn cert-ldap-workflow
+  "Returns a workflow that tests the client certificate provided
+   with the request.  The certificate will have been validated by
+   the SSL interactions before the workflow receives the certificate."
+  [ldap-params]
+  (->> ldap-params
+       (partial ldap/ldap-cert-credential-fn)
+       (form-workflow :credential-fn)))
+
 (defn cert-workflow
   "Returns a workflow that tests the client certificate provided
    with the request.  The certificate will have been validated by
@@ -113,6 +138,14 @@
   [cb-client]
   (->> cb-client
        (cb-user-by-vo-fn)
+       (form-workflow :credential-fn)))
+
+(defn password-ldap-workflow
+  "Returns the an interactive form workflow for friend that
+   is configured to find user information in Couchbase."
+  [ldap-params]
+  (->> ldap-params
+       (partial ldap/ldap-credential-fn)
        (form-workflow :credential-fn)))
 
 (defn password-workflow
@@ -128,7 +161,14 @@
   "Returns a list of the active workflows for authenticating
    users for the cloud instance."
   [cb-client]
-  [(password-workflow cb-client)
-   (cert-workflow cb-client)
-   (voms-workflow cb-client)])
+  (let [cfg (authn-cfg)]
+    (if-let [ldap (:ldap cfg)]
+      [(password-workflow cb-client)
+       (password-ldap-workflow ldap)
+       (cert-workflow cb-client)
+       (cert-ldap-workflow ldap)
+       (voms-workflow cb-client)]
+      [(password-workflow cb-client)
+       (cert-workflow cb-client)
+       (voms-workflow cb-client)])))
 

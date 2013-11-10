@@ -95,6 +95,13 @@
       (throw (Exception. (str "non-existent resource: " uri))))
     {}))
 
+(defn service-configuration
+  "Finds the service configuration document for the given service."
+  [cb-client service-name]
+  (->> service-name
+       (str "ServiceConfiguration/")
+       (cbc/get-json cb-client)))
+
 (defn user-record
   "Finds a user record associated with a given identifier."
   [cb-client identifier]
