@@ -1,7 +1,6 @@
 (ns eu.stratuslab.authn.workflows.client-certificate
   (:require
     [clojure.tools.logging :as log]
-    [clojure.pprint :refer [pprint]]
     [cemerick.friend :as friend]
     [cemerick.friend.workflows :as workflows]
     [cemerick.friend.util :as futil])

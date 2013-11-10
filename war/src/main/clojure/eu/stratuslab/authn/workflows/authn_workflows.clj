@@ -3,7 +3,6 @@
     [clojure.tools.logging :as log]
     [clojure.set :as set]
     [clojure.string :as str]
-    [clojure.pprint :refer [pprint]]
     [couchbase-clj.client :as cbc]
     [cemerick.friend :as friend]
     [cemerick.friend.util :as futil]

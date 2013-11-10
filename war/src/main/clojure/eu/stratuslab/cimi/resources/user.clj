@@ -21,6 +21,7 @@
    these resources."
   (:require
     [clojure.string :as str]
+    [clojure.pprint :refer [pprint]]
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [clojure.data.json :as json]
@@ -80,22 +81,19 @@
     (assoc m :acl acl)))
 
 (defn dump-entry [m]
-  (println m)
+  (pprint m)
   m)
 
 (defn add
   "Adds a new user to the database."
   [cb-client entry]
-  (println entry)
   (let [uri (uuid->uri (:username entry))
-        _ (println uri)
         entry (-> entry
                   (u/strip-service-attrs)
                   (assoc :id uri)
                   (assoc :resourceURI type-uri)
                   (u/set-time-attributes)
                   (add-acl)
-                  (dump-entry)
                   (validate))]
     (if (cbc/add-json cb-client uri entry)
       (r/created uri)

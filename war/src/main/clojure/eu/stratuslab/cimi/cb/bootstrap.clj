@@ -57,7 +57,6 @@
                  :password   (creds/hash-bcrypt password)
                  :active     true
                  :roles      ["::ADMIN"]}]
-      (println admin)
       (if (= 201 (:status (user/add cb-client admin)))
         (log/warn "User/admin entry created; initial password is" password)
         (log/info "User/admin entry NOT created")))
