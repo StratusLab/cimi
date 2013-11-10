@@ -1,6 +1,6 @@
-(ns eu.stratuslab.cimi.filter-parser2-test
+(ns eu.stratuslab.cimi.filter.parser-test
   (:require
-    [eu.stratuslab.cimi.filter-parser2 :refer :all]
+    [eu.stratuslab.cimi.filter.parser :refer :all]
     [instaparse.core :as insta]
     [clojure.test :refer [deftest are]]))
 

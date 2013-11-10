@@ -1,4 +1,4 @@
-(ns eu.stratuslab.cimi.filter-parser2
+(ns eu.stratuslab.cimi.filter.parser
   "Implements a parser for CIMI filters as defined in Section 4.1.6.1 of the 
   CIMI specification (DSP0263 v1.0.1)."
   (:require
@@ -7,7 +7,7 @@
 
 ;; NOTE: The URL for instaparse must be a string.
 (def grammar-url
-  (str (io/resource "eu/stratuslab/cimi/filter-grammar.txt")))
+  (str (io/resource "eu/stratuslab/cimi/filter/grammar.txt")))
 
 (def parser
   (insta/parser grammar-url))
