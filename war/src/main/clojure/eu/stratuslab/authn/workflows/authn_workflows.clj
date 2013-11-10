@@ -162,13 +162,17 @@
    with the request.  The certificate will have been validated by
    the SSL interactions before the workflow receives the certificate."
   [ldap-params]
-  (if (:cert-enabled ldap-params)
-    (when-let [pool (ldap/connection-pool (:connection ldap-params))]
-      (log/info "initializing ldap certificate authn workflow")
-      (->> pool
-           (assoc ldap-params :ldap-connection-pool)
-           (partial ldap/ldap-cert-credential-fn)
-           (form-workflow :credential-fn)))))
+  (if true
+    (do
+      (log/error "ldap certificate authn workflow is NOT implemented")
+      nil)
+    (if (:cert-enabled ldap-params)
+      (when-let [pool (ldap/connection-pool (:connection ldap-params))]
+        (log/info "initializing ldap certificate authn workflow")
+        (->> pool
+             (assoc ldap-params :ldap-connection-pool)
+             (partial ldap/ldap-cert-credential-fn)
+             (form-workflow :credential-fn))))))
 
 (defn cert-workflow
   "Returns a workflow that tests the client certificate provided
