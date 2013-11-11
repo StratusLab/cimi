@@ -110,7 +110,7 @@
   [cb-client]
   (let [java-cb-client (cbc/get-client cb-client)]
     (try
-      (.getDesignDocument design-doc-name)
+      (.getDesignDocument java-cb-client design-doc-name)
       false
       (catch Exception e
         (log/warn "could not retrieve design document" design-doc-name "->" (str e))
