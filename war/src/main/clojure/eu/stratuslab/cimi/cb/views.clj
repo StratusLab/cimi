@@ -38,62 +38,62 @@
 
 (def view-map
   {:user-ids ;; view on user identifiers, user may have more than one
-   "
-   function(doc, meta) {
-     if (meta.type==\"json\") {
-       if (doc.username) {
-         emit(doc.username, null);
-       }
-       if (doc.altnames) {
-         for (var k in doc.altnames) {
-           emit(doc.altnames[k], null);
-         }
-       }
-     }
-   }"
+    "
+    function(doc, meta) {
+      if (meta.type==\"json\") {
+        if (doc.username) {
+          emit(doc.username, null);
+        }
+        if (doc.altnames) {
+          for (var k in doc.altnames) {
+            emit(doc.altnames[k], null);
+          }
+        }
+      }
+    }"
 
    :resource-uri ;; view on resource type (full CIMI URI)
-   "
-   function(doc, meta) {
-     if (meta.type==\"json\" && doc.resourceURI) {
-       emit(doc.resourceURI,null);
-     }
-   }
-   "
+    "
+    function(doc, meta) {
+      if (meta.type==\"json\" && doc.resourceURI) {
+        emit(doc.resourceURI,null);
+      }
+    }
+    "
 
    :resource-type ;; view on resource type and VIEW right principal
-   "
-   function (doc, meta) {
-     if (meta.type==\"json\") {
-       var i=meta.id.indexOf('/');
-       if (i>0) {
-         var rt=meta.id.substring(0, i);
-         emit([rt, \"ROLE_::ADMIN\"], null);
+    "
+    function (doc, meta) {
+      if (meta.type==\"json\") {
+        var i=meta.id.indexOf('/');
+        if (i>0) {
+          var rt=meta.id.substring(0, i);
+          emit([rt, \"ROLE_::ADMIN\"], null);
 
-         if (doc.acl) {
-           if (doc.acl.owner) {
-             var owner = doc.acl.owner;
-             if (owner.principal && owner.type) {
-               if (owner.type != \"ROLE\" && owner.principal != \"::ADMIN\") {
-                 emit([rt, owner.type + \"_\" + owner.principal], null);
-               }
-             }
-           }
-
-           if (doc.acl.rules) {
- 	          for (i=0; i<doc.acl.rules.length; i++) {
-     	        var rule = doc.acl.rules[i];
-
-              if (rule.principal && rule.type) {
-                emit([rt, rule.type + \"_\" + rule.principal], null);
+          if (doc.acl) {
+            if (doc.acl.owner) {
+              var owner = doc.acl.owner;
+              if (owner.principal && owner.type) {
+                if (owner.type != \"ROLE\" && owner.principal != \"::ADMIN\") {
+                  emit([rt, owner.type + \"_\" + owner.principal], null);
+                }
               }
-	           }
-           }
-         }
-       }
-     }
-   }
-   "
+            }
+
+            if (doc.acl.rules) {
+              for (i=0; i<doc.acl.rules.length; i++) {
+                var rule = doc.acl.rules[i];
+
+               if (rule.principal && rule.type) {
+                 emit([rt, rule.type + \"_\" + rule.principal], null);
+               }
+              }
+            }
+          }
+        }
+      }
+    }
+    "
    })
 
 (defn create-design-doc
@@ -108,8 +108,12 @@
    document was created; false otherwise."
   [cb-client]
   (let [java-cb-client (cbc/get-client cb-client)]
-    (->> (create-design-doc)
-         (.createDesignDoc java-cb-client))))
+    (try
+      (.getDesignDocument design-doc-name)
+      false
+      (catch Exception e
+        (->> (create-design-doc)
+             (.createDesignDoc java-cb-client))))))
 
 (defn get-view
   "Returns the Couchbase view associated with the given keyword."

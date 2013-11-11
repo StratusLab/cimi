@@ -24,16 +24,14 @@
    if not, it will create one.  The CloudEntryPoint is the core
    resource of the service and must exist."
   [cb-client]
-  (try
-    (cep/add cb-client)
+  (if (cep/add cb-client)
     (log/info "created CloudEntryPoint")
-    (catch Exception e
-      (log/warn "could not create CloudEntryPoint:" (.getMessage e))
-      (try
-        (cep/retrieve cb-client)
-        (log/info "CloudEntryPoint exists")
-        (catch Exception e
-          (log/error "problem retrieving CloudEntryPoint:" (.getMessage e)))))))
+    (do
+      (log/warn "did NOT create CloudEntryPoint")
+      (let [status (:status (cep/retrieve cb-client))]
+        (if (= 200 status)
+          (log/info "CloudEntryPoint exists")
+          (log/error "problem retrieving CloudEntryPoint"))))))
 
 (defn random-password
   "A random password of 12 characters consisting of the ASCII
