@@ -28,7 +28,7 @@
     (log/info "created CloudEntryPoint")
     (do
       (log/warn "did NOT create CloudEntryPoint")
-      (let [status (:status (cep/retrieve cb-client))]
+      (let [status (:status (cep/retrieve cb-client "http://example.org/"))]
         (if (= 200 status)
           (log/info "CloudEntryPoint exists")
           (log/error "problem retrieving CloudEntryPoint"))))))
