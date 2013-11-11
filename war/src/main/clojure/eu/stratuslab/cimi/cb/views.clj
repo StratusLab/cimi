@@ -30,6 +30,7 @@
    resolve the problem."
 
   (:require
+    [clojure.tools.logging :as log]
     [couchbase-clj.client :as cbc])
   (:import
     [com.couchbase.client.protocol.views DesignDocument ViewDesign]))
