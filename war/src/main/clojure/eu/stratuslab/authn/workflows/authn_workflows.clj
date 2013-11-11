@@ -154,7 +154,7 @@
   (when (:enabled cfg)
     (log/info "initializing voms proxy authn workflow")
     (->> cb-client
-         (cb-user-by-dn-fn)
+         (cb-user-by-vo-fn)
          (form-workflow :credential-fn))))
 
 (defn cert-ldap-workflow

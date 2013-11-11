@@ -120,5 +120,5 @@
       [:main
        [:h1 "Authentication Information"]
        [:section
-        [:textarea {:id "authn-info" :rows 25 :value (get-authn-info request)}]]]
+        [:pre {:id "authn-info"} (get-authn-info request)]]]
       footer]]))
