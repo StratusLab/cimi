@@ -13,9 +13,7 @@
   "Returns a vector with two values: the VO name and a list of roles
    (actually the FQANs defined in the attribute)."
   [^VOMSAttribute attr]
-  (let [vo-name (.getVO attr)
-        roles (list (.getFQANs attr))]
-    [vo-name, roles]))
+  [(.getVO attr), (.getFQANs attr)])
 
 (defn voms-vo-info
   "Returns a map containing key-value pairs where the key is the
