@@ -93,7 +93,7 @@
    can be the user's identity or any given alternative names, for
    example, an X500 DN."
   [cb-client userkey]
-  (when userkey
+  (when-not (str/blank? userkey)
     (if-let [user-map (u/user-record cb-client userkey)]
       (do
         (log/debug "user record for" userkey "found; active?" (:active user-map))
@@ -182,7 +182,7 @@
   (when (:cert-enabled cfg)
     (log/info "initializing couchbase certificate authn workflow")
     (->> cb-client
-         (cb-user-by-vo-fn)
+         (cb-user-by-dn-fn)
          (form-workflow :credential-fn))))
 
 (defn password-ldap-workflow
