@@ -35,7 +35,7 @@
 
 (def-map-schema LdapConfigurationHostSchema
                 [[:address] NonEmptyString
-                 [:port] PosIntegral])
+                 [:port] Integer])
 
 (def-map-schema LdapConfigurationConnectionSchema
                 [[:host] LdapConfigurationHostSchema
@@ -63,10 +63,10 @@
                  (optional-path [:ldap-connection-pool]) Anything])
 
 (defn connection-pool
-  [cfg]
-  (when-let [params (:connection cfg)]
+  [connection-params]
+  (when connection-params
     (try
-      (ldap/connect params)
+      (ldap/connect connection-params)
       (catch Exception e
         (log/error "could not initialize ldap connection pool: " (str e))
         nil))))
