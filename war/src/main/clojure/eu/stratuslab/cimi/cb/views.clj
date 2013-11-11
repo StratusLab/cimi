@@ -112,6 +112,7 @@
       (.getDesignDocument design-doc-name)
       false
       (catch Exception e
+        (log/warn "could not retrieve design document" design-doc-name "->" (str e))
         (->> (create-design-doc)
              (.createDesignDoc java-cb-client))))))
 
