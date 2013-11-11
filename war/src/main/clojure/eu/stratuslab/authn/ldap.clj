@@ -35,7 +35,7 @@
 
 (def-map-schema LdapConfigurationHostSchema
                 [[:address] NonEmptyString
-                 [:port] Integer])
+                 [:port] Integral])
 
 (def-map-schema LdapConfigurationConnectionSchema
                 [[:host] LdapConfigurationHostSchema
