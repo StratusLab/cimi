@@ -128,7 +128,7 @@
                  [:last-name] NonEmptyString
                  [:username] NonEmptyString
                  (optional-path [:password]) NonEmptyString
-                 (optional-path [:active]) Boolean
+                 (optional-path [:enabled]) Boolean
                  (optional-path [:roles]) Roles
                  (optional-path [:altnames]) Altnames])
 

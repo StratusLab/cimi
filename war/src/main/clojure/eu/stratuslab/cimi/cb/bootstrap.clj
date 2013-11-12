@@ -53,7 +53,7 @@
                  :last-name  "administrator"
                  :username   "admin"
                  :password   (creds/hash-bcrypt password)
-                 :active     true
+                 :enabled    true
                  :roles      ["::ADMIN"]}]
       (if (= 201 (:status (user/add cb-client admin)))
         (log/warn "User/admin entry created; initial password is" password)

@@ -96,8 +96,8 @@
   (when-not (str/blank? userkey)
     (if-let [user-map (u/user-record cb-client userkey)]
       (do
-        (log/debug "user record for" userkey "found; active?" (:active user-map))
-        (if (:active user-map)
+        (log/debug "user record for" userkey "found; enabled?" (:enabled user-map))
+        (if (:enabled user-map)
           user-map))
       (log/debug "user record for" userkey "NOT found"))))
 
@@ -125,7 +125,7 @@
 (defn cb-user-by-id-fn
   "Returns a function that returns a user record with a
    document id of 'User/identity' in the database.  If
-   the document doesn't exist or the :active flag is not
+   the document doesn't exist or the :enabled flag is not
    set, then the function returns nil."
   [cb-client]
   (fn [identity]

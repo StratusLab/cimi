@@ -161,8 +161,8 @@
     (are [v pred] (pred (validation-errors User v))
                   user empty?
                   (assoc user :password "password") empty?
-                  (assoc user :active true) empty?
-                  (assoc user :active "BAD") (complement empty?)
+                  (assoc user :enabled true) empty?
+                  (assoc user :enabled "BAD") (complement empty?)
                   (assoc user :roles ["OK"]) empty?
                   (assoc user :roles []) (complement empty?)
                   (assoc user :roles "BAD") (complement empty?)
