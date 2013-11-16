@@ -26,6 +26,7 @@
     [eu.stratuslab.cimi.resources.service-configuration :as sc]
     [eu.stratuslab.cimi.resources.service-message :as sm]
     [eu.stratuslab.cimi.resources.machine-configuration :as mc]
+    [eu.stratuslab.cimi.resources.machine-image :as mi]
     [eu.stratuslab.cimi.resources.job :as job]
     [clj-schema.validation :refer [validation-errors]]
     [clojure.test :refer :all]))
@@ -378,6 +379,35 @@
                   (dissoc mc :memory) (complement empty?)
                   (dissoc mc :cpuArch) (complement empty?)
                   (dissoc mc :cpu) (complement empty?))))
+
+;;
+;; MachineImage
+;;
+
+(def valid-mi-entry
+  {:acl         valid-acl
+   :name        "valid"
+   :description "valid machine image"
+   :state "CREATING"
+   :type "SNAPSHOT"
+   :imageLocation "https://image.com/myimage"
+   :relatedImage  {:href "MachineImage/other-uuid"}})
+
+(deftest test-machine-image-schema
+  (let [mi (assoc valid-mi-entry
+             :id "MachineImage/10"
+             :resourceURI mi/type-uri
+             :created "1964-08-25T10:00:00.0Z"
+             :updated "1964-08-25T10:00:00.0Z"
+             )]
+
+    (are [v pred] (pred (validation-errors MachineImage v))
+                  mi empty?
+                  (dissoc mi :state) (complement empty?)
+                  (dissoc mi :type) (complement empty?)
+                  (dissoc mi :imageLocation) empty?
+                  (dissoc mi :relatedImage) empty?
+                  (assoc mi :state "IMAGE") (complement empty?))))
 
 ;;
 ;; Service Message

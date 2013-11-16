@@ -340,6 +340,27 @@
                  (optional-path [:disks]) Disks])
 
 ;;
+;; MachineImage
+;;
+
+(def-map-schema Disk
+                [[:capacity] PosIntegral
+                 [:format] NonEmptyString
+                 (optional-path [:initialLocation]) NonEmptyString])
+
+(def-seq-schema Disks
+                (constraints (fn [s] (pos? (count s))))
+                [Disk])
+
+(def-map-schema MachineImage
+                (constraints (fn [m] (or (not= "IMAGE" (:type m) (nil? (:relatedImage m))))))
+                CommonAttrs
+                [[:state] #{"CREATING" "AVAILABLE" "DELETING" "ERROR"}
+                 [:type] #{"IMAGE" "SNAPSHOT" "PARTIAL_SNAPSHOT"}
+                 (optional-path [:imageLocation]) NonEmptyString
+                 (optional-path [:relatedImage]) ResourceLink])
+
+;;
 ;; ServiceMessage
 ;;
 
