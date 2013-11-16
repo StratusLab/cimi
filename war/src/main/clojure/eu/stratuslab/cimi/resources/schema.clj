@@ -36,21 +36,29 @@
         m (into {} (map (fn [k] [k (str root (name k))]) valid-actions))]
     (assoc m :add "add" :edit "edit" :delete "delete")))
 
+(def ^:const ValidCpuArch
+  #{"68000" "Alpha" "ARM" "Itanium" "MIPS" "PA_RISC"
+    "POWER" "PowerPC" "x86" "x86_64" "zArchitecture", "SPARC"})
+
 (def-map-schema
   ^{:doc "Link to another resource."}
   ResourceLink
   [[:href] NonEmptyString])
+
+(def-seq-schema ResourceLinks
+                (constraints (fn [s] (seq s)))
+                [ResourceLink])
 
 (def-map-schema Operation
                 [[:rel] (set (vals action-uri))
                  [:href] NonEmptyString])
 
 (def-seq-schema Operations
-                (constraints (fn [s] (pos? (count s))))
+                (constraints (fn [s] (seq s)))
                 [Operation])
 
 (def-map-schema Properties
-                (constraints (fn [m] (pos? (count (keys m)))))
+                (constraints (fn [m] (seq m)))
                 [[(wild (:or Keyword String))] String])
 
 ;;
@@ -73,7 +81,7 @@
                 [[:right] access-control-rights])
 
 (def-seq-schema AccessControlRules
-                (constraints (fn [s] (pos? (count s))))
+                (constraints (fn [s] (seq s)))
                 AccessControlRule)
 
 (def-map-schema AccessControlList
@@ -115,11 +123,11 @@
 ;; User records within the database.  (StratusLab extension.)
 ;;
 (def-seq-schema Roles
-                (constraints (fn [s] (pos? (count s))))
+                (constraints (fn [s] (seq s)))
                 [NonEmptyString])
 
 (def-map-schema Altnames
-                (constraints (fn [m] (pos? (count (keys m)))))
+                (constraints (fn [m] (seq m)))
                 [[(wild Keyword)] NonEmptyString])
 
 (def-map-schema User :loose
@@ -223,7 +231,7 @@
   Anything)
 
 (def-seq-schema MeterTemplateRefs
-                (constraints (fn [refs] (pos? (count refs))))
+                (constraints (fn [m] (seq m)))
                 MeterTemplateRef)
 
 ;; TODO: Add real schema once EventLogs are supported.
@@ -335,8 +343,7 @@
                 CommonAttrs
                 [[:cpu] PosIntegral
                  [:memory] PosIntegral
-                 [:cpuArch] #{"68000" "Alpha" "ARM" "Itanium" "MIPS" "PA_RISC"
-                              "POWER" "PowerPC" "x86" "x86_64" "zArchitecture", "SPARC"}
+                 [:cpuArch] ValidCpuArch
                  (optional-path [:disks]) Disks])
 
 ;;
@@ -349,7 +356,7 @@
                  (optional-path [:initialLocation]) NonEmptyString])
 
 (def-seq-schema Disks
-                (constraints (fn [s] (pos? (count s))))
+                (constraints (fn [s] (seq s)))
                 [Disk])
 
 (def-map-schema MachineImage
@@ -359,6 +366,77 @@
                  [:type] #{"IMAGE" "SNAPSHOT" "PARTIAL_SNAPSHOT"}
                  (optional-path [:imageLocation]) NonEmptyString
                  (optional-path [:relatedImage]) ResourceLink])
+
+;;
+;; MachineTemplate
+;;
+
+(def-map-schema MachineTemplateVolume
+                [(optional-path [:initialLocation]) NonEmptyString
+                 [:volume] ResourceLink])
+
+(def-seq-schema MachineTemplateVolumes
+                (constraints (fn [s] (seq s)))
+                [MachineTemplateVolume])
+
+(def-map-schema MachineTemplateVolumeTemplate
+                [(optional-path [:initialLocation]) NonEmptyString
+                 [:volumeTemplate] ResourceLink])
+
+(def-seq-schema MachineTemplateVolumeTemplates
+                (constraints (fn [s] (seq s)))
+                [MachineTemplateVolumeTemplate])
+
+(def-seq-schema MachineTemplateAddresses
+                (constraints (fn [s] (seq s)))
+                [ResourceLink])
+
+(def-map-schema MachineTemplateNetworkInterface
+                [(optional-path [:addresses]) MachineTemplateAddresses
+                 [:network] ResourceLink
+                 [:networkPort] ResourceLink
+                 [:state] #{"Active", "Passive", "Disabled"}
+                 [:mtu] PosIntegral])
+
+(def-seq-schema MachineTemplateNetworkInterfaces
+                (constraints (fn [s] (seq s)))
+                [MachineTemplateNetworkInterface])
+
+(def-map-schema MachineTemplate
+                CommonAttrs
+                [[:initialState ]NonEmptyString
+                 [:machineConfig] ResourceLink
+                 [:machineImage] ResourceLink
+                 (optional-path [:credential]) ResourceLink
+                 (optional-path [:volumes]) MachineTemplateVolumes
+                 (optional-path [:volumeTemplates]) MachineTemplateVolumeTemplates
+                 (optional-path [:networkInterfaces]) MachineTemplateNetworkInterfaces
+                 (optional-path [:userData]) NonEmptyString
+                 (optional-path [:meterTemplates]) ResourceLinks
+                 (optional-path [:eventLogTemplate]) ResourceLink])
+
+;;
+;; Machine
+;;
+
+(def-map-schema MachineTemplate
+                CommonAttrs
+                [[:state] #{"CREATING"
+                            "STARTING" "STARTED"
+                            "STOPPING" "STOPPED"
+                            "PAUSING" "PAUSED"
+                            "SUSPENDING" "SUSPENDED"
+                            "DELETING" "ERROR"}
+                 [:cpu] PosIntegral
+                 [:memory] PosIntegral
+                 (optional-path [:disks]) ResourceLink
+                 [:cpuArch] ValidCpuArch
+                 (optional-path [:volumes]) ResourceLink
+                 (optional-path [:networkInterfaces]) ResourceLink
+                 (optional-path [:latestSnapshot]) ResourceLink
+                 (optional-path [:snapshots]) ResourceLinks
+                 (optional-path [:meters]) ResourceLinks
+                 (optional-path [:eventLog]) ResourceLink])
 
 ;;
 ;; ServiceMessage
