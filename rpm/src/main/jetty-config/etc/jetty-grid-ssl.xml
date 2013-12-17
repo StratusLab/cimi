@@ -29,11 +29,11 @@
       <Item>SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA</Item>
       <Item>SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA</Item>
     </Array>
-    <Set name="ExcludeProtocols">
-      <Array type="String">
-        <Item>SSLv2Hello</Item>
-      </Array>
-    </Set>
+  </Set>
+  <Set name="ExcludeProtocols">
+    <Array type="String">
+      <Item>SSLv2Hello</Item>
+    </Array>
   </Set>
 
   <Set name="WantClientAuth">true</Set>
