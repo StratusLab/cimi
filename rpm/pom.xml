@@ -10,7 +10,7 @@
   <parent>
     <groupId>eu.stratuslab.cimi</groupId>
     <artifactId>cimi</artifactId>
-    <version>13.12.0-SNAPSHOT</version>
+    <version>13.12.0</version>
   </parent>
 
   <!-- NOTE: This project MUST have same version as proxy module. -->
