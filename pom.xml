@@ -100,7 +100,7 @@
       <dependency>
         <groupId>eu.stratuslab.authn</groupId>
         <artifactId>authn-ssl</artifactId>
-        <version>${project.version}</version>
+        <version>13.12.0</version>
         <classifier>jar-with-dependencies</classifier>
       </dependency>
 
