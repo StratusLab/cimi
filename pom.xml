@@ -180,6 +180,19 @@
       </dependency>
 
       <dependency>
+        <groupId>couchbase-clj</groupId>
+        <artifactId>couchbase-clj</artifactId>
+        <version>0.1.3</version>
+      </dependency>
+
+      <!-- no longer pulled in as dependency of couchbase-clj -->
+      <dependency>
+        <groupId>net.spy</groupId>
+        <artifactId>spymemcached</artifactId>
+        <version>2.9.1</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.clojars.runa</groupId>
         <artifactId>clj-schema</artifactId>
         <version>1.0.0</version>
