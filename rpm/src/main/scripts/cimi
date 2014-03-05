@@ -163,7 +163,7 @@ then
   ETC=$HOME/etc
 fi
 
-for CONFIG in $ETC/default/jetty{,9} $HOME/.jettyrc; do
+for CONFIG in $ETC/default/cimi $HOME/.jettyrc; do
   if [ -f "$CONFIG" ] ; then 
     readConfig "$CONFIG"
   fi
@@ -205,43 +205,13 @@ fi
 
 
 ##################################################
-# if no JETTY_HOME, search likely locations.
+# if no JETTY_HOME, use default
 ##################################################
 if [ -z "$JETTY_HOME" ] ; then
-  STANDARD_LOCATIONS=(
-        "/opt/stratuslab"
-        )
-  JETTY_DIR_NAMES=(
-        "cimi"
-        )
-        
-  for L in "${STANDARD_LOCATIONS[@]}"
-  do
-    for N in "${JETTY_DIR_NAMES[@]}"
-    do
-      POSSIBLE_JETTY_HOME=("$L/"$N)
-      if [ ! -d "$POSSIBLE_JETTY_HOME" ]
-      then
-        # Not a directory. skip.
-        unset POSSIBLE_JETTY_HOME
-      elif [ ! -f "$POSSIBLE_JETTY_HOME/$JETTY_INSTALL_TRACE_FILE" ]
-      then
-        # Trace file not found. skip.
-        unset POSSIBLE_JETTY_HOME
-      else
-        # Good hit, Use it
-        JETTY_HOME=$POSSIBLE_JETTY_HOME
-        # Break out of JETTY_DIR_NAMES loop
-        break
-      fi
-    done
-    if [ -n "$POSSIBLE_JETTY_HOME" ]
-    then
-      # We have found our JETTY_HOME
-      # Break out of STANDARD_LOCATIONS loop
-      break
-    fi
-  done
+  POSSIBLE_JETTY_HOME="/opt/stratuslab/cimi"
+  if [ -d "$POSSIBLE_JETTY_HOME" ]; then
+    JETTY_HOME=$POSSIBLE_JETTY_HOME
+  fi
 fi
 
 
@@ -333,7 +303,7 @@ fi
 
 if [ -z "$JETTY_STATE" ] 
 then
-  JETTY_STATE=$JETTY_HOME/jetty.state
+  JETTY_STATE=$JETTY_HOME/cimi.state
 fi
 JAVA_OPTIONS+=("-Djetty.state=$JETTY_STATE")
 rm -f $JETTY_STATE
