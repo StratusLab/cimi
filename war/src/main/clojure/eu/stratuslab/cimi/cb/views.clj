@@ -20,18 +20,19 @@
    database.
 
    NOTE: The view methods may not work when using a local network
-   configured with 10.0.x.x addresses.  The symptom is that the 
+   configured with 10.0.x.x addresses.  The symptom is that the
    connection to the database will timeout.  Information about this
    problem can be found here:
 
    http://www.couchbase.com/issues/browse/JCBC-151
 
-   The workarounds in the given ticket may or may not work to 
+   The workarounds in the given ticket may or may not work to
    resolve the problem."
 
   (:require
     [clojure.tools.logging :as log]
-    [couchbase-clj.client :as cbc])
+    [couchbase-clj.client :as cbc]
+    [couchbase-clj.query :as cbq])
   (:import
     [com.couchbase.client.protocol.views DesignDocument ViewDesign]))
 
@@ -98,14 +99,14 @@
    })
 
 (defn create-design-doc
-  "Creates the Couchbase design document that includes all of the 
+  "Creates the Couchbase design document that includes all of the
    views needed to query the database."
   []
   (let [views (map (fn [[k v]] (ViewDesign. (name k) v)) view-map)]
     (DesignDocument. design-doc-name views nil)))
 
 (defn add-design-doc
-  "Add the design document to the database.  Returns true if the 
+  "Add the design document to the database.  Returns true if the
    document was created; false otherwise."
   [cb-client]
   (let [java-cb-client (cbc/get-client cb-client)]
@@ -121,4 +122,41 @@
   "Returns the Couchbase view associated with the given keyword."
   [cb-client view-kw]
   (cbc/get-view cb-client design-doc-name (name view-kw)))
+
+(defn check-view
+  "Performs a dummy query against the given view.  Returns true if
+   the query succeeded or throws an exception."
+  [cb-client view-kw]
+  (let [v (get-view cb-client view-kw)
+        opts {:include-docs false
+              :key          "dummy-key"
+              :limit        1
+              :stale        false
+              :on-error     :continue}
+        q (cbq/create-query opts)]
+    (cbc/query cb-client v q)
+    true))
+
+(defn retry-check-view
+  "Execute the check of the given view a maximum of n times with a
+   delay of t milliseconds between attempts.  Rethrows the caught
+   exception if the check fails after n attempts."
+  [cb-client view-kw n t]
+  (loop [n n]
+    (if (try
+          (check-view cb-client view-kw)
+          (catch Exception e
+            (when (zero? n)
+              (log/error "Fatal error accessing view:" (name view-kw))
+              (throw e))))
+      true
+      (do
+        (Thread/sleep t)
+        (recur (dec n))))))
+
+(defn views-available?
+  "Checks that all defined views are available."
+  [cb-client]
+  (doall (map #(retry-check-view cb-client % 3 1000) (keys view-map))))
+
 

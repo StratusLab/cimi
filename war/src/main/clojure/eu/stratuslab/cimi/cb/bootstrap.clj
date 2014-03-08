@@ -1,6 +1,6 @@
 (ns eu.stratuslab.cimi.cb.bootstrap
   "Provides the utility to provide the necessary views and objects
-   in the Couchbase database for minimal operation of the CIMI 
+   in the Couchbase database for minimal operation of the CIMI
    service."
 
   (:require
@@ -8,6 +8,7 @@
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
     [eu.stratuslab.cimi.resources.user :as user]
     [eu.stratuslab.cimi.cb.views :as views]
+    [eu.stratuslab.cimi.cb.utils :as cbutils]
     [couchbase-clj.client :as cbc]
     [cemerick.friend.credentials :as creds]))
 
@@ -65,6 +66,8 @@
   "Bootstraps the Couchbase database by creating the CloudEntryPoint
    and inserting the design document with views, as necessary."
   [cb-client]
+  (cbutils/wait-until-ready cb-client)
+  (create-views cb-client)
   (create-admin cb-client)
   (create-cep cb-client)
-  (create-views cb-client))
+  (views/views-available? cb-client))
