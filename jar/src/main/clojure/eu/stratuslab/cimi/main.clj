@@ -27,4 +27,4 @@
    recognized arguments are the port and the name of the Couchbase
    configuration file."
   [& args]
-  (start 8080))
+  (start "/etc/stratuslab/couchbase.cfg" "cimi" 8080))
