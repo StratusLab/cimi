@@ -129,7 +129,7 @@ ln -f -s /opt/stratuslab/cimi/lib/cimi-jar-jar-with-dependencies.jar /opt/stratu
 </script>
           </postinstallScriptlet>
           <preremoveScriptlet>
-            <script>service cimi stop</script>
+            <script>service cimi stop || true</script>
           </preremoveScriptlet>
           <postremoveScriptlet>
             <script>rm -f /opt/stratuslab/cimi/lib/cimi.jar</script>
