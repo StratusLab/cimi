@@ -32,11 +32,6 @@
         </dependency>
 
         <dependency>
-            <groupId>clj-http</groupId>
-            <artifactId>clj-http</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>http-kit</groupId>
             <artifactId>http-kit</artifactId>
         </dependency>
@@ -234,11 +229,6 @@
                 <groupId>com.theoryinpractise</groupId>
                 <artifactId>clojure-maven-plugin</artifactId>
 
-                <configuration>
-                    <!-- Edit this file and uncomment the next line to limit tests. -->
-                    <!-- <testScript>src/main/scripts/test-runner.clj</testScript> -->
-                </configuration>
-
                 <executions>
 
                     <execution>
@@ -249,7 +239,6 @@
                         <phase>compile</phase>
                         <configuration>
                             <namespaces>
-                                <namespace>eu.stratuslab.cimi.servlet</namespace>
                                 <namespace>eu.stratuslab.cimi.main</namespace>
                             </namespaces>
                             <compileDeclaredNamespaceOnly>true</compileDeclaredNamespaceOnly>
