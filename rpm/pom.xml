@@ -23,11 +23,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>eu.stratuslab.authn</groupId>
-      <artifactId>authn-ssl</artifactId>
-      <classifier>jar-with-dependencies</classifier>
-    </dependency>
-    <dependency>
       <groupId>eu.stratuslab.cimi</groupId>
       <artifactId>cimi-jar</artifactId>
       <version>${project.version}</version>
@@ -102,23 +97,6 @@
 	    </configuration>
 	  </execution>
 
-	  <execution>
-	    <id>copy-ssl</id>
-	    <goals>
-	      <goal>copy</goal>
-	    </goals>
-	    <configuration>
-	      <outputDirectory>${project.build.directory}/dependency/ssl</outputDirectory>
-	      <artifactItems>
-		<artifactItem>
-		  <groupId>eu.stratuslab.authn</groupId>
-		  <artifactId>authn-ssl</artifactId>
-		  <classifier>jar-with-dependencies</classifier>
-		</artifactItem>
-	      </artifactItems>
-	    </configuration>
-	  </execution>
-
 	</executions>
 
       </plugin>
@@ -157,19 +135,6 @@ ln -f -s /opt/stratuslab/cimi/lib/cimi-jar-jar-with-dependencies.jar /opt/stratu
             <script>rm -f /opt/stratuslab/cimi/lib/cimi.jar</script>
           </postremoveScriptlet>
 	  <mappings>
-
-	    <mapping>
-	      <directory>${installation.dir}/lib/ext</directory>
-	      <filemode>644</filemode>
-	      <username>root</username>
-	      <groupname>root</groupname>
-	      <directoryIncluded>false</directoryIncluded>
-	      <sources>
-		<source>
-		  <location>target/dependency/ssl/</location>
-		</source>
-	      </sources>
-	    </mapping>
 
 	    <mapping>
 	      <directory>/etc/rc.d/init.d/</directory>

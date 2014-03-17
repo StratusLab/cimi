@@ -5,7 +5,7 @@
     <artifactId>cimi-jar</artifactId>
     <name>StratusLab CIMI (JAR)</name>
 
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
 
     <parent>
         <groupId>eu.stratuslab.cimi</groupId>
@@ -14,6 +14,11 @@
     </parent>
 
     <dependencies>
+      <dependency>
+        <groupId>eu.stratuslab.authn</groupId>
+        <artifactId>authn-ssl</artifactId>
+        <classifier>jar-with-dependencies</classifier>
+      </dependency>
         <dependency>
             <groupId>org.clojure</groupId>
             <artifactId>clojure</artifactId>
