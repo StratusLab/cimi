@@ -17,6 +17,7 @@
 (ns eu.stratuslab.cimi.main
   "Entry point for running CIMI server from the command line and
    hence from system service management scripts."
+  (:gen-class)
   (:require
     [eu.stratuslab.cimi.server :refer [start]]
     [clojure.tools.logging :as log]))
