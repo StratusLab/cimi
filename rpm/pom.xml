@@ -29,7 +29,7 @@
     </dependency>
     <dependency>
       <groupId>eu.stratuslab.cimi</groupId>
-      <artifactId>cimi-war</artifactId>
+      <artifactId>cimi-jar</artifactId>
       <version>${project.version}</version>
       <type>jar</type>
       <classifier>jar-with-dependencies</classifier>
@@ -89,12 +89,12 @@
 	      <goal>copy</goal>
 	    </goals>
 	    <configuration>
-	      <outputDirectory>${project.build.directory}/dependency/webapps</outputDirectory>
+	      <outputDirectory>${project.build.directory}/dependency/fatjar</outputDirectory>
 	      <stripVersion>true</stripVersion>
 	      <artifactItems>
 		<artifactItem>
 		  <groupId>eu.stratuslab.cimi</groupId>
-		  <artifactId>cimi-war</artifactId>
+		  <artifactId>cimi-jar</artifactId>
 		  <type>jar</type>
                   <classifier>jar-with-dependencies</classifier>
 		</artifactItem>
@@ -145,9 +145,17 @@
 	    <require>java-1.7.0-openjdk</require>
             <require>nginx</require>
 	  </requires>
+          <postinstallScriptlet>
+            <script>
+ln -f -s /opt/stratuslab/cimi/lib/cimi-jar-jar-with-dependencies.jar /opt/stratuslab/cimi/lib/cimi.jar
+</script>
+          </postinstallScriptlet>
           <preremoveScriptlet>
             <script>service cimi stop</script>
           </preremoveScriptlet>
+          <postremoveScriptlet>
+            <script>rm -f /opt/stratuslab/cimi/lib/cimi.jar</script>
+          </postremoveScriptlet>
 	  <mappings>
 
 	    <mapping>
@@ -204,7 +212,7 @@
 	      <directoryIncluded>false</directoryIncluded>
 	      <sources>
 		<source>
-		  <location>target/dependency/webapps</location>
+		  <location>target/dependency/fatjar</location>
 		</source>
 	      </sources>
 	    </mapping>

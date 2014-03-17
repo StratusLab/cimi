@@ -169,7 +169,7 @@ fi
 # Define the command for starting the service
 #####################################################
 CIMI_JAR=$CIMI_HOME/lib/cimi.jar
-[ ! -f "$CIMI_JAR" ]; then
+if [ ! -f "$CIMI_JAR" ]; then
   echo "CIMI jar file (${CIMI_JAR}) not found." 2>&2
   exit 1
 fi
@@ -298,10 +298,8 @@ case "$ACTION" in
   check|status)
     echo "Checking arguments to CIMI: "
     echo "CIMI_HOME    =  $CIMI_HOME"
-    echo "CIMI_CONF    =  $CIMI_CONF"
-    echo "CIMI_ARGS    =  $CIMI_ARGS"
+    echo "CIMI_CB_CFG  =  $CIMI_CB_CFG"
     echo "CIMI_PID     =  $CIMI_PID"
-    echo "CLASSPATH    =  $CLASSPATH"
     echo "JAVA         =  $JAVA"
     echo "JAVA_OPTIONS =  ${JAVA_OPTIONS[*]}"
     echo "RUN_CMD      =  ${RUN_CMD[*]}"

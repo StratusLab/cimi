@@ -2,10 +2,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>cimi-war</artifactId>
-    <name>StratusLab CIMI (WAR)</name>
+    <artifactId>cimi-jar</artifactId>
+    <name>StratusLab CIMI (JAR)</name>
 
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
 
     <parent>
         <groupId>eu.stratuslab.cimi</groupId>
@@ -112,11 +112,6 @@
         </dependency>
 
         <dependency>
-            <groupId>codox</groupId>
-            <artifactId>codox.core</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-all</artifactId>
             <scope>test</scope>
@@ -201,19 +196,6 @@
                                 </configuration>
                             </execution>
 
-                            <execution>
-                                <id>run-codox</id>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <runWithTests>true</runWithTests>
-                                    <includePluginDependencies>true</includePluginDependencies>
-                                    <script>${basedir}/target/run_codox.clj</script>
-                                </configuration>
-                            </execution>
-
                         </executions>
 
                     </plugin>
@@ -228,40 +210,13 @@
         <plugins>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-
-                <executions>
-                    <execution>
-                        <id>codox script</id>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <phase>process-resources</phase>
-
-                        <configuration>
-                            <resources>
-                                <resource>
-                                    <filtering>true</filtering>
-                                    <directory>src/main/scripts</directory>
-                                    <includes>
-                                        <include>run_codox.clj</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                            <outputDirectory>target</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-assembly-plugin</artifactId>
               <configuration>
                 <descriptorRefs>
                   <descriptorRef>jar-with-dependencies</descriptorRef>
-                </descriptorRefs>                
+                </descriptorRefs>
+                <mainClass>eu.stratuslab.cimi.main</mainClass>
               </configuration>
 
               <executions>
@@ -303,27 +258,6 @@
 
                 </executions>
 
-            </plugin>
-
-            <plugin>
-                <artifactId>maven-war-plugin</artifactId>
-                <configuration>
-                    <!-- Remove the servlet-api jar files. This is provided by the
-                      servlet container and causes unnecessary warnings in the log files. -->
-                    <packagingExcludes>**/servlet-api*.jar,**/javax.servlet*.jar</packagingExcludes>
-
-                    <!-- REPLACE LOGGING PROPERTIES FILE WITH ONE SUITABLE FOR A PRODUCTION
-                      ENVIRONMENT. -->
-                    <webResources>
-                        <resource>
-                            <directory>${basedir}/src/main/war</directory>
-                            <targetPath>WEB-INF/classes</targetPath>
-                            <includes>
-                                <include>log4j.properties</include>
-                            </includes>
-                        </resource>
-                    </webResources>
-                </configuration>
             </plugin>
 
         </plugins>

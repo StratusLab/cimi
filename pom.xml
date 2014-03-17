@@ -29,7 +29,7 @@
   </parent>
 
   <modules>
-    <module>war</module>
+    <module>jar</module>
   </modules>
 
   <profiles>
