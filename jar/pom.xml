@@ -5,7 +5,7 @@
     <artifactId>cimi-jar</artifactId>
     <name>StratusLab CIMI (JAR)</name>
 
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
 
     <parent>
         <groupId>eu.stratuslab.cimi</groupId>
@@ -208,15 +208,19 @@
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-assembly-plugin</artifactId>
               <configuration>
+                <archive>
+                  <manifest>
+                    <mainClass>eu.stratuslab.cimi.main</mainClass>
+                  </manifest>
+                </archive>
                 <descriptorRefs>
                   <descriptorRef>jar-with-dependencies</descriptorRef>
                 </descriptorRefs>
-                <mainClass>eu.stratuslab.cimi.main</mainClass>
               </configuration>
 
               <executions>
                 <execution>
-                  <id>assemble-all</id>
+                  <id>make-jar-with-dependencies</id>
                   <phase>package</phase>
                   <goals>
                     <goal>single</goal>
