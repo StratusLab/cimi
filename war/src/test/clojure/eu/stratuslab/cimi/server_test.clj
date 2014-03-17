@@ -42,13 +42,3 @@
                                 (resp/status 401))
      :credential-fn        #(creds/bcrypt-credential-fn @users %)
      :workflows            [(workflows/interactive-form)]}))
-
-;;
-;;
-;;(defn run
-;;  []
-;;  (defonce ^:private server
-;;           (ring.adapter.jetty/run-jetty #'site {:port 8080 :join? false}))
-;;  server)
-
-
