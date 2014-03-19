@@ -14,11 +14,13 @@
     </parent>
 
     <dependencies>
+<!--
       <dependency>
         <groupId>eu.stratuslab.authn</groupId>
         <artifactId>authn-ssl</artifactId>
         <classifier>jar-with-dependencies</classifier>
       </dependency>
+-->
         <dependency>
             <groupId>org.clojure</groupId>
             <artifactId>clojure</artifactId>
@@ -181,7 +183,6 @@
                         <artifactId>clojure-maven-plugin</artifactId>
 
                         <executions>
-
                             <execution>
                                 <id>syntax-check</id>
                                 <goals>
@@ -195,7 +196,6 @@
                                     </sourceDirectories>
                                 </configuration>
                             </execution>
-
                         </executions>
 
                     </plugin>

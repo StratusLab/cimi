@@ -8,6 +8,9 @@
 
 ;; UTILITY FUNCTIONS
 
+(def admin-dn "uid=admin,ou=system")
+(def admin-password "secret")
+
 ;; Tests are run over a variety of connection types
 (def ^:dynamic *connections* nil)
 (def ^:dynamic *conn* nil)
@@ -177,8 +180,7 @@
                     :password (get-in user [:object :userPassword])}
             bad-params (assoc params :password "bad")]
         (is (force-bind *conn* params))
-        (is (not (force-bind *conn* bad-params)))
-        ))))
+        (is (not (force-bind *conn* bad-params)))))))
 
 (deftest check-force-bind-nonexistant-user
   (doall
