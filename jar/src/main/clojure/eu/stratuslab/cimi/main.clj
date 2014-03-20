@@ -19,7 +19,7 @@
    hence from system service management scripts."
   (:gen-class)
   (:require
-    [eu.stratuslab.cimi.server :refer [start]]
+    [eu.stratuslab.cimi.server :refer [start register-shutdown-hook]]
     [clojure.tools.logging :as log]))
 
 (defn -main
@@ -27,4 +27,5 @@
    recognized arguments are the port and the name of the Couchbase
    configuration file."
   [& args]
-  (start "/etc/stratuslab/couchbase.cfg" "cimi" 8080))
+  (let [state (start "/etc/stratuslab/couchbase.cfg" "cimi" 8080)]
+    (register-shutdown-hook state)))

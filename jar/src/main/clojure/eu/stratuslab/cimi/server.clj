@@ -12,7 +12,7 @@
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
     [eu.stratuslab.cimi.middleware.format-response :refer [wrap-restful-response]]
     [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
-    [eu.stratuslab.cimi.middleware.servlet-request :refer [wrap-servlet-paths wrap-base-uri]]
+    [eu.stratuslab.cimi.middleware.base-uri :refer [wrap-base-uri]]
     [eu.stratuslab.cimi.middleware.couchbase-store :refer [couchbase-store]]
     [eu.stratuslab.cimi.routes :as routes]
     [cemerick.friend :as friend]
@@ -62,7 +62,6 @@
                               :workflows           workflows})
         (handler/site {:session {:store (couchbase-store cb-client)}})
         (wrap-base-uri)
-        (wrap-servlet-paths)
         (wrap-cb-client cb-client)
         (wrap-restful-params)
         (wrap-restful-response))))
@@ -81,11 +80,16 @@
   [state]
   (proxy [Thread] [] (run [] (stop state))))
 
-(defn- register-shutdown-hook
-  [hook]
-  (.. (Runtime/getRuntime)
-      (addShutdownHook hook))
-  (log/info "registered shutdown hook"))
+(defn register-shutdown-hook
+  "This function registers a shutdown hook to close the database
+   client cleanly and to shutdown the http-kit container when the
+   JVM exits.  This only needs to be called in a context in which
+   the stop function will not be explicitly called."
+  [state]
+  (let [hook (create-shutdown-hook state)]
+    (.. (Runtime/getRuntime)
+        (addShutdownHook hook))
+    (log/info "registered shutdown hook")))
 
 (defn start
   "Starts the CIMI server and returns a map with the application
@@ -93,11 +97,9 @@
    the http-kit container."
   [cb-cfg-file context port]
   (let [cb-client (create-cb-client cb-cfg-file)
-        ring-app (create-ring-handler cb-client context)
+        ring-app (create-ring-handler {:cb-client cb-client :context context})
         stop-fn (start-container ring-app port)
         state {:cb-client cb-client :stop-fn stop-fn}]
-    (-> (create-shutdown-hook state)
-        (register-shutdown-hook))
     (bootstrap cb-client)
     state))
 
