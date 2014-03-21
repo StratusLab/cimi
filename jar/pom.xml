@@ -53,12 +53,22 @@
             <artifactId>ring-core</artifactId>
         </dependency>
         <dependency>
+          <groupId>ring</groupId>
+          <artifactId>ring-json</artifactId>
+        </dependency>
+        <dependency>
             <groupId>compojure</groupId>
             <artifactId>compojure</artifactId>
         </dependency>
         <dependency>
-            <groupId>ring-middleware-format</groupId>
-            <artifactId>ring-middleware-format</artifactId>
+            <groupId>hiccup</groupId>
+            <artifactId>hiccup</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -79,6 +89,16 @@
         <dependency>
             <groupId>couchbase-clj</groupId>
             <artifactId>couchbase-clj</artifactId>
+        </dependency>
+
+        <dependency>
+          <groupId>metrics-clojure</groupId>
+          <artifactId>metrics-clojure</artifactId>
+        </dependency>
+
+        <dependency>
+          <groupId>metrics-clojure-ring</groupId>
+          <artifactId>metrics-clojure-ring</artifactId>
         </dependency>
 
         <dependency>

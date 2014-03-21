@@ -5,12 +5,11 @@
     [clojure.tools.logging :as log]
     [couchbase-clj.client :as cbc]
     [compojure.handler :as handler]
-    [ring.middleware.format-params :refer [wrap-restful-params]]
+    [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
     [eu.stratuslab.cimi.couchbase-cfg :refer [read-cfg]]
     [eu.stratuslab.authn.workflows.authn-workflows :as aw]
     [eu.stratuslab.cimi.cb.bootstrap :refer [bootstrap]]
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
-    [eu.stratuslab.cimi.middleware.format-response :refer [wrap-restful-response]]
     [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
     [eu.stratuslab.cimi.middleware.base-uri :refer [wrap-base-uri]]
     [eu.stratuslab.cimi.middleware.couchbase-store :refer [couchbase-store]]
@@ -18,6 +17,8 @@
     [cemerick.friend :as friend]
     [cemerick.friend.workflows :as workflows]
     [cemerick.friend.credentials :as creds]
+    [metrics.ring.instrument :refer [instrument]]
+    [metrics.ring.expose :refer [expose-metrics-as-json]]
     [org.httpkit.server :refer [run-server]])
   (:import
     [java.net URI]))
@@ -63,8 +64,10 @@
         (handler/site {:session {:store (couchbase-store cb-client)}})
         (wrap-base-uri)
         (wrap-cb-client cb-client)
-        (wrap-restful-params)
-        (wrap-restful-response))))
+        (instrument)
+        (expose-metrics-as-json)
+        (wrap-json-body)
+        (wrap-json-response))))
 
 (defn- start-container
   "Starts the http-kit container with the given ring application and
