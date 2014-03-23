@@ -57,7 +57,7 @@
 
 (def footer
   [:footer
-   [:p "Copyright (c) 2013 by StratusLab Contributors"]])
+   [:p "Copyright (c) 2013-2014 by StratusLab Contributors"]])
 
 (defn browser
   [request]
