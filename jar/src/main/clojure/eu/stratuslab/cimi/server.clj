@@ -33,6 +33,10 @@
    If the argument is nil, then the default connection parameters
    are used."
   [cb-cfg]
+
+  ;; force logging to use SLF4J facade
+  (System/setProperty "net.spy.log.LoggerImpl" "net.spy.memcached.compat.log.SLF4JLogger")
+
   (log/info "create Couchbase client")
   (if-let [cfg (read-cfg cb-cfg)]
     (try

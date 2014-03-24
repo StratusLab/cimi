@@ -152,6 +152,12 @@
         </dependency>
 
         <dependency>
+          <groupId>org.clojure</groupId>
+          <artifactId>tools.namespace</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <scope>test</scope>
