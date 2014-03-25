@@ -16,7 +16,7 @@
   list.  If the list contains '*', then a function that retains all
   attributes will be returned.  Invalid attribute names will be
   ignored."
-  [s]
+  [^String s]
   (let [attr-names (str/split (.trim s) #"\s*,\s*")
         valid-names (set (filter #(re-matches #"(?:[a-zA-Z_]\w*)|\*" %) attr-names))]
     (if (contains? valid-names "*")
@@ -29,7 +29,7 @@
           function dispatches on the name of the query parameter after the
           leading dollar sign.  Parameters not starting with a dollar sign or
           other invalid parameters are ignored."
-          (fn [req key value]
+          (fn [req ^String key value]
             (if (.startsWith key "$")
               (keyword (.substring key 1))))
           :default nil)

@@ -216,6 +216,7 @@
                                 </goals>
                                 <phase>compile</phase>
                                 <configuration>
+                                  <warnOnReflection>true</warnOnReflection>
                                     <temporaryOutputDirectory>true</temporaryOutputDirectory>
                                     <sourceDirectories>
                                         <sourceDirectory>src/main/clojure</sourceDirectory>

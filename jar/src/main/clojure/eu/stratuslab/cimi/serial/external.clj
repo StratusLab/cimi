@@ -15,10 +15,9 @@
       (last (str/split path #"/")))))
 
 (defn xml-output-factory
-  []
-  (let [factory (XMLOutputFactory/newFactory)]
-    (.setProperty factory "javax.xml.stream.isRepairingNamespaces" Boolean/TRUE)
-    factory))
+  ^XMLOutputFactory []
+  (doto (XMLOutputFactory/newFactory)
+    (.setProperty "javax.xml.stream.isRepairingNamespaces" Boolean/TRUE)))
 
 (defmulti serialize-element
           (fn [xml-writer key value]
@@ -26,7 +25,7 @@
           :default nil)
 
 (defmethod serialize-element nil
-           [xml-writer key value]
+           [^XMLStreamWriter xml-writer key value]
   (doto xml-writer
     (.writeStartElement key)
     (.writeCharacters (str value))
@@ -37,7 +36,7 @@
   nil)
 
 (defmethod serialize-element "properties"
-           [xml-writer key value]
+           [^XMLStreamWriter xml-writer key value]
   (doall
     (for [[k v] value]
       (doto xml-writer
@@ -54,7 +53,7 @@
   [{:keys [resourceURI] :as data}]
   (let [factory (xml-output-factory)]
     (with-open [writer (StringWriter.)]
-      (let [xml-writer (.createXMLStreamWriter factory writer)
+      (let [^XMLStreamWriter xml-writer (.createXMLStreamWriter factory writer)
             root-element-name (resource-name resourceURI)]
         (doto xml-writer
           (.writeStartDocument)

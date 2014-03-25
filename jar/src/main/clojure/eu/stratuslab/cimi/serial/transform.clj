@@ -2,11 +2,10 @@
   (:require
     [clojure.java.io :as io])
   (:import
-    [java.util Properties]
     [javax.xml.transform Transformer TransformerFactory]
     [javax.xml.transform.dom DOMSource]
     [javax.xml.transform.stream StreamSource StreamResult]
-    [javax.xml.parsers DocumentBuilderFactory]
+    [javax.xml.parsers DocumentBuilder DocumentBuilderFactory]
     [java.io StringReader StringWriter ByteArrayInputStream]))
 
 (def strip-transform
@@ -34,20 +33,28 @@
 
   </xsl:stylesheet>")
 
-(def document-builder-factory
+(def ^DocumentBuilderFactory document-builder-factory
   (doto (DocumentBuilderFactory/newInstance)
     (.setNamespaceAware true)
     (.setValidating false)))
 
-(defn get-transformer []
-  (let [factory (TransformerFactory/newInstance)
-        stylesheet (StreamSource. (StringReader. strip-transform))]
-    (.newTransformer factory stylesheet)))
+(defn get-transformer
+  ^Transformer []
+  (->> strip-transform
+       (StringReader.)
+       (StreamSource.)
+       (.newTransformer (TransformerFactory/newInstance))))
 
-(defn get-doc-source [input]
-  (let [builder (.newDocumentBuilder document-builder-factory)
-        document (.parse builder (ByteArrayInputStream. (.getBytes input "UTF-8")))]
-    (DOMSource. document)))
+(defn get-doc-builder
+  ^DocumentBuilder []
+  (.newDocumentBuilder document-builder-factory))
+
+(defn get-doc-source
+  ^DOMSource [^String input]
+  (->> (.getBytes input "UTF-8")
+       (ByteArrayInputStream.)
+       (.parse (get-doc-builder))
+       (DOMSource.)))
 
 (defn strip-non-cimi-elements [input]
   (let [source (get-doc-source input)
