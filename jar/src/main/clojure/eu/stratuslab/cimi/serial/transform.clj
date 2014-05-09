@@ -1,6 +1,4 @@
 (ns eu.stratuslab.cimi.serial.transform
-  (:require
-    [clojure.java.io :as io])
   (:import
     [javax.xml.transform Transformer TransformerFactory]
     [javax.xml.transform.dom DOMSource]

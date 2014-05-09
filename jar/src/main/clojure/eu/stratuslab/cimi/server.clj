@@ -59,7 +59,7 @@
     (if (empty? workflows)
       (log/warn "NO authn workflows configured"))
 
-    (-> (friend/authenticate routes/main-routes
+    (-> (friend/authenticate (routes/get-main-routes)
                              {:allow-anon?         true
                               :login-uri           "/login"
                               :default-landing-uri "/webui"

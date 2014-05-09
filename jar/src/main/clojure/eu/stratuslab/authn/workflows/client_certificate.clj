@@ -6,7 +6,6 @@
     [cemerick.friend.util :as futil])
   (:import
     [eu.emi.security.authn.x509.proxy ProxyUtils]
-    [javax.servlet.http HttpServletRequest]
     [org.italiangrid.voms VOMSAttribute VOMSValidators]))
 
 (defn voms-name-and-roles
@@ -30,10 +29,11 @@
         (log/info "exception when treating voms proxy:" (str e))
         nil))))
 
+;; FIXME: Need to redo this method for use with http-kit and nginx.
 (defn extract-client-cert-chain
   "Will pull the full certificate chain out of the HttpServletRequest.  The
    returned value is an X509Certificate array or nil if no value is found."
-  [^HttpServletRequest request]
+  [request]
   (when request
     (.getAttribute request "javax.servlet.request.X509Certificate")))
 
