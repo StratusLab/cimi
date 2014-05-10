@@ -163,11 +163,10 @@
         <scope>runtime</scope>
       </dependency>
 
-      <!-- required to compile ring -->
+      <!-- needed by ring for multipart params middleware-->
       <dependency>
         <groupId>javax.servlet</groupId>
         <artifactId>servlet-api</artifactId>
-        <scope>provided</scope>
       </dependency>
 
     </dependencies>
@@ -253,11 +252,21 @@
                 <goal>shade</goal>
               </goals>
               <configuration>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>eu.stratuslab.cimi.main</mainClass>
-                </transformer>
-              </transformers>
+		<transformers>
+                  <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                    <mainClass>eu.stratuslab.cimi.main</mainClass>
+                  </transformer>
+		</transformers>
+		<filters>
+		  <filter>
+		    <artifact>*:*</artifact>
+		    <excludes>
+                      <exclude>META-INF/*.SF</exclude>
+                      <exclude>META-INF/*.DSA</exclude>
+                      <exclude>META-INF/*.RSA</exclude>
+		    </excludes>
+		  </filter>
+		</filters>
               </configuration>
             </execution>
           </executions>
