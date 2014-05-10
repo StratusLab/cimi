@@ -33,7 +33,7 @@
 
 (handler/site
   (friend/authenticate
-    routes/main-routes
+    (routes/get-main-routes)
     {:allow-anon?          true
      :login-uri            "/cimi/login"
      :default-landing-uri  "/cimi/webui"
