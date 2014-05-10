@@ -163,11 +163,10 @@
         <scope>runtime</scope>
       </dependency>
 
-      <!-- required to compile ring -->
+      <!-- needed by ring for multipart params middleware-->
       <dependency>
         <groupId>javax.servlet</groupId>
         <artifactId>servlet-api</artifactId>
-        <scope>provided</scope>
       </dependency>
 
     </dependencies>
