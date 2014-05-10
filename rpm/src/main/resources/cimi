@@ -1,0 +1,1 @@
+JAVA_OPTIONS=-Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.SLF4JLogger
