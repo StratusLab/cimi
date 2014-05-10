@@ -27,7 +27,6 @@
       <artifactId>cimi-jar</artifactId>
       <version>${project.version}</version>
       <type>jar</type>
-      <classifier>jar-with-dependencies</classifier>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -86,12 +85,13 @@
 	    <configuration>
 	      <outputDirectory>${project.build.directory}/dependency/fatjar</outputDirectory>
 	      <stripVersion>true</stripVersion>
+	      <stripClassifier>true</stripClassifier>
 	      <artifactItems>
 		<artifactItem>
 		  <groupId>eu.stratuslab.cimi</groupId>
 		  <artifactId>cimi-jar</artifactId>
 		  <type>jar</type>
-                  <classifier>jar-with-dependencies</classifier>
+		  <destFileName>cimi.jar</destFileName>
 		</artifactItem>
 	      </artifactItems>
 	    </configuration>
@@ -123,18 +123,44 @@
 	    <require>java-1.7.0-openjdk</require>
             <require>nginx</require>
 	  </requires>
+
+	  <preinstallScriptlet>
+	    <script>
+groupadd --force --system stratuslab
+          
+/bin/egrep  -i "^slcimi:" /etc/passwd
+  if [ $? -ne 0 ]; then
+    adduser --system --home-dir /opt/stratuslab/cimi \
+            --no-user-group --gid stratuslab \
+            --comment 'StratusLab CIMI Service' \
+            slcimi
+fi
+	    </script>
+	  </preinstallScriptlet>
+
           <postinstallScriptlet>
-            <script>
-ln -f -s /opt/stratuslab/cimi/lib/cimi-jar-jar-with-dependencies.jar /opt/stratuslab/cimi/lib/cimi.jar
-</script>
+            <script>service nginx restart || true</script>
           </postinstallScriptlet>
+
           <preremoveScriptlet>
             <script>service cimi stop || true</script>
           </preremoveScriptlet>
+
           <postremoveScriptlet>
-            <script>rm -f /opt/stratuslab/cimi/lib/cimi.jar</script>
+            <script>service nginx restart || true</script>
           </postremoveScriptlet>
+
+          <defaultDirmode>755</defaultDirmode>
+          <defaultFilemode>644</defaultFilemode>
+          <defaultGroupname>stratuslab</defaultGroupname>
+          <defaultUsername>slcimi</defaultUsername>
+
 	  <mappings>
+
+            <mapping>
+              <directory>/var/log/stratuslab/cimi</directory>
+              <directoryIncluded>true</directoryIncluded>
+            </mapping>
 
 	    <mapping>
 	      <directory>/etc/rc.d/init.d/</directory>
@@ -154,9 +180,6 @@ ln -f -s /opt/stratuslab/cimi/lib/cimi-jar-jar-with-dependencies.jar /opt/stratu
 
             <mapping>
               <directory>/etc/default</directory>
-              <filemode>644</filemode>
-              <username>root</username>
-              <groupname>root</groupname>
               <directoryIncluded>false</directoryIncluded>
               <configuration>noreplace</configuration>
               <sources>
@@ -171,9 +194,6 @@ ln -f -s /opt/stratuslab/cimi/lib/cimi-jar-jar-with-dependencies.jar /opt/stratu
 
 	    <mapping>
 	      <directory>${installation.dir}/lib</directory>
-	      <filemode>644</filemode>
-	      <username>root</username>
-	      <groupname>root</groupname>
 	      <directoryIncluded>false</directoryIncluded>
 	      <sources>
 		<source>
