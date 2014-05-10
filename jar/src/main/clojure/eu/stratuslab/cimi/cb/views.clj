@@ -125,17 +125,21 @@
 
 (defn check-view
   "Performs a dummy query against the given view.  Returns true if
-   the query succeeded or throws an exception."
+   the query succeeded or nil otherwise."
   [cb-client view-kw]
-  (let [v (get-view cb-client view-kw)
-        opts {:include-docs false
+  (let [opts {:include-docs false
               :key          "dummy-key"
               :limit        1
               :stale        false
               :on-error     :continue}
-        q (cbq/create-query opts)]
-    (cbc/query cb-client v q)
-    true))
+        q (cbq/create-query opts)
+        v (get-view cb-client view-kw)]
+    (try
+      (cbc/query cb-client v q)
+      true
+      (catch Exception e
+        (log/warn "error accessing view:" (name view-kw) (str e))
+        nil))))
 
 (defn retry-check-view
   "Execute the check of the given view a maximum of n times with a
@@ -143,16 +147,12 @@
    exception if the check fails after n attempts."
   [cb-client view-kw n t]
   (loop [n n]
-    (if (try
-          (check-view cb-client view-kw)
-          (catch Exception e
-            (when (zero? n)
-              (log/error "Fatal error accessing view:" (name view-kw))
-              (throw e))))
-      true
-      (do
-        (Thread/sleep t)
-        (recur (dec n))))))
+    (if-not (check-view cb-client view-kw)
+      (if (zero? n)
+        (log/error "fatal error accessing view:" (name view-kw))
+        (do
+          (Thread/sleep t)
+          (recur (dec n)))))))
 
 (defn views-available?
   "Checks that all defined views are available."
