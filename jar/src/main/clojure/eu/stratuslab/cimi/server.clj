@@ -102,7 +102,7 @@
   "Starts the CIMI server and returns a map with the application
    state containing the Couchbase client and the function to stop
    the http-kit container."
-  [cb-cfg-file context port]
+  [port cb-cfg-file context]
   (let [cb-client (create-cb-client cb-cfg-file)
         ring-app (create-ring-handler {:cb-client cb-client :context context})
         stop-fn (start-container ring-app port)

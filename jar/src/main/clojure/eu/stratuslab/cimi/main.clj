@@ -22,10 +22,23 @@
     [eu.stratuslab.cimi.server :refer [start register-shutdown-hook]]
     [clojure.tools.logging :as log]))
 
+(defn parse-port
+  [s]
+  (try
+    (let [port (Integer/valueOf s)]
+      (if (< 0 port 65536)
+        port
+        nil))
+    (catch Exception e
+      nil)))
+
 (defn -main
-  "Starts the cimi server using the command line arguments.  The
-   recognized arguments are the port and the name of the Couchbase
-   configuration file."
-  [& args]
-  (let [state (start "/etc/stratuslab/couchbase.cfg" "cimi" 8080)]
-    (register-shutdown-hook state)))
+  "Starts the cimi server using the command line arguments.  Takes as
+   possible arguments the port number, Couchbase configuration file, and
+   the context."
+  [& [port cbcfg context]]
+  (let [port (or (parse-port port) 9200)
+        cbcfg (or cbcfg "/etc/stratuslab/couchbase.cfg")
+        context (or context "cimi")]
+    (->> (start port cbcfg context)
+         (register-shutdown-hook))))
