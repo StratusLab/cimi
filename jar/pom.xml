@@ -14,6 +14,7 @@
     </parent>
 
     <dependencies>
+
 <!--
       <dependency>
         <groupId>eu.stratuslab.authn</groupId>
@@ -23,281 +24,270 @@
 -->
 
       <dependency>
-        <groupId>bultitude</groupId>
-        <artifactId>bultitude</artifactId>
-        <version>0.2.6</version>
+        <groupId>org.clojure</groupId>
+        <artifactId>clojure</artifactId>
+      </dependency>
+      <dependency>
+        <groupId>org.clojure</groupId>
+        <artifactId>tools.logging</artifactId>
+      </dependency>
+      <dependency>
+        <groupId>org.clojure</groupId>
+        <artifactId>data.json</artifactId>
+      </dependency>
+      <dependency>
+        <groupId>clojure-ini</groupId>
+        <artifactId>clojure-ini</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>http-kit</groupId>
+        <artifactId>http-kit</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.clojars.runa</groupId>
+        <artifactId>clj-schema</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>ring</groupId>
+        <artifactId>ring-core</artifactId>
+      </dependency>
+      <dependency>
+        <groupId>ring</groupId>
+        <artifactId>ring-json</artifactId>
+      </dependency>
+      <dependency>
+        <groupId>compojure</groupId>
+        <artifactId>compojure</artifactId>
+      </dependency>
+      <dependency>
+        <groupId>hiccup</groupId>
+        <artifactId>hiccup</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>com.cemerick</groupId>
+        <artifactId>friend</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>clj-time</groupId>
+        <artifactId>clj-time</artifactId>
       </dependency>
 
-        <dependency>
-            <groupId>org.clojure</groupId>
-            <artifactId>clojure</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.clojure</groupId>
-            <artifactId>tools.logging</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.clojure</groupId>
-            <artifactId>data.json</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>clojure-ini</groupId>
-            <artifactId>clojure-ini</artifactId>
-        </dependency>
+      <dependency>
+        <groupId>couchbase-clj</groupId>
+        <artifactId>couchbase-clj</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>metrics-clojure</groupId>
+        <artifactId>metrics-clojure</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>metrics-clojure-ring</groupId>
+        <artifactId>metrics-clojure-ring</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>eu.eu-emi.security</groupId>
+        <artifactId>canl</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.italiangrid</groupId>
+        <artifactId>voms-api-java</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.clojars.pntblnk</groupId>
+        <artifactId>clj-ldap</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>instaparse</groupId>
+        <artifactId>instaparse</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>reply</groupId>
+        <artifactId>reply</artifactId>
+        <scope>provided</scope>
+      </dependency>
+      
+      <dependency>
+        <groupId>jline</groupId>
+        <artifactId>jline</artifactId>
+        <scope>provided</scope>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.apache.directory.server</groupId>
+        <artifactId>apacheds-all</artifactId>
+        <scope>test</scope>
+      </dependency>
+      
+      <dependency>
+        <groupId>peridot</groupId>
+        <artifactId>peridot</artifactId>
+        <scope>test</scope>
+      </dependency>
+      
+      <dependency>
+        <groupId>fs</groupId>
+        <artifactId>fs</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.clojure</groupId>
+        <artifactId>java.classpath</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.clojure</groupId>
+        <artifactId>tools.namespace</artifactId>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
+        <scope>provided</scope>
+      </dependency>
 
-        <dependency>
-            <groupId>http-kit</groupId>
-            <artifactId>http-kit</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.clojars.runa</groupId>
-            <artifactId>clj-schema</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>ring</groupId>
-            <artifactId>ring-core</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>ring</groupId>
-          <artifactId>ring-json</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>compojure</groupId>
-            <artifactId>compojure</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>hiccup</groupId>
-            <artifactId>hiccup</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.cemerick</groupId>
-            <artifactId>friend</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>clj-time</groupId>
-            <artifactId>clj-time</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.couchbase.client</groupId>
-            <artifactId>couchbase-client</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>couchbase-clj</groupId>
-            <artifactId>couchbase-clj</artifactId>
-        </dependency>
-
-        <dependency>
-          <groupId>metrics-clojure</groupId>
-          <artifactId>metrics-clojure</artifactId>
-        </dependency>
-
-        <dependency>
-          <groupId>metrics-clojure-ring</groupId>
-          <artifactId>metrics-clojure-ring</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>eu.eu-emi.security</groupId>
-            <artifactId>canl</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.italiangrid</groupId>
-            <artifactId>voms-api-java</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.clojars.pntblnk</groupId>
-            <artifactId>clj-ldap</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>instaparse</groupId>
-            <artifactId>instaparse</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>reply</groupId>
-            <artifactId>reply</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>jline</groupId>
-            <artifactId>jline</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.directory.server</groupId>
-            <artifactId>apacheds-all</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>peridot</groupId>
-            <artifactId>peridot</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>fs</groupId>
-            <artifactId>fs</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-          <groupId>org.clojure</groupId>
-          <artifactId>java.classpath</artifactId>
-        </dependency>
-
-        <dependency>
-          <groupId>org.clojure</groupId>
-          <artifactId>tools.namespace</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <scope>test</scope>
-        </dependency>
+      <!-- required to compile ring -->
+      <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>servlet-api</artifactId>
+        <scope>provided</scope>
+      </dependency>
 
     </dependencies>
 
     <profiles>
-        <profile>
-            <id>run-db-tests</id>
-            <activation>
-                <property>
-                    <name>!NO_DB_TESTS</name>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.theoryinpractise</groupId>
-                        <artifactId>clojure-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>run-tests</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <phase>test</phase>
-                                <configuration>
-                                    <temporaryOutputDirectory>true</temporaryOutputDirectory>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>full-compile-and-docs</id>
-            <activation>
-                <property>
-                    <name>!skipTests</name>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.theoryinpractise</groupId>
-                        <artifactId>clojure-maven-plugin</artifactId>
-
-                        <executions>
-                            <execution>
-                                <id>syntax-check</id>
-                                <goals>
-                                    <goal>compile</goal>
-                                </goals>
-                                <phase>compile</phase>
-                                <configuration>
-                                  <warnOnReflection>true</warnOnReflection>
-                                    <temporaryOutputDirectory>true</temporaryOutputDirectory>
-                                    <sourceDirectories>
-                                        <sourceDirectory>src/main/clojure</sourceDirectory>
-                                    </sourceDirectories>
-                                </configuration>
-                            </execution>
-                        </executions>
-
-                    </plugin>
-
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
-
-    <build>
-
-        <plugins>
-
+      <profile>
+        <id>run-db-tests</id>
+        <activation>
+          <property>
+            <name>!NO_DB_TESTS</name>
+          </property>
+        </activation>
+        <build>
+          <plugins>
             <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-assembly-plugin</artifactId>
-              <configuration>
-                <archive>
-                  <manifest>
-                    <mainClass>eu.stratuslab.cimi.main</mainClass>
-                  </manifest>
-                </archive>
-                <descriptorRefs>
-                  <descriptorRef>jar-with-dependencies</descriptorRef>
-                </descriptorRefs>
-              </configuration>
-
+              <groupId>com.theoryinpractise</groupId>
+              <artifactId>clojure-maven-plugin</artifactId>
               <executions>
                 <execution>
-                  <id>make-jar-with-dependencies</id>
-                  <phase>package</phase>
+                  <id>run-tests</id>
                   <goals>
-                    <goal>single</goal>
+                    <goal>test</goal>
                   </goals>
+                  <phase>test</phase>
+                  <configuration>
+                    <temporaryOutputDirectory>true</temporaryOutputDirectory>
+                  </configuration>
                 </execution>
               </executions>
             </plugin>
-
+          </plugins>
+        </build>
+      </profile>
+      
+      <profile>
+        <id>full-compile-and-docs</id>
+        <activation>
+          <property>
+            <name>!skipTests</name>
+          </property>
+        </activation>
+        <build>
+          <plugins>
             <plugin>
-                <groupId>com.theoryinpractise</groupId>
-                <artifactId>clojure-maven-plugin</artifactId>
-
-                <executions>
-
-                    <execution>
-                        <id>minimal-compile</id>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <phase>compile</phase>
-                        <configuration>
-                            <namespaces>
-                                <namespace>eu.stratuslab.cimi.main</namespace>
-                            </namespaces>
-                            <compileDeclaredNamespaceOnly>true</compileDeclaredNamespaceOnly>
-                        </configuration>
-                    </execution>
-
-                </executions>
-
+              <groupId>com.theoryinpractise</groupId>
+              <artifactId>clojure-maven-plugin</artifactId>
+              
+              <executions>
+                <execution>
+                  <id>syntax-check</id>
+                  <goals>
+                    <goal>compile</goal>
+                  </goals>
+                  <phase>compile</phase>
+                  <configuration>
+                    <warnOnReflection>true</warnOnReflection>
+                    <temporaryOutputDirectory>true</temporaryOutputDirectory>
+                    <sourceDirectories>
+                      <sourceDirectory>src/main/clojure</sourceDirectory>
+                    </sourceDirectories>
+                  </configuration>
+                </execution>
+              </executions>
+              
             </plugin>
-
-        </plugins>
-
+            
+          </plugins>
+        </build>
+      </profile>
+    </profiles>
+    
+    <build>
+      
+      <plugins>
+        
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <configuration>
+            <archive>
+              <manifest>
+                <mainClass>eu.stratuslab.cimi.main</mainClass>
+              </manifest>
+            </archive>
+            <descriptorRefs>
+              <descriptorRef>jar-with-dependencies</descriptorRef>
+            </descriptorRefs>
+          </configuration>
+          
+          <executions>
+            <execution>
+              <id>make-jar-with-dependencies</id>
+              <phase>package</phase>
+              <goals>
+                <goal>single</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        
+        <plugin>
+          <groupId>com.theoryinpractise</groupId>
+          <artifactId>clojure-maven-plugin</artifactId>
+          
+          <executions>
+            
+            <execution>
+              <id>minimal-compile</id>
+              <goals>
+                <goal>compile</goal>
+              </goals>
+              <phase>compile</phase>
+              <configuration>
+                <namespaces>
+                  <namespace>eu.stratuslab.cimi.main</namespace>
+                </namespaces>
+                <compileDeclaredNamespaceOnly>true</compileDeclaredNamespaceOnly>
+              </configuration>
+            </execution>
+            
+          </executions>
+          
+        </plugin>
+        
+      </plugins>
+      
     </build>
-
+    
 </project>
