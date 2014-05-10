@@ -27,6 +27,7 @@
       <artifactId>cimi-jar</artifactId>
       <version>${project.version}</version>
       <type>jar</type>
+      <classifier>jar-with-dependencies</classifier>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -91,6 +92,7 @@
 		  <groupId>eu.stratuslab.cimi</groupId>
 		  <artifactId>cimi-jar</artifactId>
 		  <type>jar</type>
+		  <classifier>jar-with-dependencies</classifier>
 		  <destFileName>cimi.jar</destFileName>
 		</artifactItem>
 	      </artifactItems>
