@@ -27,6 +27,7 @@
       <artifactId>cimi-jar</artifactId>
       <version>${project.version}</version>
       <type>jar</type>
+      <classifier>jar-with-dependencies</classifier>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -91,6 +92,7 @@
 		  <groupId>eu.stratuslab.cimi</groupId>
 		  <artifactId>cimi-jar</artifactId>
 		  <type>jar</type>
+		  <classifier>jar-with-dependencies</classifier>
 		  <destFileName>cimi.jar</destFileName>
 		</artifactItem>
 	      </artifactItems>
@@ -121,7 +123,7 @@
 	  </description>
 	  <requires>
 	    <require>java-1.7.0-openjdk</require>
-            <require>nginx</require>
+            <require>stratuslab-nginx-cfg</require>
 	  </requires>
 
 	  <preinstallScriptlet>
@@ -188,6 +190,29 @@ fi
                   <includes>
                     <include>cimi</include>
                   </includes>
+                </source>
+              </sources>
+            </mapping>
+
+            <mapping>
+              <directory>/etc/nginx/conf.d</directory>
+              <directoryIncluded>false</directoryIncluded>
+              <configuration>noreplace</configuration>
+              <sources>
+                <source>
+                  <location>src/main/resources/conf.d</location>
+                </source>
+              </sources>
+            </mapping>
+
+            <mapping>
+              <directory>/usr/share/nginx/stratuslab</directory>
+              <directoryIncluded>false</directoryIncluded>
+	      <username>root</username>
+	      <groupname>root</groupname>
+              <sources>
+                <source>
+                  <location>src/main/html</location>
                 </source>
               </sources>
             </mapping>
