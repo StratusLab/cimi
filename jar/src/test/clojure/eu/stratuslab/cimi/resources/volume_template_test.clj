@@ -1,7 +1,7 @@
 (ns eu.stratuslab.cimi.resources.volume-template-test
   (:require
     [eu.stratuslab.cimi.resources.volume-template :refer :all]
-    [eu.stratuslab.cimi.resources.utils :as u]
+    [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
     [clj-schema.validation :refer [validation-errors]]
     [ring.util.response :as rresp]

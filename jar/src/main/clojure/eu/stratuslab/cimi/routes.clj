@@ -4,7 +4,6 @@
     [compojure.core :refer :all]
     [compojure.route :as route]
     [ring.util.response :as r]
-    [eu.stratuslab.cimi.webui.routes :as webui]
     [clojure.tools.logging :as log]
     [clojure.java.classpath :as cp]
     [clojure.tools.namespace.find :as nsf]))
@@ -63,8 +62,7 @@
        (map deref)))
 
 (def final-routes
-  [webui/routes
-   (route/resources "/")
+  [(route/resources "/")
    (route/not-found "unknown resource")])
 
 (defn get-main-routes

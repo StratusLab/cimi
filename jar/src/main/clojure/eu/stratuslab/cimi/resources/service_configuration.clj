@@ -21,9 +21,9 @@
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [clojure.data.json :as json]
-    [eu.stratuslab.cimi.resources.schema :as schema]
-    [eu.stratuslab.cimi.resources.utils :as u]
-    [eu.stratuslab.cimi.resources.auth-utils :as a]
+    [eu.stratuslab.cimi.resources.impl.schema :as schema]
+    [eu.stratuslab.cimi.resources.utils.utils :as u]
+    [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.cb.views :as views]
     [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]
@@ -109,7 +109,7 @@
 
 ;; FIXME: Implementation should use CAS functions to avoid update conflicts.
 (defn edit
-  "Updates the given resource with the new information.  This will 
+  "Updates the given resource with the new information.  This will
    validate the new entry before updating it."
   [cb-client uuid entry]
   (let [uri (uuid->uri uuid)]

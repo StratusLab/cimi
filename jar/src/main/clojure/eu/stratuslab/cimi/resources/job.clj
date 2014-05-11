@@ -18,9 +18,9 @@
   (:require
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
-    [eu.stratuslab.cimi.resources.schema :as schema]
-    [eu.stratuslab.cimi.resources.utils :as u]
-    [eu.stratuslab.cimi.resources.auth-utils :as a]
+    [eu.stratuslab.cimi.resources.impl.schema :as schema]
+    [eu.stratuslab.cimi.resources.utils.utils :as u]
+    [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.cb.views :as views]
     [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]
@@ -75,7 +75,7 @@
 
 (defn create
   "Creates a new job and adds it to the database.  Unlike the add function
-   this returns just the job URI (or nil if there is an error).  This is 
+   this returns just the job URI (or nil if there is an error).  This is
    useful when creating jobs in the process of manipulating other resources."
   [cb-client entry]
   (let [uri (uuid->uri (u/create-uuid))
@@ -108,7 +108,7 @@
 
 ;; FIXME: Implementation should use CAS functions to avoid update conflicts.
 (defn edit
-  "Updates the given resource with the new information.  This will 
+  "Updates the given resource with the new information.  This will
    validate the new entry before updating it."
   [cb-client uuid entry]
   (let [uri (uuid->uri uuid)]
@@ -169,7 +169,7 @@
 
 (defn properties-map
   "Converts the given map into a properties map, with all keys
-   and values converted into strings.  If the map is nil or 
+   and values converted into strings.  If the map is nil or
    empty, then an empty map is returned."
   [props]
   (if (seq props)

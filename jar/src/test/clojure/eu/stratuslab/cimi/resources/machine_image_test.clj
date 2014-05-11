@@ -17,7 +17,7 @@
 (ns eu.stratuslab.cimi.resources.machine-image-test
   (:require
     [eu.stratuslab.cimi.resources.machine-image :refer :all]
-    [eu.stratuslab.cimi.resources.utils :as u]
+    [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
     [clojure.test :refer :all]
     [clojure.data.json :as json]

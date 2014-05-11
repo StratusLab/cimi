@@ -14,7 +14,7 @@
 ; limitations under the License.
 ;
 
-(ns eu.stratuslab.cimi.resources.utils
+(ns eu.stratuslab.cimi.resources.utils.utils
   "General utilities for dealing with resources."
   (:require
     [eu.stratuslab.cimi.cb.views :as views]
@@ -44,7 +44,7 @@
 
 (defn strip-service-attrs
   "Strips common attributes from the map whose values are controlled
-   entirely by the service.  These include :id, :created, :updated, 
+   entirely by the service.  These include :id, :created, :updated,
    :resourceURI, and :operations."
   [m]
   (dissoc m :id :created :updated :resourceURI :operations))
@@ -74,7 +74,7 @@
 
 (defn create-validation-fn
   "Creates a validation function that compares a resource against the
-   given schema.  The generated function raises an exception with the 
+   given schema.  The generated function raises an exception with the
    violations of the schema or the resource itself if everything's OK."
   [schema]
   (fn [resource]
@@ -153,7 +153,7 @@
 
 (defn resolve-hrefs
   "Does a prewalk of the given data structure, replacing any map with an href
-   attribute with the result of merging the referenced resource with the 
+   attribute with the result of merging the referenced resource with the
    values provided locally.  If a reference is found, the common attributes
    are also removed from the map."
   [cb-client v]

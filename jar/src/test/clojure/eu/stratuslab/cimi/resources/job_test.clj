@@ -2,7 +2,7 @@
   (:require
     [eu.stratuslab.cimi.resources.job :refer :all]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
-    [eu.stratuslab.cimi.resources.utils :as u]
+    [eu.stratuslab.cimi.resources.utils.utils :as u]
     [clojure.data.json :as json]
     [clojure.test :refer :all]
     [peridot.core :refer :all]))

@@ -14,10 +14,10 @@
 ; limitations under the License.
 ;
 
-(ns eu.stratuslab.cimi.resources.schema-test
+(ns eu.stratuslab.cimi.resources.impl.schema-test
   (:require
-    [eu.stratuslab.cimi.resources.schema :refer :all]
-    [eu.stratuslab.cimi.resources.utils :as utils]
+    [eu.stratuslab.cimi.resources.impl.schema :refer :all]
+    [eu.stratuslab.cimi.resources.utils.utils :as utils]
     [eu.stratuslab.cimi.resources.user :as user]
     [eu.stratuslab.cimi.resources.volume-configuration :as vc]
     [eu.stratuslab.cimi.resources.volume-template :as vt]

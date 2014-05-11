@@ -19,9 +19,9 @@
   (:require
     [clojure.tools.logging :as log]
     [couchbase-clj.client :as cbc]
-    [eu.stratuslab.cimi.resources.schema :as schema]
-    [eu.stratuslab.cimi.resources.utils :as u]
-    [eu.stratuslab.cimi.resources.auth-utils :as a]
+    [eu.stratuslab.cimi.resources.impl.schema :as schema]
+    [eu.stratuslab.cimi.resources.utils.utils :as u]
+    [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.resources.machine-configuration :as mc]
     [eu.stratuslab.cimi.resources.job :as job]
     [eu.stratuslab.cimi.resources.service-configuration :as sc]

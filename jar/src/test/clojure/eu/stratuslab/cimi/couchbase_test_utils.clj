@@ -20,7 +20,7 @@
     [eu.stratuslab.cimi.cb.bootstrap :refer [bootstrap]]
     [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
     [eu.stratuslab.cimi.middleware.base-uri :refer [wrap-base-uri]]
-    [eu.stratuslab.cimi.resources.utils :as utils]
+    [eu.stratuslab.cimi.resources.utils.utils :as utils]
     [eu.stratuslab.cimi.cb.utils :as cbutils]
     [eu.stratuslab.cimi.cb.views :as views]
     [cemerick.friend :as friend]

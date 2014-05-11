@@ -17,7 +17,7 @@
 (ns eu.stratuslab.cimi.resources.machine-configuration-test
   (:require
     [eu.stratuslab.cimi.resources.machine-configuration :refer :all]
-    [eu.stratuslab.cimi.resources.utils :as u]
+    [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
     [clojure.test :refer :all]
     [clojure.data.json :as json]

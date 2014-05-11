@@ -14,7 +14,7 @@
 ; limitations under the License.
 ;
 
-(ns eu.stratuslab.cimi.resources.auth-utils
+(ns eu.stratuslab.cimi.resources.utils.auth-utils
   "Utilities for dealing with authn and authz decisions"
   (:require
     [ring.util.response :as r]

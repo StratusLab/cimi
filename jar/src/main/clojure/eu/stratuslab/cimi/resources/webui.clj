@@ -1,11 +1,11 @@
-(ns eu.stratuslab.cimi.webui.routes
+(ns eu.stratuslab.cimi.resources.webui
   (:require
     [cemerick.friend :as friend]
     [compojure.core :refer [GET POST defroutes]]
     [ring.util.response :as resp]
     [hiccup.page :as h]
     [hiccup.element :as e]
-    [eu.stratuslab.cimi.webui.pages :refer [browser login-page authn-page]]))
+    [eu.stratuslab.cimi.resources.impl.webui-pages :refer [browser login-page authn-page]]))
 
 (defroutes routes
            (GET "/webui" request

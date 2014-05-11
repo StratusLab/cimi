@@ -14,7 +14,7 @@
 ; limitations under the License.
 ;
 
-(ns eu.stratuslab.cimi.resources.schema
+(ns eu.stratuslab.cimi.resources.impl.schema
   "Data, definitions, and utilities common to all resources."
   (:require
     [clojure.tools.logging :refer [debug info error]]
@@ -89,7 +89,7 @@
                  (optional-path [:rules]) AccessControlRules])
 
 ;;
-;; These attributes are common to all resources except the 
+;; These attributes are common to all resources except the
 ;; CloudEntryPoint.  When these attributes are passed into the
 ;; CIMI service implementation, the required entries and the
 ;; :operations will be replaced by the service-generated values.

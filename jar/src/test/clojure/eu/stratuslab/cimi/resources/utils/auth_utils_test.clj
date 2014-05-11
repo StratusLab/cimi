@@ -14,8 +14,8 @@
 ; limitations under the License.
 ;
 
-(ns eu.stratuslab.cimi.resources.auth-utils-test
-  (:require [eu.stratuslab.cimi.resources.auth-utils :refer :all]
+(ns eu.stratuslab.cimi.resources.utils.auth-utils-test
+  (:require [eu.stratuslab.cimi.resources.utils.auth-utils :refer :all]
             [eu.stratuslab.cimi.couchbase-test-utils :as t]
             [clojure.test :refer :all]
             [couchbase-clj.client :as cbc])

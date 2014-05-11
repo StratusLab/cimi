@@ -9,10 +9,10 @@
     [cemerick.friend.workflows :as workflows]
     [cemerick.friend.credentials :as creds]
     [ring.util.request :as req]
-    [eu.stratuslab.cimi.resources.utils :as u]
+    [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.authn.workflows.client-certificate :as cwf]
     [eu.stratuslab.authn.ldap :as ldap]
-    [eu.stratuslab.cimi.resources.schema :as schema]
+    [eu.stratuslab.cimi.resources.impl.schema :as schema]
     [clj-schema.schema :refer :all]
     [clj-schema.simple-schemas :refer :all]
     [clj-schema.validation :refer :all]))

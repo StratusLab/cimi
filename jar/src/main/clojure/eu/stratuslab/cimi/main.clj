@@ -22,13 +22,19 @@
     [eu.stratuslab.cimi.server :refer [start register-shutdown-hook]]
     [clojure.tools.logging :as log]))
 
+(defn valid-port?
+  "If the port number is valid, then returns the port itself;
+   otherwise returns nil."
+  [port]
+  (if (< 0 port 65536)
+    port))
+
 (defn parse-port
+  "Parses the given string into a port value.  If the port is not
+   valid, then function returns nil."
   [s]
   (try
-    (let [port (Integer/valueOf s)]
-      (if (< 0 port 65536)
-        port
-        nil))
+    (valid-port? (Integer/valueOf s))
     (catch Exception e
       nil)))
 

@@ -1,4 +1,4 @@
-(ns eu.stratuslab.cimi.webui.pages
+(ns eu.stratuslab.cimi.resources.impl.webui-pages
   (:require
     [clojure.data.json :as json]
     [eu.stratuslab.authn.workflows.client-certificate :as cwf]

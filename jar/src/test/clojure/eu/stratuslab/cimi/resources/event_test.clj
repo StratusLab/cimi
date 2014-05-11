@@ -17,7 +17,7 @@
 (ns eu.stratuslab.cimi.resources.event-test
   (:require
     [eu.stratuslab.cimi.resources.event :refer :all]
-    [eu.stratuslab.cimi.resources.utils :as u]
+    [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
     [clj-schema.validation :refer [validation-errors]]
     [ring.util.response :as rresp]

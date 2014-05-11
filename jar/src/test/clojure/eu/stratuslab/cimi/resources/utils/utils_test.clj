@@ -1,5 +1,5 @@
-(ns eu.stratuslab.cimi.resources.utils-test
-  (:require [eu.stratuslab.cimi.resources.utils :refer :all]
+(ns eu.stratuslab.cimi.resources.utils.utils-test
+  (:require [eu.stratuslab.cimi.resources.utils.utils :refer :all]
             [eu.stratuslab.cimi.couchbase-test-utils :as t]
             [clojure.test :refer :all]
             [couchbase-clj.client :as cbc])
