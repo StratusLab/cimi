@@ -39,7 +39,7 @@
 
 (def ^:const type-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type))
 
-(def ^:const base-uri "/")
+(def ^:const base-uri "/cimi")
 
 (def resource-acl {:owner {:principal "::ADMIN" :type "ROLE"}
                    :rules [{:principal "::ANON" :type "ROLE" :right "VIEW"}]})

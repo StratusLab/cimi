@@ -17,32 +17,18 @@
 (ns eu.stratuslab.cimi.middleware.base-uri
   "middleware to add the :base-uri key and value to the request"
   (:require
-    [clojure.string :as s]
     [clojure.tools.logging :as log]))
 
-(defn format-context
-  "Formats the given value as a valid context string, which is
-   either the empty string or a path beginning with a slash. Passing
-   nil returns the empty string.  Multiple consequative slashes
-   are reduced to one."
-  [context]
-  (let [normalized (-> context
-                     (or "")
-                     (s/replace #"/+" "/"))
-        stripped (second (re-matches #"^/*(.*?)/*$" normalized))]
-    (if-not (= "" stripped)
-      (str "/" stripped)
-      stripped)))
+(defn construct-base-uri
+  [{:keys [scheme server-name server-port]}]
+  (format "%s://%s:%d%s/" (name scheme) server-name server-port "/cimi"))
 
 (defn wrap-base-uri
-  "adds the :base-uri key to the request with the base URI value
-   taking into account the context of the end server (e.g. if being
-   proxied by nginx, then the context is the path added by the server)"
-  [handler & [context]]
-  (let [context (format-context context)]
-    (fn [req]
-      (let [{:keys [scheme server-name server-port]} req
-            base-uri (format "%s://%s:%d%s/" (name scheme) server-name server-port context)
-            req (assoc req :base-uri base-uri)]
-        (log/debug (format "base-uri=%s" base-uri))
-        (handler req)))))
+  "adds the :base-uri key to the request with the base URI value"
+  [handler]
+  (fn [req]
+    (let [base-uri (construct-base-uri req)]
+      (log/debug (format "base-uri=%s" base-uri))
+      (-> req
+          (assoc :base-uri base-uri)
+          (handler)))))

@@ -35,7 +35,7 @@
 
 (def ^:const collection-type-uri (str "http://schemas.dmtf.org/cimi/1/" collection-resource-type))
 
-(def ^:const base-uri (str "/" resource-type))
+(def ^:const base-uri (str "/cimi/" resource-type))
 
 (def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}
                      :rules [{:principal "::USER" :type "ROLE" :right "MODIFY"}]})
