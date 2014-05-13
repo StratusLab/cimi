@@ -36,7 +36,7 @@ function update_window() {
     d3.json(resource_url(), page_callback);
 }
 
-/* provides page contents once data is retrieve from CIMI server */
+/* provides page contents once data is retrieved from CIMI server */
 function page_callback(request, json) {
 	if (json) {
 
@@ -212,7 +212,7 @@ function render_cep(o, m) {
 
 function render_collection(o, m) {
 	o.selectAll('*').remove();
-	
+
 	if (m.count <= 0) {
 		o.append('p').text('No items.');
 	} else {
@@ -225,7 +225,7 @@ function render_collection(o, m) {
 			var id = entries[i].id;
 			var name = entries[i].name || '';
 			var desc = entries[i].description || '';
-			
+
 			var link = resource_view_url(id);
 			var tag = id.split('/').pop();
 
@@ -236,16 +236,16 @@ function render_collection(o, m) {
 			var row = table.append('tr');
 			row.append('td').append('a').text(tag).attr('href', link);
 			row.append('td').text(name);
-			row.append('td').text(desc);			
+			row.append('td').text(desc);
 		}
 	}
-	
+
 	return o;
 }
 
 function render_item(o, m) {
 	o.selectAll('*').remove();
-	
+
 	var entries = d3.entries(m).sort(function(a, b) {return d3.ascending(a.key, b.key);})
 
 	var dl = o.append('dl');
@@ -300,7 +300,7 @@ function format_operation(o, op) {
 		button_name = op.rel.split('/').pop();
 
 		var func = '';
-		
+
 		if (op.rel=='delete') {
 			var parent = parent_page_uri();
 			func = 'delete_resource("' + op.href + '", "' + url + '", "' + parent + '")';
@@ -315,7 +315,7 @@ function format_operation(o, op) {
 			append_button(o, 'cancel', 'cancel_add()', 'add-mode');
 		} else {
 			append_button(o, button_name, 'do_action("'+ button_name + '", "' + url +'")', 'normal-mode');
-		}	
+		}
 	}
 	return o;
 }
@@ -445,12 +445,12 @@ function resolve_url(rel_url) {
 
 /* calculates the CIMI resource URL for referenced resource */
 function resource_url() {
-    url = base_url();
     if (window.location.hash) {
         resource = window.location.hash.substring(1);
-       	url = url + resource;
+       	return base_url() + resource;
+    } else {
+        return base_url_no_slash();
     }
-    return url;
 }
 
 function resource_view_url(id) {

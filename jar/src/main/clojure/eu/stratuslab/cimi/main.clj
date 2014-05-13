@@ -40,11 +40,9 @@
 
 (defn -main
   "Starts the cimi server using the command line arguments.  Takes as
-   possible arguments the port number, Couchbase configuration file, and
-   the context."
-  [& [port cbcfg context]]
+   possible arguments the port number and Couchbase configuration file."
+  [& [port cbcfg]]
   (let [port (or (parse-port port) 9200)
-        cbcfg (or cbcfg "/etc/stratuslab/couchbase.cfg")
-        context (or context "cimi")]
-    (->> (start port cbcfg context)
+        cbcfg (or cbcfg "/etc/stratuslab/couchbase.cfg")]
+    (->> (start port cbcfg)
          (register-shutdown-hook))))

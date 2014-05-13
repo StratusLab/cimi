@@ -62,7 +62,7 @@
        (map deref)))
 
 (def final-routes
-  [(route/resources "/")
+  [(route/resources "/cimi/")
    (route/not-found "unknown resource")])
 
 (defn get-main-routes

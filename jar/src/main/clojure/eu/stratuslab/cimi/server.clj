@@ -52,8 +52,8 @@
   "Creates a ring handler that wraps all of the service routes
    in the necessary ring middleware to handle authentication,
    header treatment, and message formatting."
-  [{:keys [cb-client context]}]
-  (log/info "creating servlet ring handler with context" context)
+  [{:keys [cb-client]}]
+  (log/info "creating ring handler")
 
   (let [workflows (aw/get-workflows cb-client)]
     (if (empty? workflows)
@@ -61,8 +61,8 @@
 
     (-> (friend/authenticate (routes/get-main-routes)
                              {:allow-anon?         true
-                              :login-uri           "/login"
-                              :default-landing-uri "/webui"
+                              :login-uri           "/cimi/login"
+                              :default-landing-uri "/cimi/webui"
                               :credential-fn       (constantly nil)
                               :workflows           workflows})
         (handler/site {:session {:store (couchbase-store cb-client)}})
@@ -102,9 +102,9 @@
   "Starts the CIMI server and returns a map with the application
    state containing the Couchbase client and the function to stop
    the http-kit container."
-  [port cb-cfg-file context]
+  [port cb-cfg-file]
   (let [cb-client (create-cb-client cb-cfg-file)
-        ring-app (create-ring-handler {:cb-client cb-client :context context})
+        ring-app (create-ring-handler {:cb-client cb-client})
         stop-fn (start-container ring-app port)
         state {:cb-client cb-client :stop-fn stop-fn}]
     (bootstrap cb-client)

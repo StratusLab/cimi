@@ -8,13 +8,13 @@
     [eu.stratuslab.cimi.resources.impl.webui-pages :refer [browser login-page authn-page]]))
 
 (defroutes routes
-           (GET "/webui" request
+           (GET "/cimi/webui" request
                 (browser request))
-           (GET "/login" request
+           (GET "/cimi/login" request
                 (login-page request))
-           (POST "/login" request
-                (resp/redirect (str (:context request) "/login?msg=login_failed")))
-           (GET "/logout" request
-                (friend/logout* (resp/redirect (str (:context request) "/webui"))))
-           (GET "/authn" request
+           (POST "/cimi/login" request
+                (resp/redirect "/cimi/login?msg=login_failed"))
+           (GET "/cimi/logout" request
+                (friend/logout* (resp/redirect  "/cimi/webui")))
+           (GET "/cimi/authn" request
                 (authn-page request)))

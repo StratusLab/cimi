@@ -19,19 +19,6 @@
     [eu.stratuslab.cimi.middleware.base-uri :refer :all]
     [clojure.test :refer [deftest is are]]))
 
-(deftest check-format-context
-  (are [x correct] (= correct (format-context x))
-                   nil ""
-                   "" ""
-                   "x" "/x"
-                   "/" ""
-                   "//" ""
-                   "/x/" "/x"
-                   "//x" "/x"
-                   "x//" "/x"
-                   "x/x" "/x/x"
-                   "x//x" "/x/x"))
-
 (deftest check-wrapping-works
   (let [context "cimi"
         correct-value "http://example.com:9999/cimi/"
