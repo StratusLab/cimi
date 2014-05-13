@@ -195,7 +195,7 @@ fi
             </mapping>
 
             <mapping>
-              <directory>/etc/nginx/conf.d/locations</directory>
+              <directory>/etc/nginx/conf.d/stratuslab-locations</directory>
               <directoryIncluded>false</directoryIncluded>
               <configuration>noreplace</configuration>
               <sources>
