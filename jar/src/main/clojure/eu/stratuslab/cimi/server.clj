@@ -81,7 +81,7 @@
    the http-kit container."
   [ring-app port]
   (log/info "starting the http-kit container on port" port)
-  (run-server ring-app {:port port}))
+  (run-server ring-app {:port port :ip "127.0.0.1"}))
 
 (declare stop)
 
