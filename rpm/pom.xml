@@ -141,7 +141,7 @@ fi
 	  </preinstallScriptlet>
 
           <postinstallScriptlet>
-            <script>service nginx restart || true</script>
+            <script>service nginx reload || true</script>
           </postinstallScriptlet>
 
           <preremoveScriptlet>
@@ -149,7 +149,7 @@ fi
           </preremoveScriptlet>
 
           <postremoveScriptlet>
-            <script>service nginx restart || true</script>
+            <script>service nginx reload || true</script>
           </postremoveScriptlet>
 
           <defaultDirmode>755</defaultDirmode>
