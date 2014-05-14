@@ -22,6 +22,15 @@
 (def ^:const proxy-scheme-header
   "x-forwarded-scheme")
 
+(defn get-proxy-port
+  [headers]
+  (try
+    (-> headers
+        (get proxy-port-header)
+        (Integer/parseInt))
+    (catch Exception e
+      nil)))
+
 (defn wrap-proxy-headers
   "If the proxy headers indicating a proxy port and scheme are set,
    then the standard fields in the ring request are updated with these
@@ -30,7 +39,7 @@
   (fn [req]
     (let [headers (:headers req)
           scheme (or (get headers proxy-scheme-header) (:scheme req))
-          port (or (get headers proxy-port-header) (:server-port req))]
+          port (or (get-proxy-port headers) (:server-port req))]
       (handler
         (-> req
             (assoc :scheme scheme)
