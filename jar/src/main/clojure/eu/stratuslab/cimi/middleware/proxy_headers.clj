@@ -14,14 +14,13 @@
 ; limitations under the License.
 ;
 
-(ns eu.stratuslab.cimi.middleware.proxy-headers
-  (:require [clojure.string :as str]))
+(ns eu.stratuslab.cimi.middleware.proxy-headers)
 
 (def ^:const proxy-port-header
-  "X-Forwarded-Port")
+  "x-forwarded-port")
 
 (def ^:const proxy-scheme-header
-  "X-Forwarded-Scheme")
+  "x-forwarded-scheme")
 
 (defn wrap-proxy-headers
   "If the proxy headers indicating a proxy port and scheme are set,
