@@ -12,6 +12,7 @@
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
     [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
     [eu.stratuslab.cimi.middleware.base-uri :refer [wrap-base-uri]]
+    [eu.stratuslab.cimi.middleware.proxy-headers :refer [wrap-proxy-headers]]
     [eu.stratuslab.cimi.middleware.couchbase-store :refer [couchbase-store]]
     [eu.stratuslab.cimi.routes :as routes]
     [cemerick.friend :as friend]
@@ -71,7 +72,8 @@
         (instrument)
         (expose-metrics-as-json)
         (wrap-json-body)
-        (wrap-json-response))))
+        (wrap-json-response)
+        (wrap-proxy-headers))))
 
 (defn- start-container
   "Starts the http-kit container with the given ring application and
