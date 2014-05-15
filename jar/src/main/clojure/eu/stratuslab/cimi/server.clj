@@ -70,7 +70,7 @@
         (wrap-base-uri)
         (wrap-cb-client cb-client)
         (instrument)
-        (expose-metrics-as-json)
+        (expose-metrics-as-json "/cimi/metrics")
         (wrap-json-body)
         (wrap-json-response)
         (wrap-proxy-headers))))
