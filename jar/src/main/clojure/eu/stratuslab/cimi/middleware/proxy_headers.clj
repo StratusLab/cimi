@@ -14,7 +14,9 @@
 ; limitations under the License.
 ;
 
-(ns eu.stratuslab.cimi.middleware.proxy-headers)
+(ns eu.stratuslab.cimi.middleware.proxy-headers
+  (:require
+    [clojure.tools.logging :as log]))
 
 (def ^:const proxy-port-header
   "x-forwarded-port")
@@ -40,6 +42,7 @@
     (let [headers (:headers req)
           scheme (or (get headers proxy-scheme-header) (:scheme req))
           port (or (get-proxy-port headers) (:server-port req))]
+      (log/info "REQUEST HEADERS:" headers)
       (handler
         (-> req
             (assoc :scheme scheme)
