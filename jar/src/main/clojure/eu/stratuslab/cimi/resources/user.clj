@@ -34,6 +34,8 @@
     [cemerick.friend :as friend]
     [clojure.tools.logging :as log]))
 
+(def ^:const resource-tag :users)
+
 (def ^:const resource-type "User")
 
 (def ^:const collection-resource-type "UserCollection")

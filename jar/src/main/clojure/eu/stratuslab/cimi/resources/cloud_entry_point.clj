@@ -22,16 +22,7 @@
     [eu.stratuslab.cimi.resources.impl.schema :as schema]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
-    [eu.stratuslab.cimi.resources.machine-configuration :as mc]
-    [eu.stratuslab.cimi.resources.job :as job]
-    [eu.stratuslab.cimi.resources.service-configuration :as sc]
-    [eu.stratuslab.cimi.resources.service-message :as sm]
-    [eu.stratuslab.cimi.resources.user :as user]
-    [eu.stratuslab.cimi.resources.volume :as volume]
-    [eu.stratuslab.cimi.resources.volume-template :as volume-template]
-    [eu.stratuslab.cimi.resources.volume-configuration :as volume-configuration]
-    [eu.stratuslab.cimi.resources.volume-image :as volume-image]
-
+    [eu.stratuslab.cimi.resources.utils.dynamic-load :as dyn]
     [compojure.core :refer [defroutes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]))
 
@@ -44,18 +35,9 @@
 (def resource-acl {:owner {:principal "::ADMIN" :type "ROLE"}
                    :rules [{:principal "::ANON" :type "ROLE" :right "VIEW"}]})
 
-;; FIXME: Generate these automatically.
+;; dynamically loads all available resources
 (def resource-links
-  {:machineConfigs        {:href mc/resource-type}
-   :jobs                  {:href job/resource-type}
-   :volumes               {:href volume/resource-type}
-   :volumeTemplates       {:href volume-template/resource-type}
-   :volumeConfigs         {:href volume-configuration/resource-type}
-   :volumeImages          {:href volume-image/resource-type}
-   :serviceMessages       {:href sm/resource-type}
-   :serviceConfigurations {:href sc/resource-type}
-   :users                 {:href user/resource-type}
-   })
+  (into {} (dyn/get-resource-links)))
 
 (def validate (u/create-validation-fn schema/CloudEntryPoint))
 

@@ -27,7 +27,11 @@
     [cemerick.friend :as friend]
     [clojure.tools.logging :as log]
     [metrics.utils :as mu]
-    [metrics.ring.expose :as me]))
+    [metrics.core :as mc]
+    [metrics.ring.expose :as me]
+    [clojure.string :as str]))
+
+(def ^:const resource-tag :serviceMetrics)
 
 (def ^:const resource-type "ServiceMetrics")
 
@@ -38,34 +42,23 @@
 (def resource-acl {:owner {:principal "::ADMIN" :type "ROLE"}
                    :rules [{:principal "::ANON" :type "ROLE" :right "VIEW"}]})
 
-(defn add-rops
-  "Adds the resource operations to the given resource."
-  [resource]
-  (if (a/can-modify? (:acl resource))
-    (let [href (:id resource)
-          ops [{:rel (:edit schema/action-uri) :href href}
-               {:rel (:delete schema/action-uri) :href href}]]
-      (assoc resource :operations ops))
-    resource))
-
-(defn add-acl [resource]
-  (assoc resource :acl {:owner {:principal "::ADMIN"
-                                :type      "ROLE"}
-                        :rules [{:principal "::ANON"
-                                 :type      "ROLE"
-                                 :right     "VIEW"}]}))
-
-(defn get-metrics
+(defn get-raw-metrics
   []
-  (into {} (map me/render-to-basic (mu/all-metrics))))
+  (->> (mu/all-metrics)
+       (map (fn [[k v]] [k (me/render-to-basic v)]))
+       (into {})))
 
 (defn retrieve
   "Returns the data associated with the requested ServiceMessage
    entry (identified by the uuid)."
   []
-  (if-let [json (get-metrics)]
-    (if (a/can-view? (friend/current-authentication) (:acl json))
-      (r/response (add-rops json))
+  (if-let [json (-> {:metrics (get-raw-metrics)}
+                    (assoc :id resource-type)
+                    (assoc :resourceURI type-uri)
+                    (u/set-time-attributes)
+                    (assoc :acl resource-acl))]
+    (if (a/can-view? (:acl json))
+      (r/response json)
       (u/unauthorized))
     (r/not-found nil)))
 

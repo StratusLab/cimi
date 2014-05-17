@@ -30,6 +30,8 @@
     [cemerick.friend :as friend]
     [clojure.tools.logging :as log]))
 
+(def ^:const resource-tag :machineImages)
+
 (def ^:const resource-type "MachineImage")
 
 (def ^:const collection-resource-type "MachineImageCollection")

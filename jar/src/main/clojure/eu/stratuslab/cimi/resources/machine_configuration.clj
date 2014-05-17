@@ -30,6 +30,8 @@
     [cemerick.friend :as friend]
     [clojure.tools.logging :as log]))
 
+(def ^:const resource-tag :machineConfigs)
+
 (def ^:const resource-type "MachineConfiguration")
 
 (def ^:const collection-resource-type "MachineConfigurationCollection")

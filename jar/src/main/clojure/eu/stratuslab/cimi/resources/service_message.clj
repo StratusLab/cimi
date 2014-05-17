@@ -35,6 +35,8 @@
     [cemerick.friend :as friend]
     [clojure.tools.logging :as log]))
 
+(def ^:const resource-tag :serviceMessages)
+
 (def ^:const resource-type "ServiceMessage")
 
 (def ^:const collection-resource-type "ServiceMessageCollection")

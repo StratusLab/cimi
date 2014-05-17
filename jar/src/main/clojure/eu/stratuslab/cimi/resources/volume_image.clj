@@ -32,6 +32,8 @@
     [ring.util.response :as r]
     [clojure.tools.logging :as log]))
 
+(def ^:const resource-tag :volumeImages)
+
 (def ^:const resource-type "VolumeImage")
 
 (def ^:const collection-resource-type "VolumeImageCollection")

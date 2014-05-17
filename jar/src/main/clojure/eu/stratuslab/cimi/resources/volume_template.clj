@@ -30,6 +30,8 @@
     [ring.util.response :as r]
     [clojure.tools.logging :as log]))
 
+(def ^:const resource-tag :volumeTemplates)
+
 (def ^:const resource-type "VolumeTemplate")
 
 (def ^:const collection-resource-type "VolumeTemplateCollection")

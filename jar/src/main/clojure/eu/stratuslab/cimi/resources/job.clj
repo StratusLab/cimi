@@ -27,6 +27,8 @@
     [clojure.walk :as w]
     [clojure.tools.logging :as log]))
 
+(def ^:const resource-tag :jobs)
+
 (def ^:const resource-type "Job")
 
 (def ^:const collection-resource-type "JobCollection")

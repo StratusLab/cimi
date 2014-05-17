@@ -19,16 +19,29 @@
   (:require
     [clojure.tools.logging :as log]))
 
+(defn get-host-port
+  "Get the host:port value for the request, preferring the 'host'
+   header value over local server name and port."
+  [{:keys [headers server-name server-port]}]
+  (or (get headers "host")
+      (format "%s:%d" server-name server-port)))
+
+(defn get-scheme
+  "Get the scheme to use for the base URI, preferring the header
+   set by the proxy for the remote scheme being used (usually https)."
+  [{:keys [headers scheme]}]
+  (or (get headers "x-forwarded-scheme")
+      (name scheme)))
+
 (defn construct-base-uri
-  [{:keys [scheme server-name server-port]}]
-  (format "%s://%s:%d%s/" (name scheme) server-name server-port "/cimi"))
+  [req]
+  (format "%s://%s/cimi/" (get-scheme req) (get-host-port req)))
 
 (defn wrap-base-uri
   "adds the :base-uri key to the request with the base URI value"
   [handler]
   (fn [req]
     (let [base-uri (construct-base-uri req)]
-      (log/debug (format "base-uri=%s" base-uri))
       (-> req
           (assoc :base-uri base-uri)
           (handler)))))

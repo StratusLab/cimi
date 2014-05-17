@@ -28,6 +28,8 @@
     [ring.util.response :as r]
     [clojure.tools.logging :as log]))
 
+(def ^:const resource-tag :events)
+
 (def ^:const resource-type "Event")
 
 (def ^:const collection-resource-type "EventCollection")
