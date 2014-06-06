@@ -30,7 +30,7 @@
   "Get the scheme to use for the base URI, preferring the header
    set by the proxy for the remote scheme being used (usually https)."
   [{:keys [headers scheme]}]
-  (or (get headers "x-forwarded-scheme")
+  (or (get headers "x-forwarded-proto")
       (name scheme)))
 
 (defn construct-base-uri
