@@ -16,9 +16,6 @@
   <!-- NOTE: This project MUST have same version as proxy module. -->
   <properties>
     <installation.dir>/opt/stratuslab/cimi</installation.dir>
- 
-    <maven.build.timestamp.format>yyyyMMdd.HHmmss</maven.build.timestamp.format>
-    <RELEASE>0.${maven.build.timestamp}.${package.os}</RELEASE>
   </properties>
 
   <dependencies>
@@ -42,14 +39,6 @@
   <build>
 
     <plugins>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
-        <configuration>
-          <arguments>-DRELEASE=1</arguments>
-        </configuration>
-      </plugin>
 
       <plugin>
 	<groupId>org.apache.maven.plugins</groupId>
