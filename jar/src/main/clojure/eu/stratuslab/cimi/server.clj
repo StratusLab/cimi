@@ -17,8 +17,10 @@
     [cemerick.friend :as friend]
     [cemerick.friend.workflows :as workflows]
     [cemerick.friend.credentials :as creds]
+    [metrics.core :refer [default-registry]]
     [metrics.ring.instrument :refer [instrument]]
     [metrics.ring.expose :refer [expose-metrics-as-json]]
+    [metrics.jvm.core :refer [instrument-jvm]]
     [org.httpkit.server :refer [run-server]])
   (:import
     [java.net URI]))
@@ -55,9 +57,12 @@
   [{:keys [cb-client]}]
   (log/info "creating ring handler")
 
-  (let [workflows (aw/get-workflows cb-client)]
+  (let [workflows (aw/get-workflows cb-client)
+        registry (default-registry)]
     (if (empty? workflows)
       (log/warn "NO authn workflows configured"))
+
+    (instrument-jvm registry)
 
     (-> (friend/authenticate (routes/get-main-routes)
                              {:allow-anon?         true
@@ -68,7 +73,7 @@
         (handler/site {:session {:store (couchbase-store cb-client)}})
         (wrap-base-uri)
         (wrap-cb-client cb-client)
-        (expose-metrics-as-json "/cimi/metrics")
+        (expose-metrics-as-json "/cimi/metrics" registry {:pretty-print? true})
         (wrap-json-body)
         (wrap-json-response)
         (instrument))))

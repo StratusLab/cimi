@@ -92,6 +92,11 @@
       </dependency>
       
       <dependency>
+        <groupId>metrics-clojure-jvm</groupId>
+        <artifactId>metrics-clojure-jvm</artifactId>
+      </dependency>
+      
+      <dependency>
         <groupId>eu.eu-emi.security</groupId>
         <artifactId>canl</artifactId>
       </dependency>
