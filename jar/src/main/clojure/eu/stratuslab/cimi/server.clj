@@ -57,12 +57,11 @@
   [{:keys [cb-client]}]
   (log/info "creating ring handler")
 
-  (let [workflows (aw/get-workflows cb-client)
-        registry (default-registry)]
+  (let [workflows (aw/get-workflows cb-client)]
     (if (empty? workflows)
       (log/warn "NO authn workflows configured"))
 
-    (instrument-jvm registry)
+    (instrument-jvm default-registry)
 
     (-> (friend/authenticate (routes/get-main-routes)
                              {:allow-anon?         true
@@ -73,10 +72,10 @@
         (handler/site {:session {:store (couchbase-store cb-client)}})
         (wrap-base-uri)
         (wrap-cb-client cb-client)
-        (expose-metrics-as-json "/cimi/metrics" registry {:pretty-print? true})
+        (expose-metrics-as-json "/cimi/metrics" default-registry {:pretty-print? true})
         (wrap-json-body)
         (wrap-json-response)
-        (instrument))))
+        (instrument default-registry))))
 
 (defn- start-container
   "Starts the http-kit container with the given ring application and
