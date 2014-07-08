@@ -138,15 +138,23 @@ fi
 	  </preinstallScriptlet>
 
           <postinstallScriptlet>
-            <script>service nginx reload || true</script>
+            <script>
+/sbin/service nginx reload || true
+/sbin/chkconfig --add cimi || true
+</script>
           </postinstallScriptlet>
 
           <preremoveScriptlet>
-            <script>service cimi stop || true</script>
+            <script>
+/sbin/service cimi stop || true
+/sbin/chkconfig --del cimi || true
+</script>
           </preremoveScriptlet>
 
           <postremoveScriptlet>
-            <script>service nginx reload || true</script>
+            <script>
+/sbin/service nginx reload || true
+</script>
           </postremoveScriptlet>
 
           <defaultDirmode>755</defaultDirmode>
