@@ -5,9 +5,7 @@
     [clojure.string :as str]
     [clojure.set :as set]
     [clj-ldap.client :as ldap]
-    [clj-schema.schema :refer :all]
-    [clj-schema.simple-schemas :refer :all]
-    [clj-schema.validation :refer :all]))
+    [schema.core :as s]))
 
 (def ^:dynamic *ldap-connection-pool* nil)
 
@@ -33,34 +31,40 @@
 
 (def ^:const filter-template "(&(objectClass=%s)(%s=%s))")
 
-(def-map-schema LdapConfigurationHostSchema
-                [[:address] NonEmptyString
-                 [:port] Integral])
+(def PosInt
+  (s/both s/Int (s/pred pos? "pos?")))
 
-(def-map-schema LdapConfigurationConnectionSchema
-                [[:host] LdapConfigurationHostSchema
-                 [:ssl?] Boolean
-                 (optional-path [:num-connections]) PosIntegral])
+(def NonBlankString
+  (s/both s/Str (s/pred (complement str/blank?) "not-blank?")))
 
-(def-map-schema LdapConfigurationCommonSchema
-                [[:user-base-dn] NonEmptyString
-                 [:user-object-class] NonEmptyString
-                 [:user-id-attr] NonEmptyString
-                 [:role-base-dn] NonEmptyString
-                 [:role-object-class] NonEmptyString
-                 [:role-member-attr] NonEmptyString
-                 [:role-name-attr] NonEmptyString
-                 [:skip-bind?] Boolean])
+(def LdapConfigurationHostSchema
+  {:address NonBlankString
+   :port PosInt})
 
-(def-map-schema LdapConfigurationSchema
-                LdapConfigurationCommonSchema
-                [[:connection] LdapConfigurationConnectionSchema])
+(def LdapConfigurationConnectionSchema
+  {:host LdapConfigurationHostSchema
+   :ssl? s/Bool
+   (s/optional-key :num-connections) PosInt})
 
-(def-map-schema LdapRequestSchema :loose
-                LdapConfigurationCommonSchema
-                [[:username] NonEmptyString
-                 (optional-path [:password]) NonEmptyString
-                 (optional-path [:ldap-connection-pool]) Anything])
+(def LdapConfigurationCommonSchema
+  {:user-base-dn NonBlankString
+   :user-object-class NonBlankString
+   :user-id-attr NonBlankString
+   :role-base-dn NonBlankString
+   :role-object-class NonBlankString
+   :role-member-attr NonBlankString
+   :role-name-attr NonBlankString
+   :skip-bind? s/Bool})
+
+(def LdapConfigurationSchema
+  (merge LdapConfigurationCommonSchema
+         {:connection LdapConfigurationConnectionSchema}))
+
+(def LdapRequestSchema
+  (merge LdapConfigurationCommonSchema
+         {:username NonBlankString
+          (s/optional-key :password) NonBlankString
+          (s/optional-key :ldap-connection-pool) s/Any}))
 
 (defn connection-pool
   [connection-params]
@@ -120,7 +124,7 @@
       (select-keys params [:identity :roles :cemerick.friend/workflow]))))
 
 (defn valid-request? [m]
-  (when (empty? (validation-errors LdapRequestSchema m))
+  (when (nil? (s/check LdapRequestSchema m))
     (when (or (:skip-bind? m) (:password m))
       m)))
 

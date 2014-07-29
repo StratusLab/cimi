@@ -1,5 +1,5 @@
 ;
-; Copyright 2013 Centre National de la Recherche Scientifique (CNRS)
+; Copyright 2014 Centre National de la Recherche Scientifique (CNRS)
 ;
 ; Licensed under the Apache License, Version 2.0 (the "License")
 ; you may not use this file except in compliance with the License.
@@ -19,182 +19,258 @@
     [eu.stratuslab.cimi.resources.impl.schema :refer :all]
     [eu.stratuslab.cimi.resources.utils.utils :as utils]
     [eu.stratuslab.cimi.resources.user :as user]
-    [eu.stratuslab.cimi.resources.volume-configuration :as vc]
-    [eu.stratuslab.cimi.resources.volume-template :as vt]
-    [eu.stratuslab.cimi.resources.volume-image :as vi]
-    [eu.stratuslab.cimi.resources.volume :as v]
     [eu.stratuslab.cimi.resources.service-configuration :as sc]
-    [eu.stratuslab.cimi.resources.service-message :as sm]
+    [eu.stratuslab.cimi.resources.volume-configuration :as vc]
+    [eu.stratuslab.cimi.resources.volume-image :as vi]
+    [eu.stratuslab.cimi.resources.volume-template :as vt]
+    [eu.stratuslab.cimi.resources.volume :as v]
+    [eu.stratuslab.cimi.resources.job :as job]
     [eu.stratuslab.cimi.resources.machine-configuration :as mc]
     [eu.stratuslab.cimi.resources.machine-image :as mi]
-    [eu.stratuslab.cimi.resources.job :as job]
-    [clj-schema.validation :refer [validation-errors]]
-    [clojure.test :refer :all]))
+    [eu.stratuslab.cimi.resources.service-message :as sm]
 
+    [schema.core :as s]
+    [clj-time.core :as time]
+    [expectations :refer :all]))
+
+;;
+;; NotEmpty
+;;
+
+(expect nil? (s/check NotEmpty "ok"))
+(expect nil? (s/check NotEmpty ["ok"]))
+(expect nil? (s/check NotEmpty [1 2]))
+(expect nil? (s/check NotEmpty {"ok" "value"}))
+(expect nil? (s/check NotEmpty {1 2}))
+(expect nil? (s/check NotEmpty "\t"))
+(expect nil? (s/check NotEmpty " "))
+(expect (s/check NotEmpty ""))
+(expect (s/check NotEmpty []))
+(expect (s/check NotEmpty {}))
+
+;;
+;; PosInt
+;;
+
+(expect nil? (s/check PosInt 1))
+(expect nil? (s/check PosInt 2))
+(expect nil? (s/check PosInt 3))
+(expect (s/check PosInt 0))
+(expect (s/check PosInt -1))
+(expect (s/check PosInt 1.0))
+(expect (s/check PosInt "bad"))
+
+;;
+;; NonNegInt
+;;
+
+(expect nil? (s/check NonNegInt 0))
+(expect nil? (s/check NonNegInt 1))
+(expect nil? (s/check NonNegInt 2))
+(expect nil? (s/check NonNegInt 3))
+(expect (s/check NonNegInt -1))
+(expect (s/check NonNegInt 1.0))
+(expect (s/check NonNegInt "bad"))
+
+;;
+;; NonBlankString
+;;
+
+(expect nil? (s/check NonBlankString "ok"))
+(expect nil? (s/check NonBlankString " ok"))
+(expect nil? (s/check NonBlankString "ok "))
+(expect nil? (s/check NonBlankString " ok "))
+(expect (s/check NonBlankString ""))
+(expect (s/check NonBlankString " "))
+(expect (s/check NonBlankString "\t"))
+(expect (s/check NonBlankString "\f"))
+(expect (s/check NonBlankString " \t\f"))
+
+;;
+;; NonEmptyStrlist
+;;
+
+(expect nil? (s/check NonEmptyStrList ["ok"]))
+(expect nil? (s/check NonEmptyStrList ["ok" "ok"]))
+(expect (s/check NonEmptyStrList []))
+(expect (s/check NonEmptyStrList [1]))
+(expect (s/check NonEmptyStrList ["ok" 1]))
+
+;;
+;; ResourceLink
+;;
+
+(expect nil? (s/check ResourceLink {:href "uri"}))
+(expect (s/check ResourceLink {}))
+(expect (s/check ResourceLink {:bad "value"}))
+(expect (s/check ResourceLink {:href ""}))
+(expect (s/check ResourceLink {:href "uri" :bad "value"}))
+
+;;
+;; ResourceLinks
+;;
+
+(expect nil? (s/check ResourceLinks [{:href "uri"}]))
+(expect nil? (s/check ResourceLinks [{:href "uri"} {:href "uri"}]))
+(expect (s/check ResourceLinks []))
+
+;;
+;; Operation
+;;
+
+(expect nil? (s/check Operation {:href "uri" :rel "add"}))
+(expect (s/check Operation {:href "uri"}))
+(expect (s/check Operation {:rel "add"}))
+(expect (s/check Operation {}))
+
+;;
+;; Operations
+;;
+
+(expect nil? (s/check Operations [{:href "uri" :rel "add"}]))
+(expect nil? (s/check Operations [{:href "uri" :rel "add"} {:href "uri" :rel "delete"}]))
+(expect (s/check Operations []))
+
+;;
+;; Properties
+;;
+
+(expect nil? (s/check Properties {:a "ok"}))
+(expect nil? (s/check Properties {:a "ok" :b "ok"}))
+(expect nil? (s/check Properties {"a" "ok"}))
+(expect nil? (s/check Properties {"a" "ok" "b" "ok"}))
+(expect (s/check Properties {}))
+(expect (s/check Properties {1 "ok"}))
+(expect (s/check Properties {"ok" 1}))
+(expect (s/check Properties [:bad "bad"]))
+
+;;
+;; Access control schemas
+;;
 
 (def valid-acl {:owner {:principal "me" :type "USER"}})
 
-(deftest test-access-control-id
-  (let [rule {:principal "::ADMIN"
-              :type      "ROLE"}]
-    (are [v pred] (pred (validation-errors AccessControlId v))
-                  rule empty?
-                  (assoc rule :bad "MODIFY") (complement empty?)
-                  (dissoc rule :principal) (complement empty?)
-                  (dissoc rule :type) (complement empty?)
-                  (assoc rule :type "USER") empty?
-                  (assoc rule :type "BAD") (complement empty?))))
+(let [id {:principal "::ADMIN"
+          :type      "ROLE"}]
+  (expect nil? (s/check AccessControlId id))
+  (expect (s/check AccessControlId (assoc id :bad "MODIFY")))
+  (expect (s/check AccessControlId (dissoc id :principal)))
+  (expect (s/check AccessControlId (dissoc id :type)))
+  (expect (s/check AccessControlId (assoc id :type "BAD"))))
 
-(deftest test-access-control-rule
-  (let [rule {:principal "::ADMIN"
+(let [rule {:principal "::ADMIN"
+            :type      "ROLE"
+            :right     "VIEW"}]
+  (expect nil? (s/check AccessControlRule rule))
+  (expect nil? (s/check AccessControlRule (assoc rule :right "MODIFY")))
+  (expect nil? (s/check AccessControlRule (assoc rule :right "ALL")))
+  (expect (s/check AccessControlRule (assoc rule :right "BAD")))
+  (expect (s/check AccessControlRule (dissoc rule :right))))
+
+(let [rules [{:principal "::ADMIN"
               :type      "ROLE"
-              :right     "VIEW"}]
-    (are [v pred] (pred (validation-errors AccessControlRule v))
-                  rule empty?
-                  (assoc rule :right "MODIFY") empty?
-                  (assoc rule :right "ALL") empty?
-                  (assoc rule :right "BAD") (complement empty?)
-                  (dissoc rule :right) (complement empty?))))
+              :right     "VIEW"}
 
-(deftest test-access-control-rules
-  (let [rules [{:principal "::ADMIN"
-                :type      "ROLE"
-                :right     "VIEW"}
+             {:principal "ALPHA"
+              :type      "USER"
+              :right     "ALL"}]]
+  (expect nil? (s/check AccessControlRules rules))
+  (expect nil? (s/check AccessControlRules (next rules)))
+  (expect (s/check AccessControlRules (next (next rules))))
+  (expect (s/check AccessControlRules (cons 1 rules))))
 
-               {:principal "ALPHA"
-                :type      "USER"
-                :right     "ALL"}]]
-    (are [v pred] (pred (validation-errors AccessControlRules v))
-                  rules empty?
-                  (next rules) empty?
-                  (next (next rules)) (complement empty?))))
+(let [acl {:owner {:principal "::ADMIN"
+                   :type      "ROLE"}
+           :rules [{:principal ":group1"
+                    :type      "ROLE"
+                    :right     "VIEW"}
+                   {:principal "group2"
+                    :type      "ROLE"
+                    :right     "MODIFY"}]}]
+  (expect nil? (s/check AccessControlList acl))
+  (expect nil? (s/check AccessControlList (dissoc acl :rules)))
+  (expect (s/check AccessControlList (assoc acl :rules [])))
+  (expect (s/check AccessControlList (assoc acl :owner "")))
+  (expect (s/check AccessControlList (assoc acl :bad "BAD"))))
 
-(deftest test-access-control-list
-  (let [acl {:owner {:principal "::ADMIN"
-                     :type      "ROLE"}
-             :rules [{:principal ":group1"
-                      :type      "ROLE"
-                      :right     "VIEW"}
-                     {:principal "group2"
-                      :type      "ROLE"
-                      :right     "MODIFY"}]}]
-    (are [v pred] (pred (validation-errors AccessControlList v))
-                  acl empty?
-                  (dissoc acl :rules) empty?
-                  (assoc acl :rules []) (complement empty?)
-                  (assoc acl :owner "") (complement empty?)
-                  (assoc acl :bad "value") (complement empty?))))
+;;
+;; Common CIMI attributes
+;;
 
-(deftest test-resource-link-schema
-  (let [ref {:href "https://example.org/resource"}]
-    (are [v pred] (pred (validation-errors ResourceLink v))
-                  ref empty?
-                  (dissoc ref :href) (complement empty?)
-                  (assoc ref :bad "BAD") (complement empty?))))
+(let [date #inst"2012-01-01T01:23:45.678Z"
+      minimal {:acl         valid-acl
+               :id          "a"
+               :resourceURI "http://example.org/data"
+               :created     date
+               :updated     date}
+      maximal (assoc minimal
+                :name "name"
+                :description "description"
+                :properties {"a" "b"}
+                :operations [{:rel "add" :href "/add"}])]
+  (expect nil? (s/check CommonAttrs minimal))
+  (expect (s/check CommonAttrs (dissoc minimal :id)))
+  (expect (s/check CommonAttrs (dissoc minimal :resourceURI)))
+  (expect (s/check CommonAttrs (dissoc minimal :created)))
+  (expect (s/check CommonAttrs (dissoc minimal :updated)))
 
-(deftest test-operation-schema
-  (are [v pred] (pred (validation-errors Operation v))
-                {:rel "add" :href "/add"} empty?
-                {:rel "add"} (complement empty?)
-                {:href "/add"} (complement empty?)
-                {} (complement empty?)))
-
-(deftest test-operations-schema
-  (let [ops [{:rel "add" :href "/add"}
-             {:rel "delete" :href "/delete"}]]
-    (are [v pred] (pred (validation-errors Operations v))
-                  ops empty?
-                  (rest ops) empty?
-                  [] (complement empty?))))
-
-(deftest test-properties-schema
-  (are [v pred] (pred (validation-errors Properties v))
-                {"a" "b"} empty?
-                {"a" "b", "c" "d"} empty?
-                {"a" 1} (complement empty?)
-                {} (complement empty?)))
-
-(deftest test-common-attrs-schema
-  (let [date "1964-08-25T10:00:00.0Z"
-        minimal {:acl         valid-acl
-                 :id          "a"
-                 :resourceURI "http://example.org/data"
-                 :created     date
-                 :updated     date}
-        maximal (assoc minimal
-                  :name "name"
-                  :description "description"
-                  :properties {"a" "b"}
-                  :operations [{:rel "add" :href "/add"}])]
-
-    (are [v pred] (pred (validation-errors CommonAttrs v))
-                  minimal empty?
-                  (dissoc minimal :id) (complement empty?)
-                  (dissoc minimal :resourceURI) (complement empty?)
-                  (dissoc minimal :created) (complement empty?)
-                  (dissoc minimal :updated) (complement empty?)
-                  maximal empty?
-                  (dissoc maximal :name) empty?
-                  (dissoc maximal :description) empty?
-                  (dissoc maximal :properties) empty?
-                  (dissoc maximal :operations) empty?
-                  (assoc maximal :bad "bad") (complement empty?))))
-
-(deftest test-action-uri-map
-  (is (= valid-actions (set (keys action-uri)))))
+  (expect nil? (s/check CommonAttrs maximal))
+  (expect nil? (s/check CommonAttrs (dissoc maximal :name)))
+  (expect nil? (s/check CommonAttrs (dissoc maximal :description)))
+  (expect nil? (s/check CommonAttrs (dissoc maximal :properties)))
+  (expect (s/check CommonAttrs (assoc maximal :bad "BAD"))))
 
 ;;
 ;; User
 ;;
+
 (def valid-user-entry
   {:acl        valid-acl
    :first-name "cloud"
    :last-name  "user"
    :username   "cloud-user"})
 
-(deftest test-user-schema
-  (let [uri (user/uuid->uri "cloud-user")
-        user (assoc valid-user-entry
-               :id uri
-               :resourceURI user/type-uri
-               :created "1964-08-25T10:00:00.0Z"
-               :updated "1964-08-25T10:00:00.0Z")]
-    (are [v pred] (pred (validation-errors User v))
-                  user empty?
-                  (assoc user :password "password") empty?
-                  (assoc user :enabled true) empty?
-                  (assoc user :enabled "BAD") (complement empty?)
-                  (assoc user :roles ["OK"]) empty?
-                  (assoc user :roles []) (complement empty?)
-                  (assoc user :roles "BAD") (complement empty?)
-                  (assoc user :altnames {:x500dn "certdn"}) empty?
-                  (assoc user :altnames {}) (complement empty?)
-                  (assoc user :email "OK@EXAMPLE.COM") empty?
-                  (dissoc user :acl) (complement empty?)
-                  (dissoc user :first-name) (complement empty?)
-                  (dissoc user :last-name) (complement empty?)
-                  (dissoc user :username) (complement empty?))))
+(let [uri (user/uuid->uri "cloud-user")
+      user (assoc valid-user-entry
+             :id uri
+             :resourceURI user/type-uri
+             :created #inst "1964-08-25T10:00:00.0Z"
+             :updated #inst "1964-08-25T10:00:00.0Z")]
+
+  (expect nil? (s/check User user))
+  (expect nil? (s/check User (assoc user :password "password")))
+  (expect nil? (s/check User (assoc user :enabled true)))
+  (expect (s/check User (assoc user :enabled "BAD")))
+  (expect nil? (s/check User (assoc user :roles ["OK"])))
+  (expect (s/check User (assoc user :roles [])))
+  (expect (s/check User (assoc user :roles "BAD")))
+  (expect nil? (s/check User (assoc user :altnames {:x500dn "certdn"})))
+  (expect (s/check User (assoc user :altnames {})))
+  (expect nil? (s/check User (assoc user :email "ok@example.com")))
+  (expect (s/check User (dissoc user :acl)))
+  (expect (s/check User (dissoc user :first-name)))
+  (expect (s/check User (dissoc user :last-name)))
+  (expect (s/check User (dissoc user :username))))
 
 ;;
 ;; Service configuration
 ;;
+
 (def valid-sc-entry
   {:acl      valid-acl
    :service  "authn"
    :instance "first"})
 
-(deftest test-sc-schema
-  (let [uri (sc/uuid->uri "authn.first")
-        sc (assoc valid-sc-entry
-             :id uri
-             :resourceURI user/type-uri
-             :created "1964-08-25T10:00:00.0Z"
-             :updated "1964-08-25T10:00:00.0Z")]
-    (are [v pred] (pred (validation-errors ServiceConfiguration v))
-                  sc empty?
-                  (dissoc sc :instance "password") empty?
-                  (dissoc sc :service) (complement empty?)
-                  (assoc sc :dummy "dummy") empty?)))
+(let [uri (sc/uuid->uri "authn.first")
+      sc (assoc valid-sc-entry
+           :id uri
+           :resourceURI user/type-uri
+           :created #inst "1964-08-25T10:00:00.0Z"
+           :updated #inst "1964-08-25T10:00:00.0Z")]
+
+  (expect nil? (s/check ServiceConfiguration sc))
+  (expect nil? (s/check ServiceConfiguration (dissoc sc :instance)))
+  (expect (s/check ServiceConfiguration (assoc sc :bad "BAD"))))
 
 ;;
 ;; VolumeConfiguration
@@ -206,18 +282,17 @@
    :format   "ext4"
    :capacity 1000})
 
-(deftest test-volume-configuration-schema
-  (let [uri (vc/uuid->uri (utils/create-uuid))
-        volume-configuration (assoc valid-vc-entry
-                               :id uri
-                               :resourceURI vc/type-uri
-                               :created "1964-08-25T10:00:00.0Z"
-                               :updated "1964-08-25T10:00:00.0Z")]
-    (are [v pred] (pred (validation-errors VolumeConfiguration v))
-                  volume-configuration empty?
-                  (dissoc volume-configuration :type) empty?
-                  (dissoc volume-configuration :format) empty?
-                  (dissoc volume-configuration :capacity) (complement empty?))))
+(let [uri (vc/uuid->uri (utils/create-uuid))
+      vc (assoc valid-vc-entry
+           :id uri
+           :resourceURI vc/type-uri
+           :created #inst "1964-08-25T10:00:00.0Z"
+           :updated #inst "1964-08-25T10:00:00.0Z")]
+
+  (expect nil? (s/check VolumeConfiguration vc))
+  (expect nil? (s/check VolumeConfiguration (dissoc vc :type)))
+  (expect nil? (s/check VolumeConfiguration (dissoc vc :format)))
+  (expect (s/check VolumeConfiguration (dissoc vc :capacity))))
 
 ;;
 ;; VolumeImage
@@ -229,19 +304,17 @@
    :imageLocation {:href "GWE_nifKGCcXiFk42XaLrS8LQ-J"}
    :bootable      true})
 
-(deftest test-volume-image-schema
-  (let [volume-image (assoc valid-vi-entry
-                       :id "VolumeImage/10"
-                       :resourceURI vi/type-uri
-                       :created "1964-08-25T10:00:00.0Z"
-                       :updated "1964-08-25T10:00:00.0Z")]
+(let [vi (assoc valid-vi-entry
+           :id "VolumeImage/10"
+           :resourceURI vi/type-uri
+           :created #inst "1964-08-25T10:00:00.0Z"
+           :updated #inst "1964-08-25T10:00:00.0Z")]
 
-    (are [v pred] (pred (validation-errors VolumeImage v))
-                  volume-image empty?
-                  (dissoc volume-image :state) (complement empty?)
-                  (dissoc volume-image :imageLocation) (complement empty?)
-                  (assoc volume-image :imageLocation {}) (complement empty?)
-                  (dissoc volume-image :bootable) (complement empty?))))
+  (expect nil? (s/check VolumeImage vi))
+  (expect (s/check VolumeImage (dissoc vi :state)))
+  (expect (s/check VolumeImage (dissoc vi :imageLocation)))
+  (expect (s/check VolumeImage (assoc vi :imageLocation {})))
+  (expect (s/check VolumeImage (dissoc vi :bootable))))
 
 ;;
 ;; VolumeTemplate
@@ -252,18 +325,16 @@
    :volumeConfig {:href "VolumeConfiguration/uuid"}
    :volumeImage  {:href "VolumeImage/mkplaceid"}})
 
-(deftest test-volume-template-schema
-  (let [uri (vt/uuid->uri (utils/create-uuid))
-        volume-template (assoc valid-vt-entry
-                          :id uri
-                          :resourceURI vt/type-uri
-                          :created "1964-08-25T10:00:00.0Z"
-                          :updated "1964-08-25T10:00:00.0Z")]
+(let [uri (vt/uuid->uri (utils/create-uuid))
+      vt (assoc valid-vt-entry
+           :id uri
+           :resourceURI vt/type-uri
+           :created #inst "1964-08-25T10:00:00.0Z"
+           :updated #inst "1964-08-25T10:00:00.0Z")]
 
-    (are [v pred] (pred (validation-errors VolumeTemplate v))
-                  volume-template empty?
-                  (dissoc volume-template :volumeConfig) (complement empty?)
-                  (dissoc volume-template :volumeImage) empty?)))
+  (expect nil? (s/check VolumeTemplate vt))
+  (expect nil? (s/check VolumeTemplate (dissoc vt :volumeImage)))
+  (expect (s/check VolumeTemplate (dissoc vt :volumeConfig))))
 
 ;;
 ;; Volume
@@ -277,20 +348,18 @@
    :bootable true
    :eventLog "EventLog/uuid"})
 
-(deftest test-volume-schema
-  (let [volume (assoc valid-v-entry
-                 :id "Volume/10"
-                 :resourceURI v/type-uri
-                 :created "1964-08-25T10:00:00.0Z"
-                 :updated "1964-08-25T10:00:00.0Z")]
+(let [volume (assoc valid-v-entry
+               :id "Volume/10"
+               :resourceURI v/type-uri
+               :created #inst "1964-08-25T10:00:00.0Z"
+               :updated #inst "1964-08-25T10:00:00.0Z")]
 
-    (are [v pred] (pred (validation-errors Volume v))
-                  volume empty?
-                  (dissoc volume :state) empty?
-                  (dissoc volume :bootable) empty?
-                  (dissoc volume :eventLog) empty?
-                  (dissoc volume :type) (complement empty?)
-                  (dissoc volume :capacity) (complement empty?))))
+  (expect nil? (s/check Volume volume))
+  (expect nil? (s/check Volume (dissoc volume :state)))
+  (expect nil? (s/check Volume (dissoc volume :bootable)))
+  (expect nil? (s/check Volume (dissoc volume :eventLog)))
+  (expect (s/check Volume (dissoc volume :type)))
+  (expect (s/check Volume (dissoc volume :capacity))))
 
 ;;
 ;; Job
@@ -305,29 +374,27 @@
    :returnCode         0
    :progress           0
    :statusMessage      "none"
-   :timeOfStatusChange "20130825T10:00:00.00Z"
+   :timeOfStatusChange #inst "2013-08-25T10:00:00.00Z"
    :parentJob          "Job/uuid-1"
    :nestedJobs         ["Job/uuid-2"]})
 
-(deftest test-job-schema
-  (let [job (assoc valid-job-entry
-              :id "/Job/10"
-              :resourceURI job/type-uri
-              :created "1964-08-25T10:00:00.0Z"
-              :updated "1964-08-25T10:00:00.0Z")]
+(let [job (assoc valid-job-entry
+            :id "/Job/10"
+            :resourceURI job/type-uri
+            :created #inst "1964-08-25T10:00:00.0Z"
+            :updated #inst "1964-08-25T10:00:00.0Z")]
 
-    (are [v pred] (pred (validation-errors Job v))
-                  job empty?
-                  (dissoc job :state) empty?
-                  (dissoc job :affectedResources) empty?
-                  (dissoc job :returnCode) empty?
-                  (dissoc job :progress) empty?
-                  (dissoc job :statusMessage) empty?
-                  (dissoc job :timeOfStatusChange) empty?
-                  (dissoc job :parentJob) empty?
-                  (dissoc job :nestedJobs) empty?
-                  (dissoc job :targetResource) (complement empty?)
-                  (dissoc job :action) (complement empty?))))
+  (expect nil? (s/check Job job))
+  (expect nil? (s/check Job (dissoc job :state)))
+  (expect nil? (s/check Job (dissoc job :affectedResources)))
+  (expect nil? (s/check Job (dissoc job :returnCode)))
+  (expect nil? (s/check Job (dissoc job :progress)))
+  (expect nil? (s/check Job (dissoc job :statusMessage)))
+  (expect nil? (s/check Job (dissoc job :timeOfStatusChange)))
+  (expect nil? (s/check Job (dissoc job :parentJob)))
+  (expect nil? (s/check Job (dissoc job :nestedJobs)))
+  (expect (s/check Job (dissoc job :targetResource)))
+  (expect (s/check Job (dissoc job :action))))
 
 ;;
 ;; MachineConfiguration
@@ -344,88 +411,86 @@
                   :format          "ext4"
                   :initialLocation "/dev/hda"}]})
 
-(deftest test-disk-schema
-  (let [disk {:capacity 1024 :format "ext4" :initialLocation "/dev/hda"}]
+(let [disk {:capacity        1024
+            :format          "ext4"
+            :initialLocation "/dev/hda"}]
 
-    (are [v pred] (pred (validation-errors Disk v))
-                  disk empty?
-                  (dissoc disk :initialLocation) empty?
-                  (dissoc disk :capacity) (complement empty?)
-                  (dissoc disk :format) (complement empty?)
-                  {} (complement empty?))))
+  (expect nil? (s/check Disk disk))
+  (expect nil? (s/check Disk (dissoc disk :initialLocation)))
+  (expect (s/check Disk (dissoc disk :capacity)))
+  (expect (s/check Disk (dissoc disk :format)))
+  (expect (s/check Disk {})))
 
-(deftest test-disks-schema
-  (let [disks [{:capacity 1024 :format "ext4" :initialLocation "/dev/hda"}
-               {:capacity 2048 :format "swap" :initialLocation "/dev/hdb"}]]
+(let [disks [{:capacity        1024
+              :format          "ext4"
+              :initialLocation "/dev/hda"}
+             {:capacity        2048
+              :format          "swap"
+              :initialLocation "/dev/hdb"}]]
 
-    (are [v pred] (pred (validation-errors Disks v))
-                  disks empty?
-                  (rest disks) empty?
-                  [] (complement empty?))))
+  (expect nil? (s/check Disks disks))
+  (expect nil? (s/check Disks (rest disks)))
+  (expect (s/check Disks [])))
 
-(deftest test-machine-configuration-schema
-  (let [mc (assoc valid-mc-entry
-             :id "/MachineConfiguration/10"
-             :resourceURI mc/type-uri
-             :created "1964-08-25T10:00:00.0Z"
-             :updated "1964-08-25T10:00:00.0Z"
-             :disks [{:capacity 1024
-                      :format   "ext4"}])]
+(let [mc (assoc valid-mc-entry
+           :id "/MachineConfiguration/10"
+           :resourceURI mc/type-uri
+           :created #inst "1964-08-25T10:00:00.0Z"
+           :updated #inst "1964-08-25T10:00:00.0Z"
+           :disks [{:capacity 1024
+                    :format   "ext4"}])]
 
-    (are [v pred] (pred (validation-errors MachineConfiguration v))
-                  mc empty?
-                  (dissoc mc :disks) empty?
-                  (dissoc mc :cpu) (complement empty?)
-                  (dissoc mc :memory) (complement empty?)
-                  (dissoc mc :cpuArch) (complement empty?)
-                  (dissoc mc :cpu) (complement empty?))))
+  (expect nil? (s/check MachineConfiguration mc))
+  (expect nil? (s/check MachineConfiguration (dissoc mc :disks)))
+  (expect (s/check MachineConfiguration (dissoc mc :cpu)))
+  (expect (s/check MachineConfiguration (dissoc mc :memory)))
+  (expect (s/check MachineConfiguration (dissoc mc :cpuArch))))
 
 ;;
 ;; MachineImage
 ;;
 
 (def valid-mi-entry
-  {:acl         valid-acl
-   :name        "valid"
-   :description "valid machine image"
-   :state "CREATING"
-   :type "SNAPSHOT"
+  {:acl           valid-acl
+   :name          "valid"
+   :description   "valid machine image"
+   :state         "CREATING"
+   :type          "SNAPSHOT"
    :imageLocation "https://image.com/myimage"
    :relatedImage  {:href "MachineImage/other-uuid"}})
 
-(deftest test-machine-image-schema
-  (let [mi (assoc valid-mi-entry
-             :id "MachineImage/10"
-             :resourceURI mi/type-uri
-             :created "1964-08-25T10:00:00.0Z"
-             :updated "1964-08-25T10:00:00.0Z"
-             )]
+(let [mi (assoc valid-mi-entry
+           :id "MachineImage/10"
+           :resourceURI mi/type-uri
+           :created #inst "1964-08-25T10:00:00.0Z"
+           :updated #inst "1964-08-25T10:00:00.0Z"
+           )]
 
-    (are [v pred] (pred (validation-errors MachineImage v))
-                  mi empty?
-                  (dissoc mi :state) (complement empty?)
-                  (dissoc mi :type) (complement empty?)
-                  (dissoc mi :imageLocation) empty?
-                  (dissoc mi :relatedImage) empty?
-                  (assoc mi :state "IMAGE") (complement empty?))))
+  (expect nil? (s/check MachineImage mi))
+  (expect nil? (s/check MachineImage (dissoc mi :imageLocation)))
+  (expect nil? (s/check MachineImage (dissoc mi :relatedImage)))
+  (expect (s/check MachineImage (dissoc mi :state)))
+  (expect (s/check MachineImage (dissoc mi :type)))
+  (expect (s/check MachineImage (assoc mi :state "IMAGE"))))
 
 ;;
 ;; Service Message
 ;;
 
-(deftest test-schema
-  (let [timestamp "1964-08-25T10:00:00.0Z"
-        uri (sm/uuid->uri timestamp)
-        service-message {:acl         valid-acl
-                         :id          uri
-                         :resourceURI sm/type-uri
-                         :created     timestamp
-                         :updated     timestamp
-                         :name        "title"
-                         :description "description"}]
+(let [timestamp #inst "1964-08-25T10:00:00.0Z"
+      uri (sm/uuid->uri timestamp)
+      sm {:acl         valid-acl
+          :id          uri
+          :resourceURI sm/type-uri
+          :created     timestamp
+          :updated     timestamp
+          :title       "title"
+          :message     "message"}]
 
-    (are [v pred] (pred (validation-errors ServiceMessage v))
-                  service-message empty?
-                  (dissoc service-message :name) (complement empty?)
-                  (dissoc service-message :description) (complement empty?))))
+  (expect nil? (s/check ServiceMessage sm))
+  (expect (s/check ServiceMessage (dissoc sm :title)))
+  (expect (s/check ServiceMessage (dissoc sm :message))))
+
+
+(run-tests [*ns*])
 

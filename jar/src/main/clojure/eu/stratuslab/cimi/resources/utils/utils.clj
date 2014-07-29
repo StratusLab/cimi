@@ -27,7 +27,7 @@
     [clojure.string :as str]
     [clj-time.core :as time]
     [clj-time.format :as time-fmt]
-    [clj-schema.validation :refer [validation-errors]]
+    [schema.core :as s]
     [ring.util.response :as r])
   (:import
     [java.util UUID Date]))
@@ -77,12 +77,14 @@
    given schema.  The generated function raises an exception with the
    violations of the schema or the resource itself if everything's OK."
   [schema]
-  (fn [resource]
-    (let [errors (validation-errors schema resource)]
-      (if (empty? errors)
-        resource
-        (throw (Exception. (str "resource does not satisfy defined schema\n"
-                                (str/join "\n" errors))))))))
+  (let [checker (s/checker schema)]
+    (fn [resource]
+      (let [msg (checker resource)]
+        (if msg
+          (throw (ex-info (str "resource does not satisfy defined schema\n" msg)
+                          {:schema schema
+                           :resource resource}))
+          resource)))))
 
 (defn get-resource
   "Gets the resource identified by its URI from Couchbase.  If the URI is nil,
@@ -92,7 +94,7 @@
   (if uri
     (if-let [json (cbc/get-json cb-client uri)]
       json
-      (throw (Exception. (str "non-existent resource: " uri))))
+      (throw (ex-info (str "non-existent resource: " uri) {})))
     {}))
 
 (defn service-configuration

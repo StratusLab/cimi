@@ -3,7 +3,6 @@
     [eu.stratuslab.cimi.resources.volume :refer :all]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
-    [clj-schema.validation :refer [validation-errors]]
     [ring.util.response :as rresp]
     [clojure.test :refer :all]
     [clojure.data.json :as json]

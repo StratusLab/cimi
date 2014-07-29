@@ -1,5 +1,5 @@
 ;
-; Copyright 2013 Centre National de la Recherche Scientifique (CNRS)
+; Copyright 2014 Centre National de la Recherche Scientifique (CNRS)
 ;
 ; Licensed under the Apache License, Version 2.0 (the "License")
 ; you may not use this file except in compliance with the License.
@@ -18,11 +18,8 @@
   "Data, definitions, and utilities common to all resources."
   (:require
     [clojure.tools.logging :refer [debug info error]]
-    [clj-schema.schema :refer :all]
-    [clj-schema.simple-schemas :refer :all]
-    [clj-schema.validation :refer :all])
-  (:import
-    clojure.lang.Keyword))
+    [clojure.string :as str]
+    [schema.core :as s]))
 
 (def ^:const resource-uri "http://schemas.dmtf.org/cimi/1/")
 
@@ -36,30 +33,44 @@
         m (into {} (map (fn [k] [k (str root (name k))]) valid-actions))]
     (assoc m :add "add" :edit "edit" :delete "delete")))
 
-(def ^:const ValidCpuArch
-  #{"68000" "Alpha" "ARM" "Itanium" "MIPS" "PA_RISC"
-    "POWER" "PowerPC" "x86" "x86_64" "zArchitecture", "SPARC"})
+(def ^:const valid-action-uris
+  (vals action-uri))
 
-(def-map-schema
-  ^{:doc "Link to another resource."}
-  ResourceLink
-  [[:href] NonEmptyString])
+(def NotEmpty
+  (s/pred seq "not-empty?"))
 
-(def-seq-schema ResourceLinks
-                (constraints (fn [s] (seq s)))
-                [ResourceLink])
+(def PosInt
+  (s/both s/Int (s/pred pos? "pos?")))
 
-(def-map-schema Operation
-                [[:rel] (set (vals action-uri))
-                 [:href] NonEmptyString])
+(def NonNegInt
+  (s/both s/Int (s/pred (complement neg?) "not-neg?")))
 
-(def-seq-schema Operations
-                (constraints (fn [s] (seq s)))
-                [Operation])
+(def NonBlankString
+  (s/both s/Str (s/pred (complement str/blank?) "not-blank?")))
 
-(def-map-schema Properties
-                (constraints (fn [m] (seq m)))
-                [[(wild (:or Keyword String))] String])
+(def NonEmptyStrList
+  (s/both [NonBlankString] NotEmpty))
+
+(def ValidCpuArch
+  (s/enum "68000" "Alpha" "ARM" "Itanium" "MIPS" "PA_RISC"
+          "POWER" "PowerPC" "x86" "x86_64" "zArchitecture", "SPARC"))
+
+(def ResourceLink
+  {:href NonBlankString})
+
+(def ResourceLinks
+  (s/both [ResourceLink] NotEmpty))
+
+(def Operation
+  (merge ResourceLink {:rel (apply s/enum valid-action-uris)}))
+
+(def Operations
+  (s/both [Operation] NotEmpty))
+
+(def Properties
+  (s/both
+    {(s/either s/Keyword s/Str) s/Str}
+    NotEmpty))
 
 ;;
 ;; Ownership and access control
@@ -68,25 +79,23 @@
 ;; StratusLab implementation.
 ;;
 
-(def access-control-types #{"USER" "ROLE"})
+(def access-control-types (s/enum "USER" "ROLE"))
 
-(def access-control-rights #{"ALL" "VIEW" "MODIFY"})
+(def access-control-rights (s/enum "ALL" "VIEW" "MODIFY"))
 
-(def-map-schema AccessControlId
-                [[:principal] NonEmptyString
-                 [:type] access-control-types])
+(def AccessControlId
+  {:principal NonBlankString
+   :type      access-control-types})
 
-(def-map-schema AccessControlRule
-                AccessControlId
-                [[:right] access-control-rights])
+(def AccessControlRule
+  (merge AccessControlId {:right access-control-rights}))
 
-(def-seq-schema AccessControlRules
-                (constraints (fn [s] (seq s)))
-                AccessControlRule)
+(def AccessControlRules
+  (s/both [AccessControlRule] NotEmpty))
 
-(def-map-schema AccessControlList
-                [[:owner] AccessControlId
-                 (optional-path [:rules]) AccessControlRules])
+(def AccessControlList
+  {:owner                  AccessControlId
+   (s/optional-key :rules) AccessControlRules})
 
 ;;
 ;; These attributes are common to all resources except the
@@ -94,355 +103,361 @@
 ;; CIMI service implementation, the required entries and the
 ;; :operations will be replaced by the service-generated values.
 ;;
-(def-map-schema CommonAttrs
-                [[:acl] AccessControlList  ;; StratusLab addition
-                 [:id] NonEmptyString
-                 [:resourceURI] NonEmptyString
-                 (optional-path [:name]) NonEmptyString
-                 (optional-path [:description]) NonEmptyString
-                 [:created] NonEmptyString
-                 [:updated] NonEmptyString
-                 (optional-path [:properties]) Properties
-                 (optional-path [:operations]) Operations])
+(def CommonAttrs
+  {:acl                          AccessControlList          ;; StratusLab addition
+   :id                           NonBlankString
+   :resourceURI                  NonBlankString
+   (s/optional-key :name)        NonBlankString
+   (s/optional-key :description) NonBlankString
+   :created                      s/Inst
+   :updated                      s/Inst
+   (s/optional-key :properties)  Properties
+   (s/optional-key :operations)  Operations})
 
 ;;
 ;; These are the common attributes for create resources.
 ;; All of the common attributes are allowed, but the optional
 ;; ones other than :name and :description will be ignored.
 ;;
-(def-map-schema CreateAttrs
-                [[:resourceURI] NonEmptyString
-                 (optional-path [:name]) NonEmptyString
-                 (optional-path [:description]) NonEmptyString
-                 (optional-path [:created]) NonEmptyString
-                 (optional-path [:updated]) NonEmptyString
-                 (optional-path [:properties]) Properties
-                 (optional-path [:operations]) Operations])
+(def CreateAttrs
+  {:resourceURI                  NonBlankString
+   (s/optional-key :name)        NonBlankString
+   (s/optional-key :description) NonBlankString
+   (s/optional-key :created)     s/Inst
+   (s/optional-key :updated)     s/Inst
+   (s/optional-key :properties)  Properties
+   (s/optional-key :operations)  Operations})
 
 ;;
 ;; User records within the database.  (StratusLab extension.)
 ;;
-(def-seq-schema Roles
-                (constraints (fn [s] (seq s)))
-                [NonEmptyString])
+(def Roles
+  (s/both
+    [NonBlankString]
+    NotEmpty))
 
-(def-map-schema Altnames
-                (constraints (fn [m] (seq m)))
-                [[(wild Keyword)] NonEmptyString])
+(def Altnames
+  (s/both
+    {s/Keyword NonBlankString}
+    NotEmpty))
 
-(def-map-schema User :loose
-                CommonAttrs
-                [[:first-name] NonEmptyString
-                 [:last-name] NonEmptyString
-                 [:username] NonEmptyString
-                 (optional-path [:password]) NonEmptyString
-                 (optional-path [:enabled]) Boolean
-                 (optional-path [:roles]) Roles
-                 (optional-path [:altnames]) Altnames])
+(def User
+  (merge CommonAttrs
+         {:first-name                NonBlankString
+          :last-name                 NonBlankString
+          :username                  NonBlankString
+          (s/optional-key :password) NonBlankString
+          (s/optional-key :enabled)  s/Bool
+          (s/optional-key :roles)    Roles
+          (s/optional-key :altnames) Altnames
+          (s/optional-key :email)    NonBlankString}))
 
 ;;
 ;; Service configuration files.  (StratusLab extension.)
 ;;
-(def-map-schema ServiceConfiguration :loose
-                CommonAttrs
-                [[:service] NonEmptyString
-                 (optional-path [:instance]) NonEmptyString])
+(def ServiceConfiguration
+  (merge CommonAttrs
+         {:service                   NonBlankString
+          (s/optional-key :instance) NonBlankString}))
 
 ;;
 ;; Cloud Entry Point Schema
 ;;
 
-(def-map-schema CloudEntryPoint
-                CommonAttrs
-                [[:baseURI] NonEmptyString
-                 (optional-path [:resourceMetadata]) ResourceLink
-                 (optional-path [:systems]) ResourceLink
-                 (optional-path [:systemTemplates]) ResourceLink
-                 (optional-path [:machines]) ResourceLink
-                 (optional-path [:machineTemplates]) ResourceLink
-                 (optional-path [:machineConfigs]) ResourceLink
-                 (optional-path [:machineImages]) ResourceLink
-                 (optional-path [:credentials]) ResourceLink
-                 (optional-path [:credentialTemplates]) ResourceLink
-                 (optional-path [:volumes]) ResourceLink
-                 (optional-path [:volumeTemplates]) ResourceLink
-                 (optional-path [:volumeConfigs]) ResourceLink
-                 (optional-path [:volumeImages]) ResourceLink
-                 (optional-path [:networks]) ResourceLink
-                 (optional-path [:networkTemplates]) ResourceLink
-                 (optional-path [:networkConfigs]) ResourceLink
-                 (optional-path [:networkPorts]) ResourceLink
-                 (optional-path [:networkPortTemplates]) ResourceLink
-                 (optional-path [:networkPortConfigs]) ResourceLink
-                 (optional-path [:addresses]) ResourceLink
-                 (optional-path [:addressTemplates]) ResourceLink
-                 (optional-path [:forwardingGroups]) ResourceLink
-                 (optional-path [:forwardingGroupTemplates]) ResourceLink
-                 (optional-path [:jobs]) ResourceLink
-                 (optional-path [:meters]) ResourceLink
-                 (optional-path [:meterTemplates]) ResourceLink
-                 (optional-path [:meterConfigs]) ResourceLink
-                 (optional-path [:eventLogs]) ResourceLink
-                 (optional-path [:eventLogTemplates]) ResourceLink
-                 (optional-path [:serviceConfigurations]) ResourceLink
-                 (optional-path [:serviceMessages]) ResourceLink
-                 (optional-path [:users]) ResourceLink])
+(def CloudEntryPoint
+  (merge CommonAttrs
+         {:baseURI                                   NonBlankString
+          (s/optional-key :resourceMetadata)         ResourceLink
+          (s/optional-key :systems)                  ResourceLink
+          (s/optional-key :systemTemplates)          ResourceLink
+          (s/optional-key :machines)                 ResourceLink
+          (s/optional-key :machineTemplates)         ResourceLink
+          (s/optional-key :machineConfigs)           ResourceLink
+          (s/optional-key :machineImages)            ResourceLink
+          (s/optional-key :credentials)              ResourceLink
+          (s/optional-key :credentialTemplates)      ResourceLink
+          (s/optional-key :volumes)                  ResourceLink
+          (s/optional-key :volumeTemplates)          ResourceLink
+          (s/optional-key :volumeConfigs)            ResourceLink
+          (s/optional-key :volumeImages)             ResourceLink
+          (s/optional-key :networks)                 ResourceLink
+          (s/optional-key :networkTemplates)         ResourceLink
+          (s/optional-key :networkConfigs)           ResourceLink
+          (s/optional-key :networkPorts)             ResourceLink
+          (s/optional-key :networkPortTemplates)     ResourceLink
+          (s/optional-key :networkPortConfigs)       ResourceLink
+          (s/optional-key :addresses)                ResourceLink
+          (s/optional-key :addressTemplates)         ResourceLink
+          (s/optional-key :forwardingGroups)         ResourceLink
+          (s/optional-key :forwardingGroupTemplates) ResourceLink
+          (s/optional-key :jobs)                     ResourceLink
+          (s/optional-key :meters)                   ResourceLink
+          (s/optional-key :meterTemplates)           ResourceLink
+          (s/optional-key :meterConfigs)             ResourceLink
+          (s/optional-key :eventLogs)                ResourceLink
+          (s/optional-key :eventLogTemplates)        ResourceLink
+          (s/optional-key :serviceConfigurations)    ResourceLink ;; StratusLab extension
+          (s/optional-key :serviceMessages)          ResourceLink ;; StratusLab extension
+          (s/optional-key :users)                    ResourceLink ;; StratusLab extension
+          }))
 
 ;;
 ;; Volume Related Schemas
 ;;
 
-(def image-states #{"CREATING" "AVAILABLE" "DELETING" "ERROR"})
+(def image-states (s/enum "CREATING" "AVAILABLE" "DELETING" "ERROR"))
 
-(def volume-states #{"CREATING" "AVAILABLE" "CAPTURING" "DELETING" "ERROR"})
+(def volume-states (s/enum "CREATING" "AVAILABLE" "CAPTURING" "DELETING" "ERROR"))
 
-(def-map-schema VolumeConfigurationAttrs
-                [(optional-path [:type]) NonEmptyString
-                 (optional-path [:format]) NonEmptyString
-                 (optional-path [:capacity]) NonNegIntegral])
+(def VolumeConfigurationAttrs
+  {(s/optional-key :type)     NonBlankString
+   (s/optional-key :format)   NonBlankString
+   (s/optional-key :capacity) PosInt})
 
-(def-map-schema VolumeConfiguration
-                CommonAttrs
-                [(optional-path [:type]) NonEmptyString
-                 (optional-path [:format]) NonEmptyString
-                 [:capacity] NonNegIntegral])
+(def VolumeConfigurationAttrs
+  {(s/optional-key :type)     NonBlankString
+   (s/optional-key :format)   NonBlankString
+   (s/optional-key :capacity) PosInt})
 
-(def-map-schema VolumeImageAttrs
-                [(optional-path [:state]) image-states
-                 (optional-path [:imageLocation]) ResourceLink
-                 (optional-path [:bootable]) Boolean])
+(def VolumeConfiguration
+  (merge CommonAttrs
+         {(s/optional-key :type)   NonBlankString
+          (s/optional-key :format) NonBlankString
+          :capacity                PosInt}))
 
-(def-map-schema VolumeImage
-                CommonAttrs
-                [[:state] image-states
-                 [:imageLocation] ResourceLink
-                 [:bootable] Boolean])
+(def VolumeImageAttrs
+  {(s/optional-key :state)         image-states
+   (s/optional-key :imageLocation) ResourceLink
+   (s/optional-key :bootable)      s/Bool})
 
-(def-map-schema VolumeConfigurationRef
-                VolumeConfigurationAttrs
-                [(optional-path [:href]) NonEmptyString])
+(def VolumeImage
+  (merge CommonAttrs
+         {:state         image-states
+          :imageLocation ResourceLink
+          :bootable      s/Bool}))
 
-(def-map-schema VolumeImageRef
-                VolumeImageAttrs
-                [(optional-path [:href]) NonEmptyString])
+(def VolumeConfigurationRef
+  (merge VolumeConfigurationAttrs
+         {(s/optional-key :href) NonBlankString}))
+
+(def VolumeImageRef
+  (merge VolumeImageAttrs
+         {(s/optional-key :href) NonBlankString}))
 
 ;; TODO: Add real schema once Meters are supported.
 (def MeterTemplateRef
-  Anything)
+  {})
 
-(def-seq-schema MeterTemplateRefs
-                (constraints (fn [m] (seq m)))
-                MeterTemplateRef)
+(def MeterTemplateRefs
+  (s/both [MeterTemplateRef] NotEmpty))
 
 ;; TODO: Add real schema once EventLogs are supported.
 (def EventLogTemplateRef
-  Anything)
+  {})
 
-(def-map-schema VolumeTemplateAttrs
-                [(optional-path [:volumeConfig]) VolumeConfigurationRef
-                 (optional-path [:volumeImage]) VolumeImageRef
-                 (optional-path [:meterTemplates]) MeterTemplateRefs
-                 (optional-path [:eventLogTemplate]) EventLogTemplateRef])
+(def VolumeTemplateAttrs
+  {(s/optional-key :volumeConfig)     VolumeConfigurationRef
+   (s/optional-key :volumeImage)      VolumeImageRef
+   (s/optional-key :meterTemplates)   MeterTemplateRefs
+   (s/optional-key :eventLogTemplate) EventLogTemplateRef})
 
-(def-map-schema VolumeTemplate
-                CommonAttrs
-                [[:volumeConfig] VolumeConfigurationRef
-                 (optional-path [:volumeImage]) VolumeImageRef
-                 (optional-path [:meterTemplates]) MeterTemplateRefs
-                 (optional-path [:eventLogTemplate]) EventLogTemplateRef])
+(def VolumeTemplate
+  (merge CommonAttrs
+         {:volumeConfig                      VolumeConfigurationRef
+          (s/optional-key :volumeImage)      VolumeImageRef
+          (s/optional-key :meterTemplates)   MeterTemplateRefs
+          (s/optional-key :eventLogTemplate) EventLogTemplateRef}))
 
-(def-map-schema ^{:doc "Documentation"} Volume
-                CommonAttrs
-                [(optional-path [:state]) volume-states
-                 [:type] NonEmptyString
-                 [:capacity] NonNegIntegral
-                 (optional-path [:bootable]) Boolean
-                 (optional-path [:eventLog]) NonEmptyString])
+(def Volume
+  (merge CommonAttrs
+         {(s/optional-key :state)    volume-states
+          :type                      NonBlankString
+          :capacity                  PosInt
+          (s/optional-key :bootable) s/Bool
+          (s/optional-key :eventLog) NonBlankString
+          }))
 
-(def-map-schema VolumeTemplateRef
-                VolumeTemplateAttrs
-                [(optional-path [:href]) NonEmptyString])
+(def VolumeTemplateRef
+  (merge VolumeTemplateAttrs
+         {(s/optional-key :href) NonBlankString}))
 
-(def-map-schema VolumeCreate
-                CreateAttrs
-                [[:volumeTemplate] VolumeTemplateRef])
+(def VolumeCreate
+  (merge CreateAttrs
+         {:volumeTemplate VolumeTemplateRef}))
 
 ;;
 ;; Jobs
 ;;
 
-(def job-states #{"QUEUED" "RUNNING" "FAILED" "SUCCESS" "STOPPING" "STOPPED"})
+(def job-states (s/enum "QUEUED" "RUNNING" "FAILED" "SUCCESS" "STOPPING" "STOPPED"))
 
-(def-map-schema Job
-                CommonAttrs
-                [(optional-path [:state]) job-states
-                 [:targetResource] NonEmptyString
-                 (optional-path [:affectedResources]) (sequence-of NonEmptyString)
-                 [:action] NonEmptyString
-                 (optional-path [:returnCode]) Integral
-                 (optional-path [:progress]) NonNegIntegral
-                 (optional-path [:statusMessage]) NonEmptyString
-                 (optional-path [:timeOfStatusChange]) NonEmptyString
-                 (optional-path [:parentJob]) NonEmptyString
-                 (optional-path [:nestedJobs]) (sequence-of NonEmptyString)])
+(def Job
+  (merge CommonAttrs
+         {(s/optional-key :state)              job-states
+          :targetResource                      NonBlankString
+          (s/optional-key :affectedResources)  NonEmptyStrList
+          :action                              NonBlankString
+          (s/optional-key :returnCode)         s/Int
+          (s/optional-key :progress)           NonNegInt
+          (s/optional-key :statusMessage)      NonBlankString
+          (s/optional-key :timeOfStatusChange) s/Inst
+          (s/optional-key :parentJob)          NonBlankString
+          (s/optional-key :nestedJobs)         NonEmptyStrList}))
 
 ;;
 ;; Event
 ;;
 
-(def-map-schema StateContent
-                [[:resName] NonEmptyString
-                 [:resource] NonEmptyString
-                 [:resType] NonEmptyString
-                 [:state] NonEmptyString
-                 (optional-path [:previous]) NonEmptyString])
+(def outcome-values (s/enum "Pending" "Unknown" "Status" "Success" "Warning" "Failure"))
 
-(def-map-schema AlarmContent
-                [[:resName] NonEmptyString
-                 [:resource] NonEmptyString
-                 [:resType] NonEmptyString
-                 [:code] NonEmptyString
-                 (optional-path [:detail]) NonEmptyString])
+(def severity-values (s/enum "critical" "high" "medium" "low"))
 
-(def-map-schema ModelContent
-                [[:resName] NonEmptyString
-                 [:resource] NonEmptyString
-                 [:resType] NonEmptyString
-                 [:change] NonEmptyString
-                 (optional-path [:detail]) NonEmptyString])
+(def StateContent
+  {:resName                   NonBlankString
+   :resource                  NonBlankString
+   :resType                   NonBlankString
+   :state                     NonBlankString
+   (s/optional-key :previous) NonBlankString})
 
-(def-map-schema AccessContent
-                [[:operation] NonEmptyString
-                 [:resource] NonEmptyString
-                 (optional-path [:detail]) NonEmptyString
-                 [:initiator] NonEmptyString])
+(def AlarmContent
+  {:resName                 NonBlankString
+   :resource                NonBlankString
+   :resType                 NonBlankString
+   :code                    NonBlankString
+   (s/optional-key :detail) NonBlankString})
 
-(def-map-schema Event
-                CommonAttrs
-                [[:timestamp] NonEmptyString
-                 [:type] NonEmptyString
-                 (optional-path [:content]) (or StateContent AlarmContent ModelContent AccessContent)
-                 [:outcome] #{"Pending" "Unknown" "Status" "Success" "Warning" "Failure"}
-                 [:severity] #{"critical" "high" "medium" "low"}
-                 (optional-path [:contact]) String])
+(def ModelContent
+  {:resName                 NonBlankString
+   :resource                NonBlankString
+   :resType                 NonBlankString
+   :change                  NonBlankString
+   (s/optional-key :detail) NonBlankString})
+
+(def AccessContent
+  {:operation               NonBlankString
+   :resource                NonBlankString
+   (s/optional-key :detail) NonBlankString
+   :initiator               NonBlankString})
+
+(def Event
+  (merge CommonAttrs
+         {:timestamp                s/Inst
+          :type                     NonBlankString
+          (s/optional-key :content) (s/either StateContent AlarmContent ModelContent AccessContent)
+          :outcome                  outcome-values
+          :severity                 severity-values
+          (s/optional-key :contact) NonBlankString}))
 
 ;;
 ;; MachineConfiguration
 ;;
 
-(def-map-schema Disk
-                [[:capacity] PosIntegral
-                 [:format] NonEmptyString
-                 (optional-path [:initialLocation]) NonEmptyString])
+(def Disk
+  {:capacity                         PosInt
+   :format                           NonBlankString
+   (s/optional-key :initialLocation) NonBlankString})
 
-(def-seq-schema Disks
-                (constraints (fn [s] (pos? (count s))))
-                [Disk])
+(def Disks
+  (s/both [Disk] NotEmpty))
 
-(def-map-schema MachineConfiguration
-                CommonAttrs
-                [[:cpu] PosIntegral
-                 [:memory] PosIntegral
-                 [:cpuArch] ValidCpuArch
-                 (optional-path [:disks]) Disks])
+(def MachineConfiguration
+  (merge CommonAttrs
+         {:cpu                    PosInt
+          :memory                 PosInt
+          :cpuArch                ValidCpuArch
+          (s/optional-key :disks) Disks}))
 
 ;;
 ;; MachineImage
 ;;
 
-(def-map-schema Disk
-                [[:capacity] PosIntegral
-                 [:format] NonEmptyString
-                 (optional-path [:initialLocation]) NonEmptyString])
+(def machine-image-state-values (s/enum "CREATING" "AVAILABLE" "DELETING" "ERROR"))
 
-(def-seq-schema Disks
-                (constraints (fn [s] (seq s)))
-                [Disk])
+(def machine-image-type-values (s/enum "IMAGE" "SNAPSHOT" "PARTIAL_SNAPSHOT"))
 
-(def-map-schema MachineImage
-                (constraints (fn [m] (or (not= "IMAGE" (:type m) (nil? (:relatedImage m))))))
-                CommonAttrs
-                [[:state] #{"CREATING" "AVAILABLE" "DELETING" "ERROR"}
-                 [:type] #{"IMAGE" "SNAPSHOT" "PARTIAL_SNAPSHOT"}
-                 (optional-path [:imageLocation]) NonEmptyString
-                 (optional-path [:relatedImage]) ResourceLink])
+(def MachineImage
+  (merge CommonAttrs
+         {:state                          machine-image-state-values
+          :type                           machine-image-type-values
+          (s/optional-key :imageLocation) NonBlankString
+          (s/optional-key :relatedImage)  ResourceLink}))
 
 ;;
 ;; MachineTemplate
 ;;
 
-(def-map-schema MachineTemplateVolume
-                [(optional-path [:initialLocation]) NonEmptyString
-                 [:volume] ResourceLink])
+(def machine-template-network-state-values (s/enum "Active", "Passive", "Disabled"))
 
-(def-seq-schema MachineTemplateVolumes
-                (constraints (fn [s] (seq s)))
-                [MachineTemplateVolume])
+(def MachineTemplateVolume
+  {(s/optional-key :initialLocation) NonBlankString
+   :volume                           ResourceLink})
 
-(def-map-schema MachineTemplateVolumeTemplate
-                [(optional-path [:initialLocation]) NonEmptyString
-                 [:volumeTemplate] ResourceLink])
+(def MachineTemplateVolumes
+  (s/both [MachineTemplateVolume] NotEmpty))
 
-(def-seq-schema MachineTemplateVolumeTemplates
-                (constraints (fn [s] (seq s)))
-                [MachineTemplateVolumeTemplate])
+(def MachineTemplateVolumeTemplate
+  {(s/optional-key :initialLocation) NonBlankString
+   :volumeTemplate                   ResourceLink})
 
-(def-seq-schema MachineTemplateAddresses
-                (constraints (fn [s] (seq s)))
-                [ResourceLink])
+(def MachineTemplateVolumeTemplates
+  (s/both [MachineTemplateVolumeTemplate] NotEmpty))
 
-(def-map-schema MachineTemplateNetworkInterface
-                [(optional-path [:addresses]) MachineTemplateAddresses
-                 [:network] ResourceLink
-                 [:networkPort] ResourceLink
-                 [:state] #{"Active", "Passive", "Disabled"}
-                 [:mtu] PosIntegral])
+(def MachineTemplateAddresses
+  (s/both [ResourceLink] NotEmpty))
 
-(def-seq-schema MachineTemplateNetworkInterfaces
-                (constraints (fn [s] (seq s)))
-                [MachineTemplateNetworkInterface])
+(def MachineTemplateNetworkInterface
+  {(s/optional-key :addresses) MachineTemplateAddresses
+   :network                    ResourceLink
+   :networkPort                ResourceLink
+   :state                      machine-template-network-state-values
+   :mtu                        PosInt})
 
-(def-map-schema MachineTemplate
-                CommonAttrs
-                [[:initialState ]NonEmptyString
-                 [:machineConfig] ResourceLink
-                 [:machineImage] ResourceLink
-                 (optional-path [:credential]) ResourceLink
-                 (optional-path [:volumes]) MachineTemplateVolumes
-                 (optional-path [:volumeTemplates]) MachineTemplateVolumeTemplates
-                 (optional-path [:networkInterfaces]) MachineTemplateNetworkInterfaces
-                 (optional-path [:userData]) NonEmptyString
-                 (optional-path [:meterTemplates]) ResourceLinks
-                 (optional-path [:eventLogTemplate]) ResourceLink])
+(def MachineTemplateNetworkInterfaces
+  (s/both [MachineTemplateNetworkInterface] NotEmpty))
+
+(def MachineTemplate
+  (merge CommonAttrs
+         {:initialState                       NonBlankString
+          :machineConfig                      ResourceLink
+          :machineImage                       ResourceLink
+          (s/optional-key :credential)        ResourceLink
+          (s/optional-key :volumes)           MachineTemplateVolumes
+          (s/optional-key :volumeTemplates)   MachineTemplateVolumeTemplates
+          (s/optional-key :networkInterfaces) MachineTemplateNetworkInterfaces
+          (s/optional-key :userData)          NonBlankString
+          (s/optional-key :meterTemplates)    ResourceLinks
+          (s/optional-key :eventLogTemplate)  ResourceLink}))
 
 ;;
 ;; Machine
 ;;
 
-(def-map-schema MachineTemplate
-                CommonAttrs
-                [[:state] #{"CREATING"
-                            "STARTING" "STARTED"
-                            "STOPPING" "STOPPED"
-                            "PAUSING" "PAUSED"
-                            "SUSPENDING" "SUSPENDED"
-                            "DELETING" "ERROR"}
-                 [:cpu] PosIntegral
-                 [:memory] PosIntegral
-                 (optional-path [:disks]) ResourceLink
-                 [:cpuArch] ValidCpuArch
-                 (optional-path [:volumes]) ResourceLink
-                 (optional-path [:networkInterfaces]) ResourceLink
-                 (optional-path [:latestSnapshot]) ResourceLink
-                 (optional-path [:snapshots]) ResourceLinks
-                 (optional-path [:meters]) ResourceLinks
-                 (optional-path [:eventLog]) ResourceLink])
+(def machine-template-state-values (s/enum "CREATING"
+                                           "STARTING" "STARTED"
+                                           "STOPPING" "STOPPED"
+                                           "PAUSING" "PAUSED"
+                                           "SUSPENDING" "SUSPENDED"
+                                           "DELETING" "ERROR"))
+
+(def MachineTemplate
+  (merge CommonAttrs
+         {:state                              machine-template-network-state-values
+          :cpu                                PosInt
+          :memory                             PosInt
+          (s/optional-key :disks)             ResourceLink
+          :cpuArch                            ValidCpuArch
+          (s/optional-key :volumes)           ResourceLink
+          (s/optional-key :networkInterfaces) ResourceLink
+          (s/optional-key :latestSnapshot)    ResourceLink
+          (s/optional-key :snapshots)         ResourceLinks
+          (s/optional-key :meters)            ResourceLinks
+          (s/optional-key :eventLog)          ResourceLink}))
 
 ;;
 ;; ServiceMessage
 ;;
 
-(def-map-schema ServiceMessage
-                CommonAttrs
-                [[:name] NonEmptyString
-                 [:description] NonEmptyString])
+(def ServiceMessage
+  (merge CommonAttrs
+         {:title   NonBlankString
+          :message NonBlankString}))

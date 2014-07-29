@@ -13,33 +13,29 @@
     [eu.stratuslab.authn.workflows.client-certificate :as cwf]
     [eu.stratuslab.authn.ldap :as ldap]
     [eu.stratuslab.cimi.resources.impl.schema :as schema]
-    [clj-schema.schema :refer :all]
-    [clj-schema.simple-schemas :refer :all]
-    [clj-schema.validation :refer :all]))
+    [schema.core :as s]))
 
-(def-map-schema LocalDBSchema
-                [[:password-enabled] Boolean
-                 [:cert-enabled] Boolean])
+(def LocalDBSchema
+  {:password-enabled s/Bool
+   :cert-enabled s/Bool})
 
-(def-map-schema VomsSchema
-                [[:enabled] Boolean])
+(def VomsSchema
+  {:enabled s/Bool})
 
-(def-map-schema LdapSchema
-                ldap/LdapConfigurationSchema
-                [[:password-enabled] Boolean
-                 [:cert-enabled] Boolean])
+(def LdapSchema
+  (merge ldap/LdapConfigurationSchema
+         {:password-enabled s/Str
+          :cert-enabled s/Str}))
 
-(def-map-schema AuthnConfigurationSchema
-                schema/ServiceConfiguration
-                [[:localdb] LocalDBSchema
-                 (optional-path [:ldap]) LdapSchema
-                 (optional-path [:voms]) VomsSchema])
+(def AuthnConfigurationSchema
+  (merge schema/ServiceConfiguration
+         {:localdb LocalDBSchema
+          (s/optional-key :ldap) LdapSchema
+          (s/optional-key :voms) VomsSchema}))
 
 (defn config-errors?
   [m]
-  (let [errors (validation-errors AuthnConfigurationSchema m)]
-    (if (pos? (count errors))
-      (str/join ", " errors))))
+  (s/check AuthnConfigurationSchema m))
 
 (def default-cfg
   {:localdb {:password-enabled true

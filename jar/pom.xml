@@ -45,8 +45,9 @@
       </dependency>
       
       <dependency>
-        <groupId>org.clojars.runa</groupId>
-        <artifactId>clj-schema</artifactId>
+        <groupId>prismatic</groupId>
+        <artifactId>schema</artifactId>
+        <version>0.2.4</version>
       </dependency>
       
       <dependency>
@@ -150,6 +151,11 @@
         <artifactId>java.classpath</artifactId>
       </dependency>
       
+      <dependency>
+        <groupId>expectations</groupId>
+        <artifactId>expectations</artifactId>
+      </dependency>
+
       <dependency>
         <groupId>org.clojure</groupId>
         <artifactId>tools.namespace</artifactId>
