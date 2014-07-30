@@ -24,8 +24,10 @@
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.cb.views :as views]
+    [eu.stratuslab.cimi.resources.impl.common :as c]
     [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]
+    [schema.core :as s]
     [clojure.tools.logging :as log]))
 
 (def ^:const resource-tag :events)
@@ -43,12 +45,57 @@
 (def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}
                      :rules [{:principal "::USER" :type "ROLE" :right "VIEW"}]})
 
-(def validate (u/create-validation-fn schema/Event))
-
 (defn uuid->uri
   "Convert the uuid into a URI for the Event resource."
   [uuid]
   (str resource-type "/" uuid))
+
+;;
+;; Event
+;;
+
+(def outcome-values (s/enum "Pending" "Unknown" "Status" "Success" "Warning" "Failure"))
+
+(def severity-values (s/enum "critical" "high" "medium" "low"))
+
+(def StateContent
+  {:resName                   c/NonBlankString
+   :resource                  c/NonBlankString
+   :resType                   c/NonBlankString
+   :state                     c/NonBlankString
+   (s/optional-key :previous) c/NonBlankString})
+
+(def AlarmContent
+  {:resName                 c/NonBlankString
+   :resource                c/NonBlankString
+   :resType                 c/NonBlankString
+   :code                    c/NonBlankString
+   (s/optional-key :detail) c/NonBlankString})
+
+(def ModelContent
+  {:resName                 c/NonBlankString
+   :resource                c/NonBlankString
+   :resType                 c/NonBlankString
+   :change                  c/NonBlankString
+   (s/optional-key :detail) c/NonBlankString})
+
+(def AccessContent
+  {:operation               c/NonBlankString
+   :resource                c/NonBlankString
+   (s/optional-key :detail) c/NonBlankString
+   :initiator               c/NonBlankString})
+
+(def Event
+  (merge c/CommonAttrs
+         c/AclAttr
+         {:timestamp                s/Inst
+          :type                     c/NonBlankString
+          (s/optional-key :content) (s/either StateContent AlarmContent ModelContent AccessContent)
+          :outcome                  outcome-values
+          :severity                 severity-values
+          (s/optional-key :contact) c/NonBlankString}))
+
+(def validate (u/create-validation-fn Event))
 
 (defn add-cops
   "Adds the collection operations to the given resource."
@@ -69,7 +116,7 @@
 (defn add
   "Add a new Event to the database."
   [cb-client entry]
-  (let [uri (uuid->uri (u/create-uuid))
+  (let [uri (uuid->uri (u/random-uuid))
         entry (-> entry
                   (u/strip-service-attrs)
                   (merge {:id uri
@@ -135,7 +182,7 @@
                   collection
                   (assoc collection :events configs)))))
 
-(defroutes collection-routes
+#_(defroutes collection-routes
            (POST base-uri {:keys [cb-client body]}
                  (if (a/can-modify? collection-acl)
                    (let [json (u/body->json body)]
@@ -149,7 +196,7 @@
            (ANY base-uri []
                 (u/bad-method)))
 
-(def resource-routes
+#_(def resource-routes
   (let-routes [uri (str base-uri "/:uuid")]
               (GET uri [uuid :as {cb-client :cb-client}]
                    (retrieve cb-client uuid))
@@ -161,6 +208,6 @@
               (ANY uri []
                    (u/bad-method))))
 
-(defroutes routes
+#_(defroutes routes
            collection-routes
            resource-routes)

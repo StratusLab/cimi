@@ -10,7 +10,7 @@
 (use-fixtures :once t/temp-bucket-fixture)
 
 (deftest check-uuid
-  (let [uuid (create-uuid)]
+  (let [uuid (random-uuid)]
     (is (string? uuid))
     (is (UUID/fromString uuid))))
 

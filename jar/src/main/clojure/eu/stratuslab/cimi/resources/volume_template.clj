@@ -22,6 +22,7 @@
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.impl.schema :as schema]
+    [eu.stratuslab.cimi.resources.volume :as v]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.resources.job :as job]
@@ -45,7 +46,7 @@
 (def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}
                      :rules [{:principal "::USER" :type "ROLE" :right "MODIFY"}]})
 
-(def validate (u/create-validation-fn schema/VolumeTemplate))
+(def validate (u/create-validation-fn v/VolumeTemplate))
 
 (defn uuid->uri
   "Convert a uuid into the URI for a VolumeTemplate resource.
@@ -72,7 +73,7 @@
 (defn add
   "Add a new VolumeConfiguration to the database."
   [cb-client entry]
-  (let [uri (uuid->uri (u/create-uuid))
+  (let [uri (uuid->uri (u/random-uuid))
         entry (-> entry
                   (u/strip-service-attrs)
                   (assoc :id uri)
@@ -138,7 +139,7 @@
                   collection
                   (assoc collection :volumeTemplates volume-templates)))))
 
-(defroutes collection-routes
+#_(defroutes collection-routes
            (POST base-uri {:keys [cb-client body]}
                  (if (a/can-modify? collection-acl)
                    (let [json (u/body->json body)]
@@ -152,7 +153,7 @@
            (ANY base-uri []
                 (u/bad-method)))
 
-(def resource-routes
+#_(def resource-routes
   (let-routes [uri (str base-uri "/:uuid")]
               (GET uri [uuid :as {cb-client :cb-client}]
                    (retrieve cb-client uuid))
@@ -164,7 +165,7 @@
               (ANY uri []
                    (u/bad-method))))
 
-(defroutes routes
+#_(defroutes routes
            collection-routes
            resource-routes)
 

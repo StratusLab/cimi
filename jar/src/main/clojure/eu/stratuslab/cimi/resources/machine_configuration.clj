@@ -21,13 +21,15 @@
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [clojure.data.json :as json]
-    [eu.stratuslab.cimi.resources.impl.schema :as schema]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
+    [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.cb.views :as views]
+    [eu.stratuslab.cimi.resources.impl.schema :as schema]
     [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]
     [cemerick.friend :as friend]
+    [schema.core :as s]
     [clojure.tools.logging :as log]))
 
 (def ^:const resource-tag :machineConfigs)
@@ -45,13 +47,34 @@
 (def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}
                      :rules [{:principal "::USER" :type "ROLE" :right "MODIFY"}]})
 
-(def validate (u/create-validation-fn schema/MachineConfiguration))
-
 (defn uuid->uri
   "Convert a uuid into the URI for a MachineConfiguration resource.
    The URI must not have a leading slash."
   [uuid]
   (str resource-type "/" uuid))
+
+;;
+;; MachineConfiguration
+;;
+
+(def Disk
+  {:capacity                         c/PosInt
+   :format                           c/NonBlankString
+   (s/optional-key :initialLocation) c/NonBlankString})
+
+(def Disks
+  (s/both [Disk] c/NotEmpty))
+
+(def MachineConfiguration
+  (merge c/CommonAttrs
+         c/AclAttr
+         {:cpu                    c/PosInt
+          :memory                 c/PosInt
+          :cpuArch                schema/ValidCpuArch
+          (s/optional-key :disks) Disks}))
+
+(def validate (u/create-validation-fn MachineConfiguration))
+
 
 (defn add-cops
   "Adds the collection operations to the given resource."
@@ -79,7 +102,7 @@
   ([cb-client] (add cb-client {}))
 
   ([cb-client entry]
-   (let [uri (uuid->uri (u/create-uuid))
+   (let [uri (uuid->uri (u/random-uuid))
          entry (-> entry
                    (u/strip-service-attrs)
                    (assoc :id uri)
@@ -147,7 +170,7 @@
                   collection
                   (assoc collection :machineConfigurations configs)))))
 
-(defroutes collection-routes
+#_(defroutes collection-routes
            (POST base-uri {:keys [cb-client body]}
                  (if (a/can-modify? collection-acl)
                    (let [json (u/body->json body)]
@@ -161,7 +184,7 @@
            (ANY base-uri []
                 (u/bad-method)))
 
-(def resource-routes
+#_(def resource-routes
   (let-routes [uri (str base-uri "/:uuid")]
               (GET uri [uuid :as {cb-client :cb-client}]
                    (retrieve cb-client uuid))
@@ -173,6 +196,6 @@
               (ANY uri []
                    (u/bad-method))))
 
-(defroutes routes
+#_(defroutes routes
            collection-routes
            resource-routes)

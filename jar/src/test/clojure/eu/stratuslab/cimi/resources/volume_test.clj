@@ -86,7 +86,7 @@
         (t/has-job))))
 
 (deftest bad-methods
-  (let [resource-uri (str base-uri "/" (u/create-uuid))]
+  (let [resource-uri (str base-uri "/" (u/random-uuid))]
     (doall
       (for [[uri method] [[base-uri :options]
                           [base-uri :delete]

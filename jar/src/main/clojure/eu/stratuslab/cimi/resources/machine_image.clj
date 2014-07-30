@@ -28,6 +28,8 @@
     [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]
     [cemerick.friend :as friend]
+    [schema.core :as s]
+    [eu.stratuslab.cimi.resources.impl.common :as c]
     [clojure.tools.logging :as log]))
 
 (def ^:const resource-tag :machineImages)
@@ -45,13 +47,28 @@
 (def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}
                      :rules [{:principal "::USER" :type "ROLE" :right "MODIFY"}]})
 
-(def validate (u/create-validation-fn schema/MachineImage))
 
 (defn uuid->uri
-  "Convert a uuid into the URI for a MachineConfiguration resource.
-   The URI must not have a leading slash."
   [uuid]
   (str resource-type "/" uuid))
+
+;;
+;; MachineImage schema
+;;
+
+(def machine-image-state-values (s/enum "CREATING" "AVAILABLE" "DELETING" "ERROR"))
+
+(def machine-image-type-values (s/enum "IMAGE" "SNAPSHOT" "PARTIAL_SNAPSHOT"))
+
+(def MachineImage
+  (merge c/CommonAttrs
+         c/AclAttr
+         {:state                          machine-image-state-values
+          :type                           machine-image-type-values
+          (s/optional-key :imageLocation) c/NonBlankString
+          (s/optional-key :relatedImage)  c/ResourceLink}))
+
+(def validate (u/create-validation-fn MachineImage))
 
 (defn add-cops
   "Adds the collection operations to the given resource."
@@ -79,7 +96,7 @@
   ([cb-client] (add cb-client {}))
 
   ([cb-client entry]
-   (let [uri (uuid->uri (u/create-uuid))
+   (let [uri (uuid->uri (u/random-uuid))
          entry (-> entry
                    (u/strip-service-attrs)
                    (assoc :id uri)
@@ -147,7 +164,7 @@
                   collection
                   (assoc collection :machineImages configs)))))
 
-(defroutes collection-routes
+#_(defroutes collection-routes
            (POST base-uri {:keys [cb-client body]}
                  (if (a/can-modify? collection-acl)
                    (let [json (u/body->json body)]
@@ -161,7 +178,7 @@
            (ANY base-uri []
                 (u/bad-method)))
 
-(def resource-routes
+#_(def resource-routes
   (let-routes [uri (str base-uri "/:uuid")]
               (GET uri [uuid :as {cb-client :cb-client}]
                    (retrieve cb-client uuid))
@@ -173,6 +190,6 @@
               (ANY uri []
                    (u/bad-method))))
 
-(defroutes routes
+#_(defroutes routes
            collection-routes
            resource-routes)

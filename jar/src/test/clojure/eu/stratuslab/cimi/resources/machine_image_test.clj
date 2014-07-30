@@ -134,20 +134,20 @@
 
 
 (deftest read-non-existing-resource-fails
-  (let [resource-uri (str base-uri "/" (u/create-uuid))]
+  (let [resource-uri (str base-uri "/" (u/random-uuid))]
     (-> (session (ring-app))
         (request resource-uri)
         (t/is-status 404))))
 
 (deftest delete-non-existing-resource-fails
-  (let [resource-uri (str base-uri "/" (u/create-uuid))]
+  (let [resource-uri (str base-uri "/" (u/random-uuid))]
     (-> (session (ring-app))
         (request resource-uri
                  :request-method :delete)
         (t/is-status 404))))
 
 (deftest update-non-existing-resource-fails
-  (let [resource-uri (str base-uri "/" (u/create-uuid))]
+  (let [resource-uri (str base-uri "/" (u/random-uuid))]
     (-> (session (ring-app))
         (request resource-uri
                  :request-method :put
@@ -204,7 +204,7 @@
       (is (= limit (count docs))))))
 
 (deftest bad-methods
-  (let [resource-uri (str base-uri "/" (u/create-uuid))]
+  (let [resource-uri (str base-uri "/" (u/random-uuid))]
     (doall
       (for [[uri method] [[base-uri :options]
                           [base-uri :delete]

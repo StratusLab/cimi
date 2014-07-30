@@ -24,6 +24,7 @@
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.impl.schema :as schema]
+    [eu.stratuslab.cimi.resources.volume :as v]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.resources.job :as job]
@@ -47,7 +48,7 @@
 (def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}
                      :rules [{:principal "::USER" :type "ROLE" :right "MODIFY"}]})
 
-(def validate (u/create-validation-fn schema/VolumeImage))
+(def validate (u/create-validation-fn v/VolumeImage))
 
 (defn uuid->uri
   "Convert the uuid into a resource URI.  NOTE: unlike for other resources,
@@ -87,7 +88,7 @@
    identifier for Marketplace images; raw http(s) URLs may be used
    to bring in images from elsewhere."
   [cb-client entry]
-  (let [uuid (or (image-id entry) (u/create-uuid))
+  (let [uuid (or (image-id entry) (u/random-uuid))
         uri (uuid->uri uuid)
         entry (-> entry
                   (u/strip-service-attrs)
@@ -158,7 +159,7 @@
                   collection
                   (assoc collection :volumeImages volume-images)))))
 
-(defroutes collection-routes
+#_(defroutes collection-routes
            (POST base-uri {:keys [cb-client body]}
                  (if (a/can-modify? collection-acl)
                    (let [json (u/body->json body)]
@@ -172,7 +173,7 @@
            (ANY base-uri []
                 (u/bad-method)))
 
-(def resource-routes
+#_(def resource-routes
   (let-routes [uri (str base-uri "/:uuid")]
               (GET uri [uuid :as {cb-client :cb-client}]
                    (retrieve cb-client uuid))
@@ -184,6 +185,6 @@
               (ANY uri []
                    (u/bad-method))))
 
-(defroutes routes
+#_(defroutes routes
            collection-routes
            resource-routes)

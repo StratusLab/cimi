@@ -23,8 +23,10 @@
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.resources.job :as job]
     [eu.stratuslab.cimi.cb.views :as views]
+    [eu.stratuslab.cimi.resources.impl.common :as c]
     [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]
+    [schema.core :as s]
     [clojure.tools.logging :as log]))
 
 (def ^:const resource-tag :volumes)
@@ -44,15 +46,104 @@
 (def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}
                      :rules [{:principal "::USER" :type "ROLE" :right "MODIFY"}]})
 
-(def validate (u/create-validation-fn schema/Volume))
-
-(def validate-create (u/create-validation-fn schema/VolumeCreate))
-
 (defn uuid->uri
   "Convert a uuid into the URI for a MachineConfiguration resource.
    The URI must not have a leading slash."
   [uuid]
   (str resource-type "/" uuid))
+
+(def volume-states (s/enum "CREATING" "AVAILABLE" "CAPTURING" "DELETING" "ERROR"))
+
+;;
+;; Volume Related Schemas
+;;
+
+(def image-states (s/enum "CREATING" "AVAILABLE" "DELETING" "ERROR"))
+
+(def VolumeConfigurationAttrs
+  {(s/optional-key :type)     c/NonBlankString
+   (s/optional-key :format)   c/NonBlankString
+   (s/optional-key :capacity) c/PosInt})
+
+(def VolumeConfigurationAttrs
+  {(s/optional-key :type)     c/NonBlankString
+   (s/optional-key :format)   c/NonBlankString
+   (s/optional-key :capacity) c/PosInt})
+
+(def VolumeConfiguration
+  (merge c/CommonAttrs
+         c/AclAttr
+         {(s/optional-key :type)   c/NonBlankString
+          (s/optional-key :format) c/NonBlankString
+          :capacity                c/PosInt}))
+
+(def VolumeImageAttrs
+  {(s/optional-key :state)         image-states
+   (s/optional-key :imageLocation) c/ResourceLink
+   (s/optional-key :bootable)      s/Bool})
+
+(def VolumeImage
+  (merge c/CommonAttrs
+         c/AclAttr
+         {:state         image-states
+          :imageLocation c/ResourceLink
+          :bootable      s/Bool}))
+
+(def VolumeConfigurationRef
+  (merge VolumeConfigurationAttrs
+         {(s/optional-key :href) c/NonBlankString}))
+
+(def VolumeImageRef
+  (merge VolumeImageAttrs
+         {(s/optional-key :href) c/NonBlankString}))
+
+;; TODO: Add real schema once Meters are supported.
+(def MeterTemplateRef
+  {})
+
+(def MeterTemplateRefs
+  (s/both [MeterTemplateRef] c/NotEmpty))
+
+;; TODO: Add real schema once EventLogs are supported.
+(def EventLogTemplateRef
+  {})
+
+(def VolumeTemplate
+  (merge c/CommonAttrs
+         c/AclAttr
+         {:volumeConfig                      VolumeConfigurationRef
+          (s/optional-key :volumeImage)      VolumeImageRef
+          (s/optional-key :meterTemplates)   MeterTemplateRefs
+          (s/optional-key :eventLogTemplate) EventLogTemplateRef}))
+
+(def Volume
+  (merge c/CommonAttrs
+         c/AclAttr
+         {(s/optional-key :state)    volume-states
+          :type                      c/NonBlankString
+          :capacity                  c/PosInt
+          (s/optional-key :bootable) s/Bool
+          (s/optional-key :eventLog) c/NonBlankString
+          }))
+
+(def VolumeTemplateAttrs
+  {(s/optional-key :volumeConfig)     VolumeConfigurationRef
+   (s/optional-key :volumeImage)      VolumeImageRef
+   (s/optional-key :meterTemplates)   MeterTemplateRefs
+   (s/optional-key :eventLogTemplate) EventLogTemplateRef})
+
+(def VolumeTemplateRef
+  (merge VolumeTemplateAttrs
+         {(s/optional-key :href) c/NonBlankString}))
+
+(def VolumeCreate
+  (merge c/CreateAttrs
+         c/AclAttr
+         {:volumeTemplate VolumeTemplateRef}))
+
+(def validate (u/create-validation-fn Volume))
+
+(def validate-create (u/create-validation-fn VolumeCreate))
 
 (defn add-cops
   "Adds the collection operations to the given resource."
@@ -106,7 +197,7 @@
    passed into this method."
   [cb-client entry]
   (validate-create entry)
-  (let [uri (uuid->uri (u/create-uuid))
+  (let [uri (uuid->uri (u/random-uuid))
         template (create-req->template cb-client uri entry)
         volume (template->volume template)
         params (template->params template)]
@@ -177,7 +268,7 @@
                   collection
                   (assoc collection :volumes volumes)))))
 
-(defroutes collection-routes
+#_(defroutes collection-routes
            (POST base-uri {:keys [cb-client body]}
                  (if (a/can-modify? collection-acl)
                    (let [json (u/body->json body)]
@@ -191,7 +282,7 @@
            (ANY base-uri []
                 (u/bad-method)))
 
-(def resource-routes
+#_(def resource-routes
   (let-routes [uri (str base-uri "/:uuid")]
               (GET uri [uuid :as {cb-client :cb-client}]
                    (retrieve cb-client uuid))
@@ -203,6 +294,6 @@
               (ANY uri []
                    (u/bad-method))))
 
-(defroutes routes
+#_(defroutes routes
            collection-routes
            resource-routes)

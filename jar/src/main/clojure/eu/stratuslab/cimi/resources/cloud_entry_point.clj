@@ -19,35 +19,62 @@
   (:require
     [clojure.tools.logging :as log]
     [couchbase-clj.client :as cbc]
+    [schema.core :as s]
     [eu.stratuslab.cimi.resources.impl.schema :as schema]
+    [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.resources.utils.dynamic-load :as dyn]
     [compojure.core :refer [defroutes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]))
 
-(def ^:const resource-type "CloudEntryPoint")
+;;
+;; utilities
+;;
 
-(def ^:const type-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type))
+(def ^:const resource-name "CloudEntryPoint")
+
+(def ^:const resource-uri (str "http://schemas.dmtf.org/cimi/1/" resource-name))
 
 (def ^:const base-uri "/cimi")
 
 (def resource-acl {:owner {:principal "::ADMIN" :type "ROLE"}
                    :rules [{:principal "::ANON" :type "ROLE" :right "VIEW"}]})
 
+;;
+;; CloudEntryPoint Schema
+;;
+
+(def CloudEntryPoint
+  (merge c/CommonAttrs
+         c/AclAttr
+         {:baseURI  c/NonBlankString
+          s/Keyword c/ResourceLink}))
+
 ;; dynamically loads all available resources
 (def resource-links
   (into {} (dyn/get-resource-links)))
 
-(def validate (u/create-validation-fn schema/CloudEntryPoint))
+;;
+;; define validation function and add to standard multi-method
+;;
 
-(defn add-rops
-  "Adds the resource operations to the given resource."
+(def validate-fn (u/create-validation-fn CloudEntryPoint))
+(defmethod c/validate [resource-uri nil]
+           [resource]
+  (validate-fn resource))
+
+
+(defmethod c/set-operations resource-uri
   [resource]
   (if (a/can-modify? (:acl resource))
     (let [ops [{:rel (:edit schema/action-uri) :href base-uri}]]
       (assoc resource :operations ops))
-    resource))
+    (dissoc resource :operations)))
+
+;;
+;; CRUD operations
+;;
 
 (defn add
   "Creates a minimal CloudEntryPoint in the database.  Note that
@@ -59,10 +86,10 @@
   [cb-client]
 
   (let [record (-> {:acl         resource-acl
-                    :id          resource-type
-                    :resourceURI type-uri}
+                    :id          resource-name
+                    :resourceURI resource-uri}
                    (u/set-time-attributes))]
-    (cbc/add-json cb-client resource-type record {:observe   true
+    (cbc/add-json cb-client resource-name record {:observe   true
                                                   :persist   :master
                                                   :replicate :zero})))
 
@@ -71,11 +98,11 @@
    the values of the common attributes in the database with the baseURI
    from the web container and the generated resource links."
   [cb-client baseURI]
-  (if-let [cep (cbc/get-json cb-client resource-type)]
+  (if-let [cep (cbc/get-json cb-client resource-name)]
     (r/response (-> cep
                     (assoc :baseURI baseURI)
                     (merge resource-links)
-                    (add-rops)))
+                    (c/set-operations)))
     (r/not-found nil)))
 
 ;; FIXME: Implementation should use CAS functions to avoid update conflicts.
@@ -85,20 +112,24 @@
   cannot be changed.  For correct behavior, the cloud entry point must
   have been previously initialized.  Returns nil."
   [cb-client baseURI entry]
-  (if-let [current (cbc/get-json cb-client resource-type)]
+  (if-let [current (cbc/get-json cb-client resource-name)]
     (let [db-doc (->> (select-keys entry [:name :description :properties])
                       (merge current)
                       (u/set-time-attributes))
           doc (-> db-doc
                   (assoc :baseURI baseURI)
                   (merge resource-links)
-                  (add-rops)
-                  (validate))]
-      (if (cbc/set-json cb-client resource-type db-doc)
+                  (c/set-operations)
+                  (c/validate))]
+      (if (cbc/set-json cb-client resource-name db-doc)
         (r/response doc)
         (r/status (r/response nil) 409)))
     (r/not-found nil)))
 
+;;
+;; CloudEntryPoint doesn't follow the usual /cimi/ResourceName/UUID
+;; pattern, so the routes must be defined explicitly.
+;;
 (defroutes routes
            (GET base-uri {:keys [cb-client base-uri] :as request}
                 (if (a/can-view? resource-acl)

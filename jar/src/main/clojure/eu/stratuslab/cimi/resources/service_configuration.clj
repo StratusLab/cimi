@@ -25,9 +25,11 @@
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.cb.views :as views]
+    [eu.stratuslab.cimi.resources.impl.common :as c]
     [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]
     [cemerick.friend :as friend]
+    [schema.core :as s]
     [clojure.tools.logging :as log]))
 
 (def ^:const resource-tag :serviceConfigurations)
@@ -44,8 +46,6 @@
 
 (def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}})
 
-(def validate (u/create-validation-fn schema/ServiceConfiguration))
-
 (defn uuid->uri
   "Convert uuid to a ServiceConfiguration resource.  The UUID
    is the concatenation of the :service and :instance values.
@@ -53,6 +53,17 @@
    the UUID is just the value of the :service key."
   [uuid]
   (str resource-type "/" uuid))
+
+;;
+;; Service configuration files.  (StratusLab extension.)
+;;
+(def ServiceConfiguration
+  (merge c/CommonAttrs
+         c/AclAttr
+         {:service                   c/NonBlankString
+          (s/optional-key :instance) c/NonBlankString}))
+
+(def validate (u/create-validation-fn ServiceConfiguration))
 
 (defn add-cops
   "Adds the collection operations to the given resource."
@@ -155,7 +166,7 @@
                   collection
                   (assoc collection :serviceConfigurations configs)))))
 
-(defroutes collection-routes
+#_(defroutes collection-routes
            (POST base-uri {:keys [cb-client body]}
                  (if (a/can-modify? collection-acl)
                    (let [json (u/body->json body)]
@@ -169,7 +180,7 @@
            (ANY base-uri []
                 (u/bad-method)))
 
-(def resource-routes
+#_(def resource-routes
   (let-routes [uri (str base-uri "/:uuid")]
               (GET uri [uuid :as {cb-client :cb-client}]
                    (retrieve cb-client uuid))
@@ -181,6 +192,6 @@
               (ANY uri []
                    (u/bad-method))))
 
-(defroutes routes
+#_(defroutes routes
            collection-routes
            resource-routes)

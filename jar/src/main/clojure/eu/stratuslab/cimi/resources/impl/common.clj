@@ -172,48 +172,48 @@
          (rest)
          (apply str))))
 
-(defn update-resource-typeuri
-  [template]
-  (let [template-typeuri (:typeURI template)
-        resource-typeuri (get-resource-typeuri template-typeuri)]
-    (assoc template :typeURI resource-typeuri)))
-
-(defn resource-type-dispatch
-  [{:keys [typeURI subtypeURI]}]
-  [typeURI subtypeURI])
-
 (defmulti template->resource
           "Converts a resource template to an instance of the resource.  This
-           dispatches on the value [:typeURI :subtypeURI].  The default implementation
-           copies the template with a modified :typeURI field.  The method removes
-           'Template' from the end of the original :typeURI value."
-          resource-type-dispatch)
+           dispatches on the value :resourceURI.  The default implementation
+           copies the template with a modified :resourceURI field.  The method removes
+           'Template' from the end of the original :resourceURI value."
+          :resourceURI)
 
 (defmethod template->resource :default
-           [{:keys [typeURI] :as template}]
-  (if-let [resource-typeuri (get-resource-typeuri typeURI)]
-    (assoc template :typeURI resource-typeuri)
+           [{:keys [resourceURI] :as template}]
+  (if-let [resource-typeuri (get-resource-typeuri resourceURI)]
+    (assoc template :resourceURI resource-typeuri)
     template))
 
 
 (defmulti validate-template
           "Validates the given resource template, returning the template itself on success.
-           This method dispatches on the value of [:typeURI :subtypeURI].  For any unknown
-           dispatch value the method throws an exception."
-          resource-type-dispatch)
+           This method dispatches on the value of resourceURI.  For any unknown
+           dispatch value, the method throws an exception."
+          :resourceURI)
 
 (defmethod validate-template :default
            [template]
-  (throw (ex-info (str "unknown resource template type: " (resource-type-dispatch template)) template)))
+  (throw (ex-info (str "unknown resource type: " (:resourceURI template)) template)))
 
 
 (defmulti validate
           "Validates the given resource, returning the resource itself on success.
-           This method dispatches on the value of [:typeURI :subtypeURI].  For any unknown
-           dispatch value the method throws an exception."
-          resource-type-dispatch)
+           This method dispatches on the value of resourceURI.  For any unknown
+           dispatch value, the method throws an exception."
+          :resourceURI)
 
 (defmethod validate :default
            [resource]
-  (throw (ex-info (str "unknown resource type: " (resource-type-dispatch resource)) resource)))
+  (throw (ex-info (str "unknown resource type: " (:resourceURI resource)) resource)))
+
+(defmulti set-operations
+          "Adds the authorized resource operations to the resource based on the current
+           user and the resource's ACL.  Dispatches on the value of resourceURI.
+           For any unknown dispatch value, the method throws an exception."
+          :resourceURI)
+
+(defmethod set-operations :default
+           [resource]
+  (throw (ex-info (str "unknown resource type: " (:resourceURI resource)) resource)))
 

@@ -22,9 +22,11 @@
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.cb.views :as views]
+    [eu.stratuslab.cimi.resources.impl.common :as c]
     [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]
     [clojure.walk :as w]
+    [schema.core :as s]
     [clojure.tools.logging :as log]))
 
 (def ^:const resource-tag :jobs)
@@ -45,13 +47,33 @@
 ;; FIXME: This ACL should depend on who is accessing the object
 (def job-acl {:owner {:principal "::ADMIN" :type "ROLE"}})
 
-(def validate (u/create-validation-fn schema/Job))
-
 (defn uuid->uri
   "Convert a uuid into the URI for a MachineConfiguration resource.
    The URI must not have a leading slash."
   [uuid]
   (str resource-type "/" uuid))
+
+;;
+;; Job schema
+;;
+
+(def job-states (s/enum "QUEUED" "RUNNING" "FAILED" "SUCCESS" "STOPPING" "STOPPED"))
+
+(def Job
+  (merge c/CommonAttrs
+         c/AclAttr
+         {(s/optional-key :state)              job-states
+          :targetResource                      c/NonBlankString
+          (s/optional-key :affectedResources)  c/NonEmptyStrList
+          :action                              c/NonBlankString
+          (s/optional-key :returnCode)         s/Int
+          (s/optional-key :progress)           c/NonNegInt
+          (s/optional-key :statusMessage)      c/NonBlankString
+          (s/optional-key :timeOfStatusChange) s/Inst
+          (s/optional-key :parentJob)          c/NonBlankString
+          (s/optional-key :nestedJobs)         c/NonEmptyStrList}))
+
+(def validate (u/create-validation-fn Job))
 
 (defn set-timestamp
   "Copies the updated timestamp to the timeOfStatusChange field."
@@ -80,7 +102,7 @@
    this returns just the job URI (or nil if there is an error).  This is
    useful when creating jobs in the process of manipulating other resources."
   [cb-client entry]
-  (let [uri (uuid->uri (u/create-uuid))
+  (let [uri (uuid->uri (u/random-uuid))
         entry (-> entry
                   (u/strip-service-attrs)
                   (merge {:id uri
@@ -196,7 +218,7 @@
           (r/response)
           (r/status 500)))))
 
-(defroutes collection-routes
+#_(defroutes collection-routes
            (POST base-uri {:keys [cb-client body]}
                  (if (a/can-modify? collection-acl)
                    (let [json (u/body->json body)]
@@ -211,7 +233,7 @@
                 (u/bad-method)))
 
 
-(def resource-routes
+#_(def resource-routes
   (let-routes [uri (str base-uri "/:uuid")]
               (GET uri [uuid :as {cb-client :cb-client}]
                    (retrieve cb-client uuid))
@@ -226,7 +248,7 @@
               (ANY uri {}
                    (u/bad-method))))
 
-(defroutes routes
+#_(defroutes routes
            collection-routes
            resource-routes)
 

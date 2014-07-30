@@ -13,6 +13,7 @@
     [eu.stratuslab.authn.workflows.client-certificate :as cwf]
     [eu.stratuslab.authn.ldap :as ldap]
     [eu.stratuslab.cimi.resources.impl.schema :as schema]
+    [eu.stratuslab.cimi.resources.service-configuration :as sc]
     [schema.core :as s]))
 
 (def LocalDBSchema
@@ -28,7 +29,7 @@
           :cert-enabled s/Str}))
 
 (def AuthnConfigurationSchema
-  (merge schema/ServiceConfiguration
+  (merge sc/ServiceConfiguration
          {:localdb LocalDBSchema
           (s/optional-key :ldap) LdapSchema
           (s/optional-key :voms) VomsSchema}))

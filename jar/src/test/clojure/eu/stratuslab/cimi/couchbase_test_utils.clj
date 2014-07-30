@@ -146,7 +146,7 @@
   [f]
   (let [mgr-uri "http://localhost:8091/"
         node-uri (str mgr-uri "pools")
-        bucket (utils/create-uuid)
+        bucket (utils/random-uuid)
         password "pswd"
         cb-cfg {:uris     [(URI. node-uri)]
                 :bucket   bucket

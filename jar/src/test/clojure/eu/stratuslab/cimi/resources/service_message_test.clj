@@ -13,11 +13,16 @@
 (defn ring-app []
   (t/make-ring-app routes))
 
+(def valid-acl {:owner {:principal "::ADMIN"
+                        :type      "ROLE"}
+                :rules [{:principal "::ANON"
+                         :type      "ROLE"
+                         :right     "VIEW"}]})
+
 (def valid-entry
-  {:acl {:owner {:principal "::ADMIN" :type "ROLE"}
-         :rules [{:principal "::ANON" :type "ROLE" :right "VIEW"}]}
-   :name "title"
-   :description "description"})
+  {:acl     valid-acl
+   :title   "title"
+   :message "description"})
 
 (deftest lifecycle
 
@@ -40,7 +45,7 @@
   (-> (session (ring-app))
       (request base-uri)
       (t/is-status 200)
-      (t/is-resource-uri collection-type-uri)
+      (t/is-resource-uri collection-resource-uri)
       (t/is-count zero?))
 
   ;; add a new entry
@@ -64,7 +69,7 @@
     ;; query to see that entry is listed
     (let [entries (-> (session (ring-app))
                       (request base-uri)
-                      (t/is-resource-uri collection-type-uri)
+                      (t/is-resource-uri collection-resource-uri)
                       (t/is-count pos?)
                       (t/entries :serviceMessages))]
       (is ((set (map :id entries)) uri)))
@@ -97,7 +102,7 @@
         (t/is-status 404))))
 
 (deftest bad-methods
-  (let [resource-uri (str base-uri "/" (u/create-uuid))]
+  (let [resource-uri (str base-uri "/" (u/random-uuid))]
     (doall
       (for [[uri method] [[base-uri :options]
                           [base-uri :delete]

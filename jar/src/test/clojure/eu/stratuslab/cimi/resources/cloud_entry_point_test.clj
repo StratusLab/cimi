@@ -23,7 +23,7 @@
   (-> (session (ring-app))
       (request "/")
       (t/is-status 200)
-      (t/is-resource-uri type-uri)
+      (t/is-resource-uri resource-uri)
       (t/is-operation-absent "edit"))
 
   ;; updating CEP as user should fail
@@ -40,7 +40,7 @@
       (authorize "root" "admin_password")
       (request "/")
       (t/is-status 200)
-      (t/is-resource-uri type-uri)
+      (t/is-resource-uri resource-uri)
       (t/is-operation-present "edit"))
 
   ;; update the entry, verify updated doc is returned
@@ -52,7 +52,7 @@
                :request-method :put
                :body (json/write-str {:name "dummy"}))
       (t/is-status 200)
-      (t/is-resource-uri type-uri)
+      (t/is-resource-uri resource-uri)
       (t/is-operation-present "edit")
       (t/is-key-value :name "dummy"))
 
@@ -61,7 +61,7 @@
       (authorize "jane" "user_password")
       (request "/")
       (t/is-status 200)
-      (t/is-resource-uri type-uri)
+      (t/is-resource-uri resource-uri)
       (t/is-operation-absent "edit")
       (t/is-key-value :name "dummy")))
 

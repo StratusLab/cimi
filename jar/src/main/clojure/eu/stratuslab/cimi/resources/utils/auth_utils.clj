@@ -65,13 +65,15 @@
 (defn authn->principals
   "Provides a list of principals that can be used when searching
    the database.  These have the form 'USER_username'."
-  [authn]
-  (if-let [id (:identity authn)]
-    (set (-> (or (map #(str "ROLE_" %) (:roles authn)) [])
-             (conj (str "USER_" id))
-             (conj "ROLE_::USER")
-             (conj "ROLE_::ANON")))
-    (set ["ROLE_::ANON"])))
+  ([]
+   (authn->principals (friend/current-authentication)))
+  ([authn]
+    (if-let [id (:identity authn)]
+      (set (-> (or (map #(str "ROLE_" %) (:roles authn)) [])
+               (conj (str "USER_" id))
+               (conj "ROLE_::USER")
+               (conj "ROLE_::ANON")))
+      (set ["ROLE_::ANON"]))))
 
 (defn authn->ids
   "Provides a list of IDs suitable for comparing against a set

@@ -32,7 +32,7 @@
   (:import
     [java.util UUID Date]))
 
-(defn create-uuid
+(defn random-uuid
   "Provides the string representation of a pseudo-random UUID."
   []
   (str (UUID/randomUUID)))
@@ -166,6 +166,12 @@
   []
   (-> (r/response {:status 405 :message "invalid method"})
       (r/status 405)))
+
+(defn not-found
+  "Returns a ring reponse with a 405 error -- invalid method."
+  []
+  (-> (r/response {:status 404 :message "not found"})
+      (r/status 404)))
 
 (defn unauthorized
   "Returns a ring reponse with a 403 error -- unauthorized."
