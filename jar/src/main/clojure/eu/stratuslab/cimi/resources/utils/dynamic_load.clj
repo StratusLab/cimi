@@ -75,7 +75,7 @@
    resource."
   [resource-ns]
   (if-let [vtag (get-ns-var "resource-tag" resource-ns)]
-    (if-let [vtype (get-ns-var "resource-type" resource-ns)]
+    (if-let [vtype (get-ns-var "resource-name" resource-ns)]
       [(deref vtag) {:href (deref vtype)}])))
 
 (defn resource-routes

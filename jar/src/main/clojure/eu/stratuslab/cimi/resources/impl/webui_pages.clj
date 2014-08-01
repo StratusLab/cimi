@@ -6,48 +6,83 @@
     [hiccup.page :as h]
     [hiccup.element :as e]))
 
-(defn head
-  [request]
-
+(def head
   [:head
    [:meta {:charset "utf-8"}]
-   [:link {:href "/cimi/js/codemirror/lib/codemirror.css" :rel "stylesheet" :type "text/css"}]
-   [:link {:href "/cimi/js/codemirror/addon/lint/lint.css" :rel "stylesheet" :type "text/css"}]
-   [:link {:href "/cimi/css/service.css" :rel "stylesheet" :type "text/css"}]
-   [:script {:src "/cimi/js/d3/d3.v3.min.js" :charset "utf-8"}]
-   [:script {:src "/cimi/js/codemirror/lib/codemirror.js" :charset "utf-8"}]
-   [:script {:src "/cimi/js/codemirror/mode/javascript/javascript.js" :charset "utf-8"}]
-   [:script {:src "/cimi/js/codemirror/addon/lint/lint.js" :charset "utf-8"}]
-   [:script {:src "/cimi/js/jsonlint/jsonlint.js" :charset "utf-8"}]
-   [:script {:src "/cimi/js/codemirror/addon/lint/json-lint.js" :charset "utf-8"}]
-   [:script {:src "/cimi/js/cimi-browser.js" :charset "utf-8"}]
+   [:link {:href "/cimi/static/js/codemirror/lib/codemirror.css" :rel "stylesheet" :type "text/css"}]
+   [:link {:href "/cimi/static/js/codemirror/addon/lint/lint.css" :rel "stylesheet" :type "text/css"}]
+   [:link {:href "/cimi/static/css/bootstrap.min.css" :rel "stylesheet" :type "text/css"}]
+   [:link {:href "/cimi/static/css/service.css" :rel "stylesheet" :type "text/css"}]
    [:title "StratusLab CIMI"]])
 
 (defn user-info
   [request]
 
-  [:div {:class "user-info"}
-   (if-let [identity (friend/current-authentication request)]
-     [:span (str (:identity identity) " (") (e/link-to "/cimi/logout" "logout") ")"]
-     (e/link-to "/cimi/login" "login"))])
+  (if-let [identity (:identity (friend/current-authentication request))]
+    [:div {:class "pull-right"}
+     [:button {:class "btn btn-primary"}
+      (e/link-to "/cimi/User/" identity)]
+     [:button {:class "btn btn-primary"}
+      (e/link-to "/cimi/logout" "logout")]]
+    [:div {:class "pull-right"}
+     [:button {:class "btn btn-primary"}
+      (e/link-to "/cimi/login" "login")]]))
 
-(def navigation
-  [:nav])
+(defn user-nav-info
+  [request]
+
+  (if-let [identity (:identity (friend/current-authentication request))]
+    [:li {:class "dropdown"}
+     [:a {:href "#" :class "dropdown-toggle" :data-toggle "dropdown"}
+      identity
+      [:span {:class "caret"}]]
+     [:ul {:class "dropdown-menu" :role "menu"}
+      [:li [:a {:href (e/link-to "/cimi/User/")} "profile"]]
+      [:li [:a {:href (e/link-to "/cimi/authn")} "authn. info"]]
+      [:li {:class "divider"}]
+      [:li [:a {:href (e/link-to "/cimi/logout")} "logout"]]]]
+    [:li (e/link-to "/cimi/login" "login")]))
+
+(def breadcrumbs
+  [:nav {:id "breadcrumbs"}])
+
+#_(defn header
+  [request]
+  [:header
+   (user-info request)
+   [:div {:class "logo"}]])
 
 (defn header
   [request]
   [:header
-   [:div {:class "logo"}]
-   (user-info request)
-   navigation])
+   [:nav {:class "navbar navbar-inverse" :role "navigation"}
+    [:div {:class "container-fluid"}
+     [:div {:class "navbar-header"}
+      [:button {:type        "button" :class "navbar-toggle"
+                :data-toggle "collapse" :data-target "#top-navbar"}
+       [:span {:class "sr-only"} "Toggle navigation"]
+       [:span {:class "icon-bar"}]
+       [:span {:class "icon-bar"}]
+       [:span {:class "icon-bar"}]]
+      [:div {:class "logo"}]]
+
+     [:div {:class "collapse navbar-collapse" :id "#top-navbar"}
+      [:ul {:class "nav navbar-nav navbar-right"}
+       (user-nav-info request)]]]]])
 
 (def message
-  [:section {:id "message"}])
+  [:div {:class "alert alert-warning alert-dismissible" :role "alert"}
+   [:button {:type "button" :class "alert" :data-dismiss "alert"}
+    [:span {:aria-hidden "true"} "&times;"]
+    [:span {:class "sr-only"} "Close"]]
+   [:div {:class "message"}]])
 
-(defn content
-  [request]
+(def content
   [:main
-   [:div {:id "operations"}]
+   [:div {:id "operations" :class "pull-right"}]
+   [:h1
+    [:span {:id "resource-title"}]
+    [:span {:class "badge" :id "collection-count"}]]
    [:section {:id "metadata" :class "normal-section"}]
    [:section {:id "content" :class "normal-section"}]
    [:section {:id "acl" :class "normal-section"}]
@@ -58,16 +93,17 @@
   [:footer
    [:p "Copyright &copy; 2013-2014 by StratusLab Contributors"]])
 
-(defn browser
-  [request]
-  (h/html5
-    (head request)
-    [:body
-     [:div {:class "wrapper"}
-      (header request)
-      message
-      (content request)
-      footer]]))
+(def scripts
+  [:div
+   [:script {:src "https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"}]
+   [:script {:src "/cimi/static/js/bootstrap.min.js"}]
+   [:script {:src "/cimi/static/js/d3/d3.v3.min.js" :charset "utf-8"}]
+   [:script {:src "/cimi/static/js/codemirror/lib/codemirror.js" :charset "utf-8"}]
+   [:script {:src "/cimi/static/js/codemirror/mode/javascript/javascript.js" :charset "utf-8"}]
+   [:script {:src "/cimi/static/js/codemirror/addon/lint/lint.js" :charset "utf-8"}]
+   [:script {:src "/cimi/static/js/jsonlint/jsonlint.js" :charset "utf-8"}]
+   [:script {:src "/cimi/static/js/codemirror/addon/lint/json-lint.js" :charset "utf-8"}]
+   [:script {:src "/cimi/static/js/cimi-browser.js" :charset "utf-8"}]])
 
 (defn login-form
   [request]
@@ -79,26 +115,18 @@
     [:main
      [:h1 "Login"]
      [:div {:id "operations"}]
-     [:section
-      [:form {:id "userform" :method "POST" :action "/cimi/login" :class "login"}
-       [:div [:label "Username:" [:input {:type "text" :name "username"}]]]
-       [:div [:label "Password:" [:input {:type "password" :name "password"}]]]
-       [:div [:input {:type "submit" :class "button" :value "login"}]]]]
-     [:section
-      [:form {:id "certform" :method "POST" :action "/cimi/login" :class "login"}
-       [:div [:span "X500 DN:"] [:span dn]]
-       [:div [:input {:type "submit" :class "button" :value "login"}]]]]]))
-
-(defn login-page
-  [request]
-  (h/html5
-    (head request)
-    [:body
-     [:div {:class "wrapper"}
-      (header request)
-      message
-      (login-form request)
-      footer]]))
+     [:section {:class "col-md-4"}
+      [:form {:id "userform" :method "POST" :action "/cimi/login" :class "form-signin" :role "form"}
+       [:h2 {:class "form-signin-heading"} "Please sign in"]
+       [:input {:type "text" :name "username" :class "form-control" :placeholder "username" :required "" :autofocus ""}]
+       [:input {:type "password" :name "password" :class "form-control" :placeholder "password"}]
+       [:button {:class "btn btn-lg btn-primary btn-block" :type "submit"} "Sign in"]
+       ]]
+     [:section {:class "col-md-4"}
+      [:form {:id "certform" :method "POST" :action "/cimi/login" :class "form-signin" :role "form"}
+       [:h2 {:class "form-signin-heading"} (str "Certificate DN: " dn)]
+       [:button {:class "btn btn-lg btn-primary btn-block" :type "submit"} "Sign in with certificate"]
+       ]]]))
 
 (defn get-authn-info [request]
   (let [authn-map (friend/current-authentication request)]
@@ -107,15 +135,31 @@
         (json/pprint authn-map))
       "No authentication information in session.")))
 
+(defn page-skeleton
+  [request contents]
+  (h/html5
+    head
+    [:body
+     [:div {:class "container"}
+      (header request)
+      breadcrumbs
+      #_message
+      contents
+      footer]
+     scripts]))
+
+(defn browser-page
+  [request]
+  (page-skeleton request content))
+
+(defn login-page
+  [request]
+  (page-skeleton request (login-form request)))
+
 (defn authn-page
   [request]
-  (h/html5
-    (head request)
-    [:body
-     [:div {:class "wrapper"}
-      (header request)
-      [:main
-       [:h1 "Authentication Information"]
-       [:section
-        [:pre {:id "authn-info"} (get-authn-info request)]]]
-      footer]]))
+  (let [contents [:main
+                  [:h1 "Authentication Information"]
+                  [:section
+                   [:pre {:id "authn-info"} (get-authn-info request)]]]]
+    (page-skeleton request contents)))

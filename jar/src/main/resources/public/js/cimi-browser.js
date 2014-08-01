@@ -41,11 +41,12 @@ function page_callback(request, json) {
 	if (json) {
 
 		var title = json.resourceURI.split('/').pop();
-		render_title(d3.select('main'), title);
 
-		render_metadata(d3.select('#metadata'), metadata(json));
-		render_navigation(d3.select('nav'));
+		render_navigation(d3.select('#breadcrumbs'));
 		render_operations(d3.select('#operations'), json.operations)
+
+		d3.select('#resource-title').text(title);
+		render_metadata(d3.select('#metadata'), metadata(json));
 		render_acl(d3.select('#acl'), json.acl)
 		clear_message();
 
@@ -105,7 +106,7 @@ function clear_message() {
 
 function render_message(msg) {
 	clear_message();
-	d3.select('#message').append('p').text(msg);
+	d3.select('#message').append('span').text(msg);
 }
 
 function render_error(request) {
@@ -113,17 +114,17 @@ function render_error(request) {
 }
 
 function render_operations(o, ops) {
-	o.selectAll('ul').remove();
+	o.selectAll('div').remove();
 
-	var ul = o.append('ul');
+	var div = o.append('div');
 
     /* always provide a 'view json' button */
-    append_button(ul, 'view json', 'start_view()', 'normal-mode');
-    append_button(ul, 'done', 'finish_view()', 'view-mode');
+    append_button(div, 'view json', 'start_view()', 'normal-mode');
+    append_button(div, 'done', 'finish_view()', 'view-mode');
 
 	if (ops) {
 		for (var i = 0; i < ops.length; i++) {
-			format_operation(ul, ops[i]);
+			format_operation(div, ops[i]);
 		}
 	}
 
@@ -136,7 +137,7 @@ function render_navigation(o) {
 
 	o.selectAll('*').remove();
 
-	var crumbs = o.append('ul');
+	var crumbs = o.append('ol').attr('class', 'breadcrumb');
 	crumbs.append('li')
 	.append('a')
 	.text('CloudEntryPoint')
@@ -153,12 +154,6 @@ function render_navigation(o) {
 		id = id + '/';
 	}
 
-	return o;
-}
-
-function render_title(o, title) {
-	o.selectAll('h1').remove();
-	o.insert('h1', ':first-child').text(title);
 	return o;
 }
 
@@ -198,6 +193,7 @@ function append_term(dl, term, desc) {
 
 function render_cep(o, m) {
 	o.selectAll('*').remove();
+	clear_count();
 
 	o.append('ul')
 	.selectAll('li')
@@ -213,10 +209,8 @@ function render_cep(o, m) {
 function render_collection(o, m) {
 	o.selectAll('*').remove();
 
-	if (m.count <= 0) {
-		o.append('p').text('No items.');
-	} else {
-		o.append('p').text('Count: ' + m.count);
+    set_count(m.count)
+	if (m.count > 0) {
 
 		var entries = get_collection_entries(m);
 
@@ -245,6 +239,7 @@ function render_collection(o, m) {
 
 function render_item(o, m) {
 	o.selectAll('*').remove();
+	clear_count();
 
 	var entries = d3.entries(m).sort(function(a, b) {return d3.ascending(a.key, b.key);})
 
@@ -255,6 +250,17 @@ function render_item(o, m) {
 	}
 
 	return o;
+}
+
+/*
+ * Badge for number of items in collection.
+ */
+function clear_count() {
+    d3.select('#collection-count').text('');
+}
+
+function set_count(count) {
+    d3.select('#collection-count').text(count);
 }
 
 /* finds the first key in the collection which is an array
@@ -320,13 +326,12 @@ function format_operation(o, op) {
 	return o;
 }
 
-function append_button(ul, name, func, mode) {
-    ul.append('li')
-    .append('button')
+function append_button(div, name, func, mode) {
+    div.append('button')
     .text(name)
     .attr('type', 'button')
     .attr('onclick', func)
-    .attr('class', mode + ' opbutton');
+    .attr('class', 'btn btn-primary ' + mode + ' opbutton');
 }
 
 function format_entry(entry) {

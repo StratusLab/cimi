@@ -1,0 +1,238 @@
+
+/*
+Colors:
+
+* Blue: #2aa0c8
+* DkGray: #66767c
+* LtGray: #98a3a6
+*
+*/
+
+body {
+font-family: Arial, Helvetica, sans-serif;
+color: black;
+background-color: white;
+}
+
+.wrapper {
+margin: auto;
+max-width: 900px;
+background-color: white;
+}
+
+.wrapper main {
+background-color: #e8e8e8;
+border-style: none;
+margin: 0;
+padding: 0;
+border-left: 2px solid #66767c;
+border-right: 2px solid #66767c;
+}
+
+.wrapper main h1 {
+display: inline-block;
+float: left;
+font-size: x-large;
+font-weight: bold;
+margin: 0;
+padding: 0.5ex;
+}
+
+.wrapper main section {
+clear: both;
+border-style: none;
+border-top: 2px solid whitesmoke;
+border-bottom: 2px solid whitesmoke;
+border-radius: 0px;
+background-color: white;
+padding: 5px;
+margin: 0;
+}
+
+.logo:before {
+content: url(stratuslab-logo-white.png);
+letter-spacing: 0.1ex;
+float: left;
+font-style: italic;
+font-weight: bold;
+color: white;
+padding: 1ex;
+}
+
+.user-info {
+float: right;
+color: white;
+padding: 1ex;
+}
+
+.user-info a:link {
+color: white;
+text-decoration: none;
+}
+
+.user-info a:visited {
+color: white;
+text-decoration: none;
+}
+
+.user-info a:hover {
+color: white;
+text-decoration: underline;
+}
+
+.user-info a:active {
+color: white;
+text-decoration: underline;
+}
+
+header {
+background-color: #66767c;
+border-radius: 20px 20px 0 0;
+font-size: large;
+}
+
+nav {
+clear: both;
+min-height: 1em;
+font-size: medium;
+padding-bottom: 0ex;
+border-bottom: solid whitesmoke;
+}
+
+nav a:link {
+color: white;
+text-decoration: none;
+}
+
+nav a:visited {
+color: white;
+text-decoration: none;
+}
+
+nav a:hover {
+color: white;
+text-decoration: underline;
+}
+
+nav a:active {
+color: white;
+text-decoration: underline;
+}
+
+nav ul {
+display: block;
+list-style-type: none;
+padding: 0;
+padding-left: 1ex;
+left: 0;
+top: 0;
+}
+
+nav ul li {
+margin: 0;
+padding: 0;
+display: inline-block;
+}
+
+nav ul li:before {
+content: "\a0\2666\a0";
+color: white;
+}
+
+nav ul li:first-child:before {
+content: none;
+}
+
+#operations {
+padding: 0.5ex;
+margin: 0;
+min-height: 1em;
+}
+
+#operations ul {
+display: block;
+float: right;
+list-style-type: none;
+padding: 0;
+padding-left: 1ex;
+margin: 0;
+margin-top: 0.5ex;
+margin-bottom: 0.5ex;
+left: 0;
+top: 0;
+}
+
+#operations ul li {
+margin: 0;
+display: inline-block;
+}
+
+#message {
+background-color: #66767c;
+min-height: 2ex;
+padding-top: 0.5ex
+padding-bottom: 0.5ex;
+}
+
+#message p {
+padding: 0;
+margin: 0;
+}
+
+#metadata {
+background-color: #e8e8e8;
+border-bottom: 4px solid black;
+font-size: small;
+}
+
+dl {
+margin: 0;
+padding: 1ex;
+}
+
+dt {
+float: left;
+margin: 0 2px;
+font-weight: bold;
+}
+
+dt:after {
+content: ": ";
+font-weight: bold;
+}
+
+dt, dd {
+overflow: hidden;
+}
+
+dd {
+word-wrap: break-word;
+}
+
+#content ul {
+list-style-type: none;
+padding: 0;
+padding-left: 1ex;
+}
+
+footer {
+background-color: #66767c;
+border-radius: 0 0 20px 20px;
+font-size: small;
+color: white;
+}
+
+footer p {
+margin: auto;
+padding-top: 1em;
+padding-bottom: 1em;
+text-align: center;
+}
+
+#editor {
+width: 90%;
+}
+
+.CodeMirror {
+border: none;
+}
