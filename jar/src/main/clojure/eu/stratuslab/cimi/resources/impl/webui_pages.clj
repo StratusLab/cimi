@@ -37,10 +37,10 @@
       identity
       [:span {:class "caret"}]]
      [:ul {:class "dropdown-menu" :role "menu"}
-      [:li [:a {:href (e/link-to "/cimi/User/")} "profile"]]
-      [:li [:a {:href (e/link-to "/cimi/authn")} "authn. info"]]
+      [:li (e/link-to (str "#User/" identity) "profile")]
+      [:li (e/link-to "/cimi/authn" "authn. info")]
       [:li {:class "divider"}]
-      [:li [:a {:href (e/link-to "/cimi/logout")} "logout"]]]]
+      [:li (e/link-to "/cimi/logout" "logout")]]]
     [:li (e/link-to "/cimi/login" "login")]))
 
 (def breadcrumbs

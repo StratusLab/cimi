@@ -8,6 +8,12 @@ Colors:
 *
 */
 
+.logo:before {
+content: url(stratuslab-logo-white.png);
+float: left;
+padding: 1ex;
+}
+
 main h1 {
 display: inline;
 }
@@ -16,10 +22,8 @@ main section {
 clear: both;
 }
 
-.logo:before {
-content: url(stratuslab-logo-white.png);
-float: left;
-padding: 1ex;
+#operations div button {
+margin-left: 0.5ex;
 }
 
 footer p {
