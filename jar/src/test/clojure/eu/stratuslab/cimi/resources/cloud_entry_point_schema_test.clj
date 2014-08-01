@@ -20,7 +20,7 @@
     [schema.core :as s]
     [expectations :refer :all]))
 
-(let [timestamp #inst "1964-08-25T10:00:00.0Z"
+(let [timestamp  "1964-08-25T10:00:00.0Z"
       cep {:id          resource-name
            :resourceURI base-uri
            :created     timestamp

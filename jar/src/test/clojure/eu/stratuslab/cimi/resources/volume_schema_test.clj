@@ -48,8 +48,8 @@
       vc (assoc valid-vc-entry
            :id uri
            :resourceURI vc/type-uri
-           :created #inst "1964-08-25T10:00:00.0Z"
-           :updated #inst "1964-08-25T10:00:00.0Z")]
+           :created  "1964-08-25T10:00:00.0Z"
+           :updated  "1964-08-25T10:00:00.0Z")]
 
   (expect nil? (s/check VolumeConfiguration vc))
   (expect nil? (s/check VolumeConfiguration (dissoc vc :type)))
@@ -69,8 +69,8 @@
 (let [vi (assoc valid-vi-entry
            :id "VolumeImage/10"
            :resourceURI vi/type-uri
-           :created #inst "1964-08-25T10:00:00.0Z"
-           :updated #inst "1964-08-25T10:00:00.0Z")]
+           :created  "1964-08-25T10:00:00.0Z"
+           :updated  "1964-08-25T10:00:00.0Z")]
 
   (expect nil? (s/check VolumeImage vi))
   (expect (s/check VolumeImage (dissoc vi :state)))
@@ -91,8 +91,8 @@
       vt (assoc valid-vt-entry
            :id uri
            :resourceURI vt/type-uri
-           :created #inst "1964-08-25T10:00:00.0Z"
-           :updated #inst "1964-08-25T10:00:00.0Z")]
+           :created  "1964-08-25T10:00:00.0Z"
+           :updated  "1964-08-25T10:00:00.0Z")]
 
   (expect nil? (s/check VolumeTemplate vt))
   (expect nil? (s/check VolumeTemplate (dissoc vt :volumeImage)))
@@ -101,8 +101,8 @@
 (let [volume (assoc valid-v-entry
                :id "Volume/10"
                :resourceURI type-uri
-               :created #inst "1964-08-25T10:00:00.0Z"
-               :updated #inst "1964-08-25T10:00:00.0Z")]
+               :created  "1964-08-25T10:00:00.0Z"
+               :updated  "1964-08-25T10:00:00.0Z")]
 
   (expect nil? (s/check Volume volume))
   (expect nil? (s/check Volume (dissoc volume :state)))

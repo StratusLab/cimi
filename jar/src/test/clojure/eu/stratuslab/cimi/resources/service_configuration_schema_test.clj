@@ -35,8 +35,8 @@
       sc (assoc valid-sc-entry
            :id uri
            :resourceURI type-uri
-           :created #inst "1964-08-25T10:00:00.0Z"
-           :updated #inst "1964-08-25T10:00:00.0Z")]
+           :created  "1964-08-25T10:00:00.0Z"
+           :updated  "1964-08-25T10:00:00.0Z")]
 
   (expect nil? (s/check ServiceConfiguration sc))
   (expect nil? (s/check ServiceConfiguration (dissoc sc :instance)))

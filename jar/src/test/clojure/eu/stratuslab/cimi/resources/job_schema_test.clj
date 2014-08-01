@@ -39,15 +39,15 @@
    :returnCode         0
    :progress           0
    :statusMessage      "none"
-   :timeOfStatusChange #inst "2013-08-25T10:00:00.00Z"
+   :timeOfStatusChange  "2013-08-25T10:00:00.00Z"
    :parentJob          "Job/uuid-1"
    :nestedJobs         ["Job/uuid-2"]})
 
 (let [job (assoc valid-job-entry
             :id "/Job/10"
             :resourceURI type-uri
-            :created #inst "1964-08-25T10:00:00.0Z"
-            :updated #inst "1964-08-25T10:00:00.0Z")]
+            :created  "1964-08-25T10:00:00.0Z"
+            :updated  "1964-08-25T10:00:00.0Z")]
 
   (expect nil? (s/check Job job))
   (expect nil? (s/check Job (dissoc job :state)))

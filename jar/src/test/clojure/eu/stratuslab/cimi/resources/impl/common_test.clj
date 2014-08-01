@@ -84,6 +84,13 @@
 (expect (s/check NonEmptyStrList ["ok" 1]))
 
 ;;
+;; Timestamp
+;;
+
+(expect nil? (s/check Timestamp "2012-01-01T01:23:45.678Z"))
+(expect (s/check Timestamp "2012-01-01T01:23:45.678Q"))
+
+;;
 ;; ResourceLink
 ;;
 
@@ -187,7 +194,7 @@
 ;; Common CIMI attributes
 ;;
 
-(let [date #inst"2012-01-01T01:23:45.678Z"
+(let [date "2012-01-01T01:23:45.678Z"
       minimal {:id          "a"
                :resourceURI "http://example.org/data"
                :created     date

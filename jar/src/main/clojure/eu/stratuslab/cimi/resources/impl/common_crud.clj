@@ -18,7 +18,6 @@
   (:require
     [clojure.tools.logging :as log]
     [clojure.string :as str]
-    [eu.stratuslab.cimi.resources.utils.time :as time]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [schema.core :as s]))
 

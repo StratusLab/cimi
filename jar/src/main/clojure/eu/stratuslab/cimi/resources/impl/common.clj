@@ -15,11 +15,12 @@
 ;
 
 (ns eu.stratuslab.cimi.resources.impl.common
+  (:import (org.joda.time DateTime))
   (:require
     [clojure.tools.logging :as log]
     [clojure.string :as str]
-    [eu.stratuslab.cimi.resources.utils.time :as time]
-    [schema.core :as s]))
+    [schema.core :as s]
+    [eu.stratuslab.cimi.resources.utils.utils :as u]))
 
 (def ^:const cimi-schema-uri "http://stratuslab.eu/cimi/1/")
 
@@ -43,6 +44,9 @@
 
 (def NonEmptyStrList
   (s/both [NonBlankString] NotEmpty))
+
+(def Timestamp
+  (s/both NonBlankString (s/pred u/valid-timestamp? "valid-timestamp?")))
 
 ;;
 ;; schema definitions for common attributes
@@ -105,8 +109,8 @@
    :resourceURI                  NonBlankString
    (s/optional-key :name)        NonBlankString
    (s/optional-key :description) NonBlankString
-   :created                      s/Inst
-   :updated                      s/Inst
+   :created                      Timestamp
+   :updated                      Timestamp
    (s/optional-key :properties)  Properties
    (s/optional-key :operations)  Operations})
 
@@ -119,8 +123,8 @@
   {:resourceURI                  NonBlankString
    (s/optional-key :name)        NonBlankString
    (s/optional-key :description) NonBlankString
-   (s/optional-key :created)     s/Inst
-   (s/optional-key :updated)     s/Inst
+   (s/optional-key :created)     Timestamp
+   (s/optional-key :updated)     Timestamp
    (s/optional-key :properties)  Properties
    (s/optional-key :operations)  Operations})
 

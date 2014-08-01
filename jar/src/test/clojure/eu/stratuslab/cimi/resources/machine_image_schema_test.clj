@@ -38,8 +38,8 @@
 (let [mi (assoc valid-mi-entry
            :id "MachineImage/10"
            :resourceURI type-uri
-           :created #inst "1964-08-25T10:00:00.0Z"
-           :updated #inst "1964-08-25T10:00:00.0Z")]
+           :created  "1964-08-25T10:00:00.0Z"
+           :updated  "1964-08-25T10:00:00.0Z")]
 
   (expect nil? (s/check MachineImage mi))
   (expect nil? (s/check MachineImage (dissoc mi :imageLocation)))

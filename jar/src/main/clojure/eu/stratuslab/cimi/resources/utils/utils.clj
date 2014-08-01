@@ -58,6 +58,12 @@
         created (or (:created data) updated)]
     (assoc data :created created :updated updated)))
 
+(defn valid-timestamp?
+  "Tries to parse the given string as a DateTime value.  Returns the DateTime
+   instance on success and nil on failure."
+  [data]
+  (time-fmt/parse (:date-time time-fmt/formatters) data))
+
 (defn body->json
   "Converts the contents of body (that must be something readable) into
    a clojure datastructure.  If the body is empty, then an empty map is

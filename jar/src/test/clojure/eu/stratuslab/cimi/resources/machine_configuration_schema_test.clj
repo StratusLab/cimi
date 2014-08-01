@@ -65,8 +65,8 @@
 (let [mc (assoc valid-mc-entry
            :id "/MachineConfiguration/10"
            :resourceURI type-uri
-           :created #inst "1964-08-25T10:00:00.0Z"
-           :updated #inst "1964-08-25T10:00:00.0Z"
+           :created  "1964-08-25T10:00:00.0Z"
+           :updated  "1964-08-25T10:00:00.0Z"
            :disks [{:capacity 1024
                     :format   "ext4"}])]
 
