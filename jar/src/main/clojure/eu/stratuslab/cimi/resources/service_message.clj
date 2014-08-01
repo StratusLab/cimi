@@ -113,7 +113,7 @@
                   (u/strip-service-attrs)
                   (assoc :id uri)
                   (assoc :resourceURI resource-uri)
-                  (u/set-time-attributes)
+                  (u/update-timestamps)
                   (add-acl)                                 ;; special ACL for these messages
                   (c/validate))]
     (if (cbc/add-json cb-client uri entry)
@@ -141,7 +141,7 @@
         (let [updated (->> entry
                            (u/strip-service-attrs)
                            (merge current)
-                           (u/set-time-attributes)
+                           (u/update-timestamps)
                            (c/validate))]
           (if (cbc/set-json cb-client uri updated)
             (r/response updated)

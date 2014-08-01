@@ -49,7 +49,7 @@
   [m]
   (dissoc m :id :created :updated :resourceURI :operations))
 
-(defn set-time-attributes
+(defn update-timestamps
   "Sets the updated attribute and optionally the created attribute
    in the request.  The created attribute is only set if the existing value
    is missing or evaluates to false."

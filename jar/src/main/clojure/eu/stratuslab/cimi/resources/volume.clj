@@ -167,7 +167,7 @@
         (u/strip-service-attrs)
         (dissoc :volumeTemplate)
         (assoc :resourceURI type-uri)
-        (u/set-time-attributes)
+        (u/update-timestamps)
         (assoc :state "CREATING" :id uri))
     (throw (Exception. (str create-uri " resource required")))))
 
@@ -230,7 +230,7 @@
       (let [updated (->> entry
                          (u/strip-service-attrs)
                          (merge current)
-                         (u/set-time-attributes)
+                         (u/update-timestamps)
                          (add-rops)
                          (validate))]
         (if (cbc/set-json cb-client uri updated)

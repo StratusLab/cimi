@@ -109,7 +109,7 @@
                           :resourceURI type-uri
                           :state "QUEUED"
                           :progress 0})
-                  (u/set-time-attributes)
+                  (u/update-timestamps)
                   (set-timestamp)
                   (validate))]
     (if (cbc/add-json cb-client uri entry)
@@ -140,7 +140,7 @@
       (let [updated (->> entry
                          (u/strip-service-attrs)
                          (merge current)
-                         (u/set-time-attributes)
+                         (u/update-timestamps)
                          (add-rops)
                          (validate))]
         (if (cbc/set-json cb-client uri updated)

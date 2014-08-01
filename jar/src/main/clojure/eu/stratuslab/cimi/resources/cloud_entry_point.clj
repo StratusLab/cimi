@@ -88,7 +88,7 @@
   (let [record (-> {:acl         resource-acl
                     :id          resource-name
                     :resourceURI resource-uri}
-                   (u/set-time-attributes))]
+                   (u/update-timestamps))]
     (cbc/add-json cb-client resource-name record {:observe   true
                                                   :persist   :master
                                                   :replicate :zero})))
@@ -115,7 +115,7 @@
   (if-let [current (cbc/get-json cb-client resource-name)]
     (let [db-doc (->> (select-keys entry [:name :description :properties])
                       (merge current)
-                      (u/set-time-attributes))
+                      (u/update-timestamps))
           doc (-> db-doc
                   (assoc :baseURI baseURI)
                   (merge resource-links)

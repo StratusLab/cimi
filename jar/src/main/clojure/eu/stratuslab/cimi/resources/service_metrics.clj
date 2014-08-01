@@ -55,7 +55,7 @@
   (if-let [json (-> {:metrics (get-raw-metrics)}
                     (assoc :id resource-type)
                     (assoc :resourceURI type-uri)
-                    (u/set-time-attributes)
+                    (u/update-timestamps)
                     (assoc :acl resource-acl))]
     (if (a/can-view? (:acl json))
       (r/response json)

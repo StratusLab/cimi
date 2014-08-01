@@ -156,15 +156,6 @@
 ;; common resource utilities and multimethods
 ;;
 
-(defn update-timestamps
-  "Sets the :updated timestamp to the current date/time and will set
-   the :created timestamp to the same time if it is not present in the
-   input."
-  [cred]
-  (let [updated (time/now)
-        created (get cred :created updated)]
-    (assoc cred :created created :updated updated)))
-
 (defn get-resource-typeuri
   "This will return the resource typeURI corresponding to the given
    resource template typeURI by removing 'Template' at the end of the

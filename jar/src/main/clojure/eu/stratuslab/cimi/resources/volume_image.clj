@@ -94,7 +94,7 @@
                   (u/strip-service-attrs)
                   (assoc :id uri)
                   (assoc :resourceURI type-uri)
-                  (u/set-time-attributes)
+                  (u/update-timestamps)
                   (assoc :state "CREATING")
                   (validate))]
     (if (cbc/add-json cb-client uri entry)
@@ -121,7 +121,7 @@
       (let [updated (->> entry
                          (u/strip-service-attrs)
                          (merge current)
-                         (u/set-time-attributes)
+                         (u/update-timestamps)
                          (add-rops)
                          (validate))]
         (if (cbc/set-json cb-client uri updated)

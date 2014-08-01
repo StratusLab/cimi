@@ -65,7 +65,7 @@
     (->> (u/random-uuid)
          (uuid->id)
          (assoc resource :id)
-         (c/update-timestamps)
+         (u/update-timestamps)
          (c/validate)
          (db/create-resource)
          (:id))))
@@ -80,7 +80,7 @@
    the updated resource."
   [resource]
   (->> resource
-       (c/update-timestamps)
+       (u/update-timestamps)
        (c/validate)
        (db/update-resource)))
 

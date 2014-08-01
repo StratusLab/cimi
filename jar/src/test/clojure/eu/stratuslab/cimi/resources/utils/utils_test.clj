@@ -40,10 +40,10 @@
     (is (= correct (strip-service-attrs entry)))))
 
 (deftest check-set-time-attributes
-  (let [m (set-time-attributes {})]
+  (let [m (update-timestamps {})]
     (is (:created m))
     (is (:updated m)))
-  (let [m (set-time-attributes {:created "dummy"})]
+  (let [m (update-timestamps {:created "dummy"})]
     (is (= "dummy" (:created m)))
     (is (:updated m))))
 
