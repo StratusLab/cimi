@@ -45,7 +45,7 @@
   (-> (session (ring-app))
       (request base-uri)
       (t/is-status 200)
-      (t/is-resource-uri collection-resource-uri)
+      (t/is-resource-uri collection-uri)
       (t/is-count zero?))
 
   ;; add a new entry
@@ -69,7 +69,7 @@
     ;; query to see that entry is listed
     (let [entries (-> (session (ring-app))
                       (request base-uri)
-                      (t/is-resource-uri collection-resource-uri)
+                      (t/is-resource-uri collection-uri)
                       (t/is-count pos?)
                       (t/entries :serviceMessages))]
       (is ((set (map :id entries)) uri)))

@@ -55,7 +55,8 @@
                  :username   "admin"
                  :password   (creds/hash-bcrypt password)
                  :enabled    true
-                 :roles      ["::ADMIN"]}]
+                 :roles      ["::ADMIN"]
+                 :email      "change_me@example.com"}]
       (if (= 201 (:status (user/add cb-client admin)))
         (log/warn "User/admin entry created; initial password is" password)
         (log/info "User/admin entry NOT created")))

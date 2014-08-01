@@ -21,6 +21,10 @@
     [eu.stratuslab.cimi.resources.utils.time :as time]
     [schema.core :as s]))
 
+(def ^:const cimi-schema-uri "http://stratuslab.eu/cimi/1/")
+
+(def ^:const service-context "/cimi/")
+
 ;;
 ;; schema definitions for basic types
 ;;

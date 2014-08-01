@@ -37,13 +37,13 @@
 
 (def ^:const resource-name "ServiceMessage")
 
-(def ^:const collection-resource-name "ServiceMessageCollection")
+(def ^:const collection-name "ServiceMessageCollection")
 
-(def ^:const resource-uri (str "http://stratuslab.eu/cimi/1/" resource-name))
+(def ^:const resource-uri (str c/cimi-schema-uri resource-name))
 
-(def ^:const collection-resource-uri (str "http://stratuslab.eu/cimi/1/" collection-resource-name))
+(def ^:const collection-uri (str c/cimi-schema-uri collection-name))
 
-(def ^:const base-uri (str "/cimi/" resource-name))
+(def ^:const base-uri (str c/service-context resource-name))
 
 (def ^:const collection-acl {:owner {:principal "::ADMIN"
                                      :type      "ROLE"}
@@ -83,12 +83,12 @@
       (assoc resource :operations ops))
     (dissoc resource :operations)))
 
-(defmethod c/set-operations collection-resource-uri
+(defmethod c/set-operations collection-uri
            [resource]
   (if (a/can-modify? collection-acl)
     (let [ops [{:rel (:add schema/action-uri) :href base-uri}]]
       (assoc resource :operations ops))
-    resource))
+    (dissoc resource :operations)))
 
 ;;
 ;; special method
@@ -168,8 +168,8 @@
   (let [principals (a/authn->principals)
         configs (u/viewable-resources cb-client resource-name principals opts)
         configs (map c/set-operations configs)
-        collection (c/set-operations {:resourceURI collection-resource-uri
-                                      :id          base-uri
+        collection (c/set-operations {:resourceURI collection-uri
+                                      :id          collection-name
                                       :count       (count configs)})]
     (r/response (if (empty? collection)
                   collection

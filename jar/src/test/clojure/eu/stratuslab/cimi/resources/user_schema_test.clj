@@ -30,12 +30,13 @@
   {:acl        valid-acl
    :first-name "cloud"
    :last-name  "user"
-   :username   "cloud-user"})
+   :username   "cloud-user"
+   :email      "user@example.com"})
 
-(let [uri (uuid->uri "cloud-user")
+(let [uri (uuid->id "cloud-user")
       user (assoc valid-user-entry
              :id uri
-             :resourceURI type-uri
+             :resourceURI resource-uri
              :created #inst "1964-08-25T10:00:00.0Z"
              :updated #inst "1964-08-25T10:00:00.0Z")]
 
@@ -48,11 +49,11 @@
   (expect (s/check User (assoc user :roles "BAD")))
   (expect nil? (s/check User (assoc user :altnames {:x500dn "certdn"})))
   (expect (s/check User (assoc user :altnames {})))
-  (expect nil? (s/check User (assoc user :email "ok@example.com")))
   (expect (s/check User (dissoc user :acl)))
   (expect (s/check User (dissoc user :first-name)))
   (expect (s/check User (dissoc user :last-name)))
-  (expect (s/check User (dissoc user :username))))
+  (expect (s/check User (dissoc user :username)))
+  (expect (s/check User (dissoc user :email))))
 
 
 (run-tests [*ns*])
