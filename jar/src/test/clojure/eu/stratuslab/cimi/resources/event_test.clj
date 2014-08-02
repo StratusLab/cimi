@@ -65,7 +65,7 @@
       (authorize "jane" "user_password")
       (request base-uri)
       (t/is-status 200)
-      (t/is-resource-uri collection-type-uri)
+      (t/is-resource-uri collection-uri)
       (t/is-count zero?))
 
   ;; add a new entry
@@ -92,7 +92,7 @@
                       (authorize "root" "admin_password")
                       (request base-uri)
                       (t/is-status 200)
-                      (t/is-resource-uri collection-type-uri)
+                      (t/is-resource-uri collection-uri)
                       (t/is-count pos?)
                       (t/entries :events))]
       (is ((set (map :id entries)) uri)))

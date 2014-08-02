@@ -65,7 +65,7 @@
                       (authorize "jane" "user_password")
                       (request base-uri)
                       (t/is-status 200)
-                      (t/is-resource-uri collection-type-uri)
+                      (t/is-resource-uri collection-uri)
                       (t/is-count pos?)
                       (t/entries :volumeImages))]
       (is ((set (map :id entries)) uri)))

@@ -24,6 +24,7 @@
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.impl.schema :as schema]
+    [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.volume :as v]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
@@ -35,18 +36,21 @@
 
 (def ^:const resource-tag :volumeImages)
 
-(def ^:const resource-type "VolumeImage")
+(def ^:const resource-name "VolumeImage")
 
-(def ^:const collection-resource-type "VolumeImageCollection")
+(def ^:const collection-name "VolumeImageCollection")
 
-(def ^:const type-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type))
+(def ^:const resource-uri (str c/cimi-schema-uri resource-name))
 
-(def ^:const collection-type-uri (str "http://schemas.dmtf.org/cimi/1/" collection-resource-type))
+(def ^:const collection-uri (str c/cimi-schema-uri collection-name))
 
-(def ^:const base-uri (str "/cimi/" resource-type))
+(def ^:const base-uri (str c/service-context resource-name))
 
-(def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}
-                     :rules [{:principal "::USER" :type "ROLE" :right "MODIFY"}]})
+(def collection-acl {:owner {:principal "::ADMIN"
+                             :type      "ROLE"}
+                     :rules [{:principal "::USER"
+                              :type      "ROLE"
+                              :right     "MODIFY"}]})
 
 (def validate (u/create-validation-fn v/VolumeImage))
 
@@ -54,7 +58,7 @@
   "Convert the uuid into a resource URI.  NOTE: unlike for other resources,
    the UUID is the base64-encoded, SHA-1 checksum of the image."
   [uuid]
-  (str resource-type "/" uuid))
+  (str resource-name "/" uuid))
 
 (defn image-id
   "If the :initialLocation/:href value is a valid image identifier
@@ -93,7 +97,7 @@
         entry (-> entry
                   (u/strip-service-attrs)
                   (assoc :id uri)
-                  (assoc :resourceURI type-uri)
+                  (assoc :resourceURI resource-uri)
                   (u/update-timestamps)
                   (assoc :state "CREATING")
                   (validate))]
@@ -126,7 +130,7 @@
                          (validate))]
         (if (cbc/set-json cb-client uri updated)
           (r/response updated)
-          (r/status (r/response nil) 409))) ;; conflict
+          (r/status (r/response nil) 409)))                 ;; conflict
       (r/not-found nil))))
 
 (defn delete
@@ -142,19 +146,19 @@
    account the given options."
   [cb-client & [opts]]
   (let [q (cbq/create-query (merge {:include-docs true
-                                    :key type-uri
-                                    :limit 100
-                                    :stale false
-                                    :on-error :continue}
+                                    :key          resource-uri
+                                    :limit        100
+                                    :stale        false
+                                    :on-error     :continue}
                                    opts))
         v (views/get-view cb-client :resource-uri)
 
         volume-images (->> (cbc/query cb-client v q)
                            (map cbc/view-doc-json)
                            (map add-rops))
-        collection (add-cops {:resourceURI collection-type-uri
-                              :id base-uri
-                              :count (count volume-images)})]
+        collection (add-cops {:resourceURI collection-uri
+                              :id          base-uri
+                              :count       (count volume-images)})]
     (r/response (if (empty? volume-images)
                   collection
                   (assoc collection :volumeImages volume-images)))))

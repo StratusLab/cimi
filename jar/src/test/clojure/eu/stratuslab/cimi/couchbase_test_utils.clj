@@ -26,6 +26,7 @@
     [cemerick.friend :as friend]
     [cemerick.friend.workflows :as workflows]
     [cemerick.friend.credentials :as creds]
+    [compojure.core :as cc]
     [clojure.test :refer [is]]
     [clojure.pprint :refer [pprint]]
     [clojure.tools.logging :as log])
@@ -105,6 +106,10 @@
 
 (defn entries [m k]
   (get-in m [:response :body k]))
+
+(defn concat-routes
+  [rs]
+  (apply cc/routes rs))
 
 (defn make-ring-app [resource-routes]
   (-> resource-routes

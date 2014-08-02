@@ -31,18 +31,21 @@
 
 (def ^:const resource-tag :jobs)
 
-(def ^:const resource-type "Job")
+(def ^:const resource-name "Job")
 
-(def ^:const collection-resource-type "JobCollection")
+(def ^:const collection-name "JobCollection")
 
-(def ^:const type-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type))
+(def ^:const resource-uri (str c/cimi-schema-uri resource-name))
 
-(def ^:const collection-type-uri (str "http://schemas.dmtf.org/cimi/1/" collection-resource-type))
+(def ^:const collection-uri (str c/cimi-schema-uri collection-name))
 
-(def ^:const base-uri (str "/cimi/" resource-type))
+(def ^:const base-uri (str c/service-context resource-name))
 
-(def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}
-                     :rules [{:principal "::USER" :type "ROLE" :right "VIEW"}]})
+(def collection-acl {:owner {:principal "::ADMIN"
+                             :type      "ROLE"}
+                     :rules [{:principal "::USER"
+                              :type      "ROLE"
+                              :right     "VIEW"}]})
 
 ;; FIXME: This ACL should depend on who is accessing the object
 (def job-acl {:owner {:principal "::ADMIN" :type "ROLE"}})
@@ -51,7 +54,7 @@
   "Convert a uuid into the URI for a MachineConfiguration resource.
    The URI must not have a leading slash."
   [uuid]
-  (str resource-type "/" uuid))
+  (str resource-name "/" uuid))
 
 ;;
 ;; Job schema
@@ -105,10 +108,10 @@
   (let [uri (uuid->uri (u/random-uuid))
         entry (-> entry
                   (u/strip-service-attrs)
-                  (merge {:id uri
-                          :resourceURI type-uri
-                          :state "QUEUED"
-                          :progress 0})
+                  (merge {:id          uri
+                          :resourceURI resource-uri
+                          :state       "QUEUED"
+                          :progress    0})
                   (u/update-timestamps)
                   (set-timestamp)
                   (validate))]
@@ -145,7 +148,7 @@
                          (validate))]
         (if (cbc/set-json cb-client uri updated)
           (r/response updated)
-          (r/status (r/response nil) 409))) ;; conflict
+          (r/status (r/response nil) 409)))                 ;; conflict
       (r/not-found nil))))
 
 (defn delete
@@ -165,19 +168,19 @@
    account the given options."
   [cb-client & [opts]]
   (let [q (cbq/create-query (merge {:include-docs true
-                                    :key type-uri
-                                    :limit 100
-                                    :stale false
-                                    :on-error :continue}
+                                    :key          resource-uri
+                                    :limit        100
+                                    :stale        false
+                                    :on-error     :continue}
                                    opts))
         v (views/get-view cb-client :resource-uri)
 
         configs (->> (cbc/query cb-client v q)
                      (map cbc/view-doc-json)
                      (map add-rops))
-        collection (add-cops {:resourceURI collection-type-uri
-                              :id base-uri
-                              :count (count configs)})]
+        collection (add-cops {:resourceURI collection-uri
+                              :id          base-uri
+                              :count       (count configs)})]
     (r/response (if (empty? configs)
                   collection
                   (assoc collection :jobs configs)))))

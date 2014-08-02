@@ -54,7 +54,7 @@
       (authorize "jane" "user_password")
       (request base-uri)
       (t/is-status 200)
-      (t/is-resource-uri collection-type-uri)
+      (t/is-resource-uri collection-uri)
       (t/is-count zero?))
 
   ;; add a new entry
@@ -80,7 +80,7 @@
     (let [entries (-> (session (ring-app))
                       (authorize "root" "admin_password")
                       (request base-uri)
-                      (t/is-resource-uri collection-type-uri)
+                      (t/is-resource-uri collection-uri)
                       (t/is-count pos?)
                       (t/entries :jobs))]
       (is ((set (map :id entries)) uri)))

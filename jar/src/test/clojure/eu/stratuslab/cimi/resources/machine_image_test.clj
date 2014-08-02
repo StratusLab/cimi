@@ -88,7 +88,7 @@
     (let [entries (-> (session (ring-app))
                       (authorize "jane" "user_password")
                       (request base-uri)
-                      (t/is-resource-uri collection-type-uri)
+                      (t/is-resource-uri collection-uri)
                       (t/is-count pos?)
                       (t/entries :machineImages))]
       (is ((set (map :id entries)) uri)))
@@ -97,7 +97,7 @@
     (let [entries (-> (session (ring-app))
                       (authorize "tarzan" "me,tarzan,you,jane")
                       (request base-uri)
-                      (t/is-resource-uri collection-type-uri)
+                      (t/is-resource-uri collection-uri)
                       (t/is-count zero?)
                       (t/entries :machineImages))]
       (is (empty? (map :id entries))))
@@ -106,7 +106,7 @@
     (let [entries (-> (session (ring-app))
                       (authorize "root" "admin_password")
                       (request base-uri)
-                      (t/is-resource-uri collection-type-uri)
+                      (t/is-resource-uri collection-uri)
                       (t/is-count pos?)
                       (t/entries :machineImages))]
       (is ((set (map :id entries)) uri)))
@@ -184,7 +184,7 @@
                    (authorize "jane" "user_password")
                    (request base-uri)
                    (t/is-status 200)
-                   (t/is-resource-uri collection-type-uri)
+                   (t/is-resource-uri collection-uri)
                    (t/is-id base-uri)
                    (t/is-count (partial = (count keys)))
                    (get-in [:response :body :machineImages]))]
@@ -197,7 +197,7 @@
                    (request base-uri
                             :body (json/write-str {:limit limit}))
                    (t/is-status 200)
-                   (t/is-resource-uri collection-type-uri)
+                   (t/is-resource-uri collection-uri)
                    (t/is-id base-uri)
                    (t/is-count (partial = limit))
                    (get-in [:response :body :machineImages]))]

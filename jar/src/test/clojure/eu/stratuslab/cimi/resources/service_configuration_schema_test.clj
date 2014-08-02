@@ -34,7 +34,7 @@
 (let [uri (uuid->uri "authn.first")
       sc (assoc valid-sc-entry
            :id uri
-           :resourceURI type-uri
+           :resourceURI resource-uri
            :created  "1964-08-25T10:00:00.0Z"
            :updated  "1964-08-25T10:00:00.0Z")]
 

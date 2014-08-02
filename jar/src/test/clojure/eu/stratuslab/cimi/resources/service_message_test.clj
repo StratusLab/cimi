@@ -3,6 +3,7 @@
     [eu.stratuslab.cimi.resources.service-message :refer :all]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
+    [eu.stratuslab.cimi.routes :as routes]
     [ring.util.response :as rresp]
     [clojure.test :refer :all]
     [clojure.data.json :as json]
@@ -11,7 +12,7 @@
 (use-fixtures :each t/temp-bucket-fixture)
 
 (defn ring-app []
-  (t/make-ring-app routes))
+  (t/make-ring-app (t/concat-routes routes/final-routes)))
 
 (def valid-acl {:owner {:principal "::ADMIN"
                         :type      "ROLE"}
@@ -23,6 +24,10 @@
   {:acl     valid-acl
    :title   "title"
    :message "description"})
+
+(defn debug [m]
+  (println "DEBUG DEBUG DEBUG DEBUG: " m)
+  m)
 
 (deftest lifecycle
 
@@ -63,6 +68,7 @@
     ;; verify that the new entry is accessible
     (-> (session (ring-app))
         (request abs-uri)
+        (debug)
         (t/is-status 200)
         (t/does-body-contain valid-entry))
 
@@ -101,7 +107,7 @@
         (request abs-uri)
         (t/is-status 404))))
 
-(deftest bad-methods
+#_(deftest bad-methods
   (let [resource-uri (str base-uri "/" (u/random-uuid))]
     (doall
       (for [[uri method] [[base-uri :options]

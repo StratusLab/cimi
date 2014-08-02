@@ -34,24 +34,27 @@
 
 (def ^:const resource-tag :machineConfigs)
 
-(def ^:const resource-type "MachineConfiguration")
+(def ^:const resource-name "MachineConfiguration")
 
-(def ^:const collection-resource-type "MachineConfigurationCollection")
+(def ^:const collection-name "MachineConfigurationCollection")
 
-(def ^:const type-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type))
+(def ^:const resource-uri (str c/cimi-schema-uri resource-name))
 
-(def ^:const collection-type-uri (str "http://schemas.dmtf.org/cimi/1/" collection-resource-type))
+(def ^:const collection-uri (str c/cimi-schema-uri collection-name))
 
-(def ^:const base-uri (str "/cimi/" resource-type))
+(def ^:const base-uri (str c/service-context resource-name))
 
-(def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}
-                     :rules [{:principal "::USER" :type "ROLE" :right "MODIFY"}]})
+(def collection-acl {:owner {:principal "::ADMIN"
+                             :type      "ROLE"}
+                     :rules [{:principal "::USER"
+                              :type      "ROLE"
+                              :right     "MODIFY"}]})
 
 (defn uuid->uri
   "Convert a uuid into the URI for a MachineConfiguration resource.
    The URI must not have a leading slash."
   [uuid]
-  (str resource-type "/" uuid))
+  (str resource-name "/" uuid))
 
 ;;
 ;; MachineConfiguration
@@ -106,7 +109,7 @@
          entry (-> entry
                    (u/strip-service-attrs)
                    (assoc :id uri)
-                   (assoc :resourceURI type-uri)
+                   (assoc :resourceURI resource-uri)
                    (u/update-timestamps)
                    (a/add-acl (friend/current-authentication))
                    (validate))]
@@ -140,7 +143,7 @@
                            (validate))]
           (if (cbc/set-json cb-client uri updated)
             (r/response updated)
-            (r/status (r/response nil) 409))) ;; conflict
+            (r/status (r/response nil) 409)))               ;; conflict
         (u/unauthorized))
       (r/not-found nil))))
 
@@ -161,11 +164,11 @@
    account the given options."
   [cb-client & [opts]]
   (let [principals (a/authn->principals (friend/current-authentication))
-        configs (u/viewable-resources cb-client resource-type principals opts)
+        configs (u/viewable-resources cb-client resource-name principals opts)
         configs (map add-rops configs)
-        collection (add-cops {:resourceURI collection-type-uri
-                              :id base-uri
-                              :count (count configs)})]
+        collection (add-cops {:resourceURI collection-uri
+                              :id          base-uri
+                              :count       (count configs)})]
     (r/response (if (empty? collection)
                   collection
                   (assoc collection :machineConfigurations configs)))))

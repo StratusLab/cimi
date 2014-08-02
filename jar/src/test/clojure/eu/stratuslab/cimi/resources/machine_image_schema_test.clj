@@ -37,7 +37,7 @@
 
 (let [mi (assoc valid-mi-entry
            :id "MachineImage/10"
-           :resourceURI type-uri
+           :resourceURI resource-uri
            :created  "1964-08-25T10:00:00.0Z"
            :updated  "1964-08-25T10:00:00.0Z")]
 

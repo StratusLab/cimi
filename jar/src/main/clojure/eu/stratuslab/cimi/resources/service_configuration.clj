@@ -22,6 +22,7 @@
     [couchbase-clj.query :as cbq]
     [clojure.data.json :as json]
     [eu.stratuslab.cimi.resources.impl.schema :as schema]
+    [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.cb.views :as views]
@@ -34,17 +35,18 @@
 
 (def ^:const resource-tag :serviceConfigurations)
 
-(def ^:const resource-type "ServiceConfiguration")
+(def ^:const resource-name "ServiceConfiguration")
 
-(def ^:const collection-resource-type "ServiceConfigurationCollection")
+(def ^:const collection-name "ServiceConfigurationCollection")
 
-(def ^:const type-uri (str "http://stratuslab.eu/cimi/1/" resource-type))
+(def ^:const resource-uri (str c/cimi-schema-uri resource-name))
 
-(def ^:const collection-type-uri (str "http://stratuslab.eu/cimi/1/" collection-resource-type))
+(def ^:const collection-uri (str c/cimi-schema-uri collection-name))
 
-(def ^:const base-uri (str "/cimi/" resource-type))
+(def ^:const base-uri (str c/service-context resource-name))
 
-(def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}})
+(def collection-acl {:owner {:principal "::ADMIN"
+                             :type      "ROLE"}})
 
 (defn uuid->uri
   "Convert uuid to a ServiceConfiguration resource.  The UUID
@@ -52,7 +54,7 @@
    If the :instance isn't set (a general configuration file), then
    the UUID is just the value of the :service key."
   [uuid]
-  (str resource-type "/" uuid))
+  (str resource-name "/" uuid))
 
 ;;
 ;; Service configuration files.  (StratusLab extension.)
@@ -103,7 +105,7 @@
          entry (-> entry
                    (u/strip-service-attrs)
                    (assoc :id uri)
-                   (assoc :resourceURI type-uri)
+                   (assoc :resourceURI resource-uri)
                    (u/update-timestamps)
                    (add-acl)
                    (validate))]
@@ -136,7 +138,7 @@
                            (validate))]
           (if (cbc/set-json cb-client uri updated)
             (r/response updated)
-            (r/status (r/response nil) 409))) ;; conflict
+            (r/status (r/response nil) 409)))               ;; conflict
         (u/unauthorized))
       (r/not-found nil))))
 
@@ -157,9 +159,9 @@
    account the given options."
   [cb-client & [opts]]
   (let [principals (a/authn->principals (friend/current-authentication))
-        configs (u/viewable-resources cb-client resource-type principals opts)
+        configs (u/viewable-resources cb-client resource-name principals opts)
         configs (map add-rops configs)
-        collection (add-cops {:resourceURI collection-type-uri
+        collection (add-cops {:resourceURI collection-uri
                               :id          base-uri
                               :count       (count configs)})]
     (r/response (if (empty? collection)

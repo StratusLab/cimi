@@ -19,6 +19,7 @@
    timing."
   (:require
     [eu.stratuslab.cimi.resources.impl.schema :as schema]
+    [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.cb.views :as views]
@@ -33,14 +34,17 @@
 
 (def ^:const resource-tag :serviceMetrics)
 
-(def ^:const resource-type "ServiceMetrics")
+(def ^:const resource-name "ServiceMetrics")
 
-(def ^:const type-uri (str "http://stratuslab.eu/cimi/1/" resource-type))
+(def ^:const resource-uri (str c/cimi-schema-uri resource-name))
 
-(def ^:const base-uri (str "/cimi/" resource-type))
+(def ^:const base-uri (str c/service-context resource-name))
 
-(def resource-acl {:owner {:principal "::ADMIN" :type "ROLE"}
-                   :rules [{:principal "::ANON" :type "ROLE" :right "VIEW"}]})
+(def resource-acl {:owner {:principal "::ADMIN"
+                           :type      "ROLE"}
+                   :rules [{:principal "::ANON"
+                            :type      "ROLE"
+                            :right     "VIEW"}]})
 
 (defn get-raw-metrics
   []
@@ -53,8 +57,8 @@
    entry (identified by the uuid)."
   []
   (if-let [json (-> {:metrics (get-raw-metrics)}
-                    (assoc :id resource-type)
-                    (assoc :resourceURI type-uri)
+                    (assoc :id resource-name)
+                    (assoc :resourceURI resource-uri)
                     (u/update-timestamps)
                     (assoc :acl resource-acl))]
     (if (a/can-view? (:acl json))

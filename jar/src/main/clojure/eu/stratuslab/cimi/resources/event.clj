@@ -32,23 +32,26 @@
 
 (def ^:const resource-tag :events)
 
-(def ^:const resource-type "Event")
+(def ^:const resource-name "Event")
 
-(def ^:const collection-resource-type "EventCollection")
+(def ^:const collection-name "EventCollection")
 
-(def ^:const type-uri (str "http://schemas.dmtf.org/cimi/1/" resource-type))
+(def ^:const resource-uri (str c/cimi-schema-uri resource-name))
 
-(def ^:const collection-type-uri (str "http://schemas.dmtf.org/cimi/1/" collection-resource-type))
+(def ^:const collection-uri (str c/cimi-schema-uri collection-name))
 
-(def ^:const base-uri (str "/cimi/" resource-type))
+(def ^:const base-uri (str c/service-context resource-name))
 
-(def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}
-                     :rules [{:principal "::USER" :type "ROLE" :right "VIEW"}]})
+(def collection-acl {:owner {:principal "::ADMIN"
+                             :type      "ROLE"}
+                     :rules [{:principal "::USER"
+                              :type      "ROLE"
+                              :right     "VIEW"}]})
 
 (defn uuid->uri
   "Convert the uuid into a URI for the Event resource."
   [uuid]
-  (str resource-type "/" uuid))
+  (str resource-name "/" uuid))
 
 ;;
 ;; Event
@@ -119,8 +122,8 @@
   (let [uri (uuid->uri (u/random-uuid))
         entry (-> entry
                   (u/strip-service-attrs)
-                  (merge {:id uri
-                          :resourceURI type-uri})
+                  (merge {:id          uri
+                          :resourceURI resource-uri})
                   (u/update-timestamps)
                   (validate))]
     (if (cbc/add-json cb-client uri entry)
@@ -150,7 +153,7 @@
                          (validate))]
         (if (cbc/set-json cb-client uri updated)
           (r/response updated)
-          (r/status (r/response nil) 409))) ;; conflict
+          (r/status (r/response nil) 409)))                 ;; conflict
       (r/not-found nil))))
 
 (defn delete
@@ -165,19 +168,19 @@
    account the given options."
   [cb-client & [opts]]
   (let [q (cbq/create-query (merge {:include-docs true
-                                    :key type-uri
-                                    :limit 100
-                                    :stale false
-                                    :on-error :continue}
+                                    :key          resource-uri
+                                    :limit        100
+                                    :stale        false
+                                    :on-error     :continue}
                                    opts))
         v (views/get-view cb-client :resource-uri)
 
         configs (->> (cbc/query cb-client v q)
                      (map cbc/view-doc-json)
                      (map add-rops))
-        collection (add-cops {:resourceURI collection-type-uri
-                              :id base-uri
-                              :count (count configs)})]
+        collection (add-cops {:resourceURI collection-uri
+                              :id          base-uri
+                              :count       (count configs)})]
     (r/response (if (empty? configs)
                   collection
                   (assoc collection :events configs)))))

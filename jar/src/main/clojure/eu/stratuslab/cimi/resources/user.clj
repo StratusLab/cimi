@@ -49,8 +49,11 @@
 
 (def ^:const base-uri (str c/service-context resource-name))
 
-(def collection-acl {:owner {:principal "::ADMIN" :type "ROLE"}
-                     :rules [{:principal "::USER" :type "ROLE" :right "VIEW"}]})
+(def collection-acl {:owner {:principal "::ADMIN"
+                             :type      "ROLE"}
+                     :rules [{:principal "::USER"
+                              :type      "ROLE"
+                              :right     "VIEW"}]})
 
 (defn uuid->id
   [uuid]

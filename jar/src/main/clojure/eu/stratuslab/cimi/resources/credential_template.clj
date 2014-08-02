@@ -14,23 +14,22 @@
 ; limitations under the License.
 ;
 
-(ns eu.stratuslab.cimi.resources.credential
-  "Management functions for credential resources within the database."
+(ns eu.stratuslab.cimi.resources.credential-template
+  "Credential templates for creating new credentials."
   (:require
     [clojure.tools.logging :as log]
     [schema.core :as s]
     [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
-    [eu.stratuslab.cimi.resources.credential-template :as ct]
     [eu.stratuslab.cimi.cb.crud-utils :as db]))
 
 ;;
 ;; utilities
 ;;
 
-(def ^:const resource-name "Credential")
+(def ^:const resource-name "CredentialTemplate")
 
-(def ^:const collection-name "CredentialCollection")
+(def ^:const collection-name "CredentialTemplateCollection")
 
 (def ^:const resource-uri (str c/cimi-schema-uri resource-name))
 
@@ -44,20 +43,20 @@
                               :type      "ROLE"
                               :right     "VIEW"}]})
 
-(def ^:const template-name (str resource-name "Template"))
-
-(def ^:const template-uri (str c/cimi-schema-uri template-name))
-
 (defn uuid->id
   [uuid]
   (str resource-name "/" uuid))
 
 ;;
-;; credential schema
+;; credential template schema
 ;;
 
-(def Credential
-  (merge c/CommonAttrs ct/CommonCredentialAttributes))
+(def CommonCredentialAttributes
+  {:subtypeURI              s/Str
+   (s/optional-key :expiry) s/Int})
+
+(def CredentialTemplate
+  (merge c/CommonAttrs CommonCredentialAttributes))
 
 ;;
 ;; standard CRUD functions for credentials
