@@ -212,7 +212,7 @@
       </profile>
       
       <profile>
-        <id>full-compile-and-docs</id>
+        <id>full-compile</id>
         <activation>
           <property>
             <name>!skipTests</name>

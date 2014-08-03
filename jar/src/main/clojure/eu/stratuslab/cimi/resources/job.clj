@@ -72,7 +72,7 @@
           (s/optional-key :returnCode)         s/Int
           (s/optional-key :progress)           c/NonNegInt
           (s/optional-key :statusMessage)      c/NonBlankString
-          (s/optional-key :timeOfStatusChange) s/Inst
+          (s/optional-key :timeOfStatusChange) c/Timestamp
           (s/optional-key :parentJob)          c/NonBlankString
           (s/optional-key :nestedJobs)         c/NonEmptyStrList}))
 

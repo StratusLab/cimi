@@ -105,7 +105,8 @@
 (defmethod c/set-operations collection-uri
            [resource]
   (if (a/can-modify? collection-acl)
-    (let [ops [{:rel (:add schema/action-uri) :href base-uri}]]
+    (let [href (:id resource)
+          ops [{:rel (:add schema/action-uri) :href href}]]
       (assoc resource :operations ops))
     (dissoc resource :operations)))
 
@@ -193,7 +194,7 @@
         configs (u/viewable-resources cb-client resource-name principals opts)
         configs (map c/set-operations configs)
         collection (c/set-operations {:resourceURI collection-uri
-                                      :id          base-uri
+                                      :id          collection-name
                                       :count       (count configs)})]
     (r/response (if (empty? collection)
                   collection

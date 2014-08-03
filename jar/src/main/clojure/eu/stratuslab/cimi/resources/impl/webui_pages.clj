@@ -70,12 +70,18 @@
       [:ul {:class "nav navbar-nav navbar-right"}
        (user-nav-info request)]]]]])
 
-(def message
-  [:div {:class "alert alert-warning alert-dismissible" :role "alert"}
-   [:button {:type "button" :class "alert" :data-dismiss "alert"}
-    [:span {:aria-hidden "true"} "&times;"]
-    [:span {:class "sr-only"} "Close"]]
-   [:div {:class "message"}]])
+(def dialog
+  [:div {:class "modal fade" :id "error-dialog"
+         :tabindex "-1" :role "dialog"
+         :aria-labelledby "error-dialog-title" :aria-hidden "true"}
+   [:div {:class "modal-dialog"}
+    [:div {:class "modal-content"}
+     [:div {:class "modal-header"}
+      [:button {:type "button" :class "close" :data-dismiss "modal"}
+       [:span {:aria-hidden "true"} "&times;"]
+       [:span {:class "sr-only"} "Close"]]
+      [:h4 {:class "modal-title" :id "error-dialog-title"}]]
+     [:div {:class "modal-body" :id "error-dialog-body"}]]]])
 
 (def content
   [:main
@@ -143,9 +149,9 @@
      [:div {:class "container"}
       (header request)
       breadcrumbs
-      #_message
       contents
       footer]
+     dialog
      scripts]))
 
 (defn browser-page

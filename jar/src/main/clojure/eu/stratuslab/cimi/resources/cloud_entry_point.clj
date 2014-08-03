@@ -68,7 +68,7 @@
 (defmethod c/set-operations resource-uri
   [resource]
   (if (a/can-modify? (:acl resource))
-    (let [ops [{:rel (:edit schema/action-uri) :href base-uri}]]
+    (let [ops [{:rel (:edit schema/action-uri) :href "#"}]]
       (assoc resource :operations ops))
     (dissoc resource :operations)))
 

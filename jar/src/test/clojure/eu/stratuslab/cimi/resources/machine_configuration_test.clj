@@ -21,14 +21,15 @@
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
     [clojure.test :refer :all]
     [clojure.data.json :as json]
-    [peridot.core :refer :all]))
+    [peridot.core :refer :all]
+    [eu.stratuslab.cimi.routes :as routes]))
 
 (use-fixtures :each t/flush-bucket-fixture)
 
 (use-fixtures :once t/temp-bucket-fixture)
 
 (defn ring-app []
-  (t/make-ring-app routes))
+  (t/make-ring-app (t/concat-routes routes/final-routes)))
 
 (def valid-entry
   {:acl {:owner {:principal "ALPHA" :type "USER"}}

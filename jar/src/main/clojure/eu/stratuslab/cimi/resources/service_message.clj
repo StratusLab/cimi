@@ -86,7 +86,8 @@
 (defmethod c/set-operations collection-uri
            [resource]
   (if (a/can-modify? collection-acl)
-    (let [ops [{:rel (:add schema/action-uri) :href base-uri}]]
+    (let [href (:id resource)
+          ops [{:rel (:add schema/action-uri) :href href}]]
       (assoc resource :operations ops))
     (dissoc resource :operations)))
 

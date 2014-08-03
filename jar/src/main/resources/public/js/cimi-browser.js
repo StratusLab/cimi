@@ -48,7 +48,7 @@ function page_callback(request, json) {
 		d3.select('#resource-title').text(title);
 		render_metadata(d3.select('#metadata'), metadata(json));
 		render_acl(d3.select('#acl'), json.acl)
-		clear_message();
+		clear_error_dialog();
 
 		var content_element = d3.select('#content');
 		var contents = content(json);
@@ -100,17 +100,22 @@ function format_json() {
     }
 }
 
-function clear_message() {
-	d3.select('#message').selectAll('*').remove();
+function clear_error_dialog() {
+    d3.select('#error-dialog-title').text('');
+	d3.select('#error-dialog-body').selectAll('*').remove();
+	$('#error-dialog').modal('hide');
 }
 
-function render_message(msg) {
-	clear_message();
-	d3.select('#message').append('span').text(msg);
+function render_message(title, msg) {
+	clear_error_dialog();
+	d3.select('#error-dialog-title').text(title);
+    d3.select('#error-dialog-body').append('p').text(msg);
+    $('#error-dialog').modal('show');
 }
 
 function render_error(request) {
-	render_message(request.statusText + '(' + request.status + ')');
+    render_message('Error: ' + request.statusText + ' (' + request.status + ')',
+                   request.responseText);
 }
 
 function render_operations(o, ops) {
@@ -529,13 +534,13 @@ function delete_resource(id, url, return_url) {
 		xhr.send('DELETE', '',
 		    function(error, json) {
 			    if (error) {
-				    render_message('Delete of resource ' + id + ' failed!');
+				    render_message('Error: delete failed (' + id + ')', JSON.stringify(json));
 			    } else {
 				    window.location = return_url;
 			    }
 		    });
 	} else {
-		render_message('Delete cancelled.');
+		render_message('Cancelled', 'Delete cancelled.');
 	}
 }
 
@@ -556,7 +561,7 @@ function finish_edit(url) {
             function(error, json) {
                 if (error) {
                     var id = window.location.hash.substring(1);
-                    render_message('Update of resource ' + id + ' failed!');
+                    render_message('Error: update failed (' + id + ')', JSON.stringify(json));
                     console.log('update FAILED for ' + url);
                     editor_visibility(false);
                     button_visibility('normal-mode')
@@ -569,7 +574,7 @@ function finish_edit(url) {
 }
 
 function cancel_edit() {
-    render_message('Edit resource cancelled.');
+    render_message('Cancelled', 'Edit resource cancelled.');
     editor_visibility(false);
     button_visibility('normal-mode')
 }
@@ -590,7 +595,7 @@ function finish_add(url) {
         xhr.send('POST', sjson,
             function(error, json) {
                 if (error) {
-                    render_message('Adding resource failed!');
+                    render_message('Error: adding resource failed', JSON.stringify(json));
                     editor_visibility(false);
                     button_visibility('normal-mode')
                 } else {
@@ -604,7 +609,7 @@ function finish_add(url) {
 }
 
 function cancel_add() {
-    render_message('Adding resource cancelled.');
+    render_message('Cancelled', 'Adding resource cancelled.');
     editor_visibility(false);
     button_visibility('normal-mode')
 }
@@ -615,13 +620,13 @@ function do_action(action, url) {
 		xhr.send('POST', '',
 		    function(error, json) {
 			    if (error) {
-				    render_message('Action ' + action + ' failed!');
+				    render_message('Error: action ' + action + ' failed', JSON.stringify(json));
 			    } else {
 				    update_window();
 			    }
 		    });
 	} else {
-		render_message('Action cancelled.');
+		render_message('Cancelled', 'Action ' + action + ' cancelled.');
 	}
 }
 

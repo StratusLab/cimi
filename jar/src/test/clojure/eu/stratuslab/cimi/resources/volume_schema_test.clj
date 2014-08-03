@@ -18,7 +18,8 @@
   (:require
     [eu.stratuslab.cimi.resources.volume :refer :all]
     [schema.core :as s]
-    [expectations :refer :all]))
+    [expectations :refer :all]
+    [eu.stratuslab.cimi.resources.utils.utils :as utils]))
 
 (def valid-acl {:owner {:principal "::ADMIN"
                         :type      "ROLE"}
@@ -44,10 +45,10 @@
    :format   "ext4"
    :capacity 1000})
 
-(let [uri (vc/uuid->uri (utils/random-uuid))
+(let [uri (uuid->uri (utils/random-uuid))
       vc (assoc valid-vc-entry
            :id uri
-           :resourceURI vc/type-uri
+           :resourceURI resource-uri
            :created  "1964-08-25T10:00:00.0Z"
            :updated  "1964-08-25T10:00:00.0Z")]
 
@@ -68,7 +69,7 @@
 
 (let [vi (assoc valid-vi-entry
            :id "VolumeImage/10"
-           :resourceURI vi/type-uri
+           :resourceURI resource-uri
            :created  "1964-08-25T10:00:00.0Z"
            :updated  "1964-08-25T10:00:00.0Z")]
 
@@ -87,10 +88,10 @@
    :volumeConfig {:href "VolumeConfiguration/uuid"}
    :volumeImage  {:href "VolumeImage/mkplaceid"}})
 
-(let [uri (vt/uuid->uri (utils/random-uuid))
+(let [uri (uuid->uri (utils/random-uuid))
       vt (assoc valid-vt-entry
            :id uri
-           :resourceURI vt/type-uri
+           :resourceURI resource-uri
            :created  "1964-08-25T10:00:00.0Z"
            :updated  "1964-08-25T10:00:00.0Z")]
 
