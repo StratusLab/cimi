@@ -43,9 +43,9 @@
 
 (def ^:const collection-name "UserCollection")
 
-(def ^:const resource-uri (str c/cimi-schema-uri resource-name))
+(def ^:const resource-uri (str c/stratuslab-cimi-schema-uri resource-name))
 
-(def ^:const collection-uri (str c/cimi-schema-uri collection-name))
+(def ^:const collection-uri (str c/stratuslab-cimi-schema-uri collection-name))
 
 (def ^:const base-uri (str c/service-context resource-name))
 

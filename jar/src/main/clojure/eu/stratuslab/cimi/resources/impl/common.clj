@@ -22,7 +22,9 @@
     [schema.core :as s]
     [eu.stratuslab.cimi.resources.utils.utils :as u]))
 
-(def ^:const cimi-schema-uri "http://stratuslab.eu/cimi/1/")
+(def ^:const cimi-schema-uri "http://schemas.dmtf.org/cimi/1/")
+
+(def ^:const stratuslab-cimi-schema-uri "http://stratuslab.eu/cimi/1/")
 
 (def ^:const service-context "/cimi/")
 

@@ -39,9 +39,9 @@
 
 (def ^:const collection-name "ServiceMessageCollection")
 
-(def ^:const resource-uri (str c/cimi-schema-uri resource-name))
+(def ^:const resource-uri (str c/stratuslab-cimi-schema-uri resource-name))
 
-(def ^:const collection-uri (str c/cimi-schema-uri collection-name))
+(def ^:const collection-uri (str c/stratuslab-cimi-schema-uri collection-name))
 
 (def ^:const base-uri (str c/service-context resource-name))
 
@@ -187,7 +187,7 @@
       (add cb-client json))
     (u/unauthorized)))
 
-(defmethod crud/query resource-name
+(defmethod crud/query collection-name
            [_ cb-client body]
   (if (a/can-view? collection-acl)
     (let [json (u/body->json body)]
