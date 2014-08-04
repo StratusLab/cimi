@@ -8,25 +8,24 @@
     [compojure.route :as route]))
 
 (def collection-routes
-  (let-routes [uri "/cimi/:resource-type"]
-              (POST uri [resource-type :as {:keys [cb-client body]}]
-                    (crud/add resource-type cb-client body))
-              (GET uri [resource-type :as {:keys [cb-client body]}]
-                   (crud/query resource-type cb-client body))
-              (ANY uri []
-                   (u/bad-method)))
-  )
+  (let-routes [uri "/cimi/:resource-name"]
+              (POST uri request
+                    (crud/add request))
+              (GET uri request
+                   (crud/query request))
+              (ANY uri request
+                   (u/bad-method request))))
 
 (def resource-routes
-  (let-routes [uri "/cimi/:resource-type/:uuid"]
-              (GET uri [resource-type uuid :as {cb-client :cb-client}]
-                   (crud/retrieve resource-type cb-client uuid))
-              (PUT uri [resource-type uuid :as {cb-client :cb-client body :body}]
-                   (crud/edit resource-type cb-client uuid body))
-              (DELETE uri [resource-type uuid :as {cb-client :cb-client}]
-                      (crud/delete resource-type cb-client uuid))
-              (ANY uri []
-                   (u/bad-method))))
+  (let-routes [uri "/cimi/:resource-name/:uuid"]
+              (GET uri request
+                   (crud/retrieve request))
+              (PUT uri request
+                   (crud/edit request))
+              (DELETE uri request
+                      (crud/delete request))
+              (ANY uri request
+                   (u/bad-method request))))
 
 (def final-routes
   [collection-routes

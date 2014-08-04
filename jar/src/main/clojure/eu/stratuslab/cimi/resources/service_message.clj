@@ -43,8 +43,6 @@
 
 (def ^:const collection-uri (str c/stratuslab-cimi-schema-uri collection-name))
 
-(def ^:const base-uri (str c/service-context resource-name))
-
 (def ^:const collection-acl {:owner {:principal "::ADMIN"
                                      :type      "ROLE"}
                              :rules [{:principal "::ANON"
@@ -86,8 +84,7 @@
 (defmethod c/set-operations collection-uri
            [resource]
   (if (a/can-modify? collection-acl)
-    (let [href (:id resource)
-          ops [{:rel (:add schema/action-uri) :href href}]]
+    (let [ops [{:rel (:add schema/action-uri) :href resource-name}]]
       (assoc resource :operations ops))
     (dissoc resource :operations)))
 
@@ -106,103 +103,32 @@
 ;; CRUD operations
 ;;
 
-(defn add
-  "Add a new ServiceMessage to the database."
-  [cb-client entry]
-  (let [uri (uuid->id (u/random-uuid))
-        entry (-> entry
-                  (u/strip-service-attrs)
-                  (assoc :id uri)
-                  (assoc :resourceURI resource-uri)
-                  (u/update-timestamps)
-                  (add-acl)                                 ;; special ACL for these messages
-                  (c/validate))]
-    (if (cbc/add-json cb-client uri entry)
-      (r/created uri)
-      (r/status (r/response (str "cannot create " uri)) 400))))
-
-(defn retrieve
-  "Returns the data associated with the requested ServiceMessage
-   entry (identified by the uuid)."
-  [cb-client uuid]
-  (if-let [json (cbc/get-json cb-client (uuid->id uuid))]
-    (if (a/can-view? (:acl json))
-      (r/response (c/set-operations json))
-      (u/unauthorized))
-    (r/not-found nil)))
-
-;; FIXME: Implementation should use CAS functions to avoid update conflicts.
-(defn edit
-  "Updates the given resource with the new information.  This will
-   validate the new entry before updating it."
-  [cb-client uuid entry]
-  (let [uri (uuid->id uuid)]
-    (if-let [current (cbc/get-json cb-client uri)]
-      (if (a/can-modify? (:acl current))
-        (let [updated (->> entry
-                           (u/strip-service-attrs)
-                           (merge current)
-                           (u/update-timestamps)
-                           (c/validate))]
-          (if (cbc/set-json cb-client uri updated)
-            (r/response updated)
-            (r/status (r/response nil) 409)))               ;; conflict
-        (u/unauthorized))
-      (r/not-found nil))))
-
-(defn delete
-  "Deletes the ServiceMessage."
-  [cb-client uuid]
-  (let [uri (uuid->id uuid)]
-    (if-let [current (cbc/get-json cb-client uri)]
-      (if (a/can-modify? (:acl current))
-        (if (cbc/delete cb-client uri)
-          (r/response nil)
-          (r/not-found nil))
-        (u/unauthorized))
-      (r/not-found nil))))
-
-(defn query
-  "Searches the database for resources of this type, taking into
-   account the given options."
-  [cb-client & [opts]]
-  (let [principals (a/authn->principals)
-        configs (u/viewable-resources cb-client resource-name principals opts)
-        configs (map c/set-operations configs)
-        collection (c/set-operations {:resourceURI collection-uri
-                                      :id          collection-name
-                                      :count       (count configs)})]
-    (r/response (if (empty? collection)
-                  collection
-                  (assoc collection :serviceMessages configs)))))
-
-;;
-;; function bindings for compojure routes
-;;
+(def add-impl (crud/get-add-fn resource-name collection-acl resource-uri add-acl))
 
 (defmethod crud/add resource-name
-           [_ cb-client body]
-  (if (a/can-modify? collection-acl)
-    (let [json (u/body->json body)]
-      (add cb-client json))
-    (u/unauthorized)))
+           [request]
+  (add-impl request))
 
-(defmethod crud/query collection-name
-           [_ cb-client body]
-  (if (a/can-view? collection-acl)
-    (let [json (u/body->json body)]
-      (query cb-client json))
-    (u/unauthorized)))
+(def retrieve-impl (crud/get-retrieve-fn resource-name))
 
 (defmethod crud/retrieve resource-name
-           [_ cb-client uuid]
-  (retrieve cb-client uuid))
+           [request]
+  (retrieve-impl request))
+
+(def edit-impl (crud/get-edit-fn resource-name))
 
 (defmethod crud/edit resource-name
-           [_ cb-client uuid body]
-  (let [json (u/body->json body)]
-    (edit cb-client uuid json)))
+           [request]
+  (edit-impl request))
+
+(def delete-impl (crud/get-delete-fn resource-name))
 
 (defmethod crud/delete resource-name
-           [_ cb-client uuid]
-  (delete cb-client uuid))
+           [request]
+  (delete-impl request))
+
+(def query-impl (crud/get-query-fn resource-name collection-acl collection-uri collection-name resource-tag))
+
+(defmethod crud/query resource-name
+           [request]
+  (query-impl request))

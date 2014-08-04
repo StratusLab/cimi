@@ -19,48 +19,129 @@
     [clojure.tools.logging :as log]
     [clojure.string :as str]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
-    [schema.core :as s]))
+    [schema.core :as s]
+    [ring.util.response :as r]
+    [couchbase-clj.client :as cbc]
+    [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
+    [eu.stratuslab.cimi.resources.impl.common :as c]))
 
-(defmulti add
-          (fn [& args]
-            (first args)))
+(defn resource-name-dispatch
+  [request]
+  (get-in request [:params :resource-name]))
+
+(defmulti add resource-name-dispatch)
 
 (defmethod add :default
-           [& args]
-  (u/bad-method))
+           [request]
+  (u/bad-method request))
 
 
-(defmulti query
-          (fn [& args]
-            (first args)))
+(defmulti query resource-name-dispatch)
 
 (defmethod query :default
-           [& args]
-  (u/bad-method))
+           [request]
+  (u/bad-method request))
 
 
-(defmulti retrieve
-          (fn [& args]
-            (first args)))
+(defmulti retrieve resource-name-dispatch)
 
 (defmethod retrieve :default
-           [& args]
-  (u/bad-method))
+           [request]
+  (u/bad-method request))
 
 
-(defmulti edit
-          (fn [& args]
-            (first args)))
+(defmulti edit resource-name-dispatch)
 
 (defmethod edit :default
-           [& args]
-  (u/bad-method))
+           [request]
+  (u/bad-method request))
 
 
-(defmulti delete
-          (fn [& args]
-            (first args)))
+(defmulti delete resource-name-dispatch)
 
 (defmethod delete :default
-           [& args]
-  (u/bad-method))
+           [request]
+  (u/bad-method request))
+
+(defmulti new-identifier
+          (fn [resource-name json]
+            resource-name))
+
+(defmethod new-identifier :default
+           [resource-name json]
+  (u/random-uuid))
+
+(defn get-add-fn
+  [resource-name collection-acl resource-uri add-acl]
+  (fn [{:keys [cb-client body] :as request}]
+    (if (a/can-modify? collection-acl)
+      (let [json (u/body->json body)
+            uri (str resource-name "/" (new-identifier resource-name json)) ;; method for finding ID may differ between resources
+            entry (-> json
+                      (u/strip-service-attrs)
+                      (assoc :id uri)
+                      (assoc :resourceURI resource-uri)
+                      (u/update-timestamps)
+                      (add-acl)                             ;; special ACL for these messages
+                      (c/validate))]
+        (if (cbc/add-json cb-client uri entry)
+          (r/created uri)
+          (r/status (r/response (str "cannot create " uri)) 400)))
+      (u/unauthorized request))))
+
+(defn get-retrieve-fn
+  [resource-name]
+  (fn [{{uuid :uuid} :params cb-client :cb-client :as request}]
+    (if-let [json (->> (str resource-name "/" uuid)
+                       (cbc/get-json cb-client))]
+      (if (a/can-view? (:acl json))
+        (r/response (c/set-operations json))
+        (u/unauthorized request))
+      (r/not-found nil))))
+
+;; FIXME: Implementation should use CAS functions to avoid update conflicts.
+(defn get-edit-fn
+  [resource-name]
+  (fn [{{uuid :uuid} :params cb-client :cb-client body :body :as request}]
+    (let [uri (str resource-name "/" uuid)]
+      (if-let [current (cbc/get-json cb-client uri)]
+        (if (a/can-modify? (:acl current))
+          (let [json (u/body->json body)
+                updated (->> json
+                             (u/strip-service-attrs)
+                             (merge current)
+                             (u/update-timestamps)
+                             (c/validate))]
+            (if (cbc/set-json cb-client uri updated)
+              (r/response updated)
+              (u/conflict request)))
+          (u/unauthorized request))
+        (r/not-found nil)))))
+
+(defn get-delete-fn
+  [resource-name]
+  (fn [{{uuid :uuid} :params cb-client :cb-client :as request}]
+    (let [uri (str resource-name "/" uuid)]
+      (if-let [current (cbc/get-json cb-client uri)]
+        (if (a/can-modify? (:acl current))
+          (if (cbc/delete cb-client uri)
+            (r/response nil)
+            (r/not-found nil))
+          (u/unauthorized request))
+        (r/not-found nil)))))
+
+(defn get-query-fn
+  [resource-name collection-acl collection-uri collection-name collection-key]
+  (fn [{:keys [cb-client body] :as request}]
+    (if (a/can-view? collection-acl)
+      (let [opts (u/body->json body)
+            principals (a/authn->principals)
+            configs (u/viewable-resources cb-client resource-name principals opts)
+            configs (map c/set-operations configs)
+            collection (c/set-operations {:resourceURI collection-uri
+                                          :id          collection-name
+                                          :count       (count configs)})]
+        (r/response (if (empty? collection)
+                      collection
+                      (assoc collection collection-key configs))))
+      (u/unauthorized request))))

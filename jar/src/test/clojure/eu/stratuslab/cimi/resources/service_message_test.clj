@@ -7,12 +7,15 @@
     [ring.util.response :as rresp]
     [clojure.test :refer :all]
     [clojure.data.json :as json]
-    [peridot.core :refer :all]))
+    [peridot.core :refer :all]
+    [eu.stratuslab.cimi.resources.impl.common :as c]))
 
 (use-fixtures :each t/temp-bucket-fixture)
 
 (defn ring-app []
   (t/make-ring-app (t/concat-routes routes/final-routes)))
+
+(def ^:const base-uri (str c/service-context resource-name))
 
 (def valid-acl {:owner {:principal "::ADMIN"
                         :type      "ROLE"}
@@ -24,10 +27,6 @@
   {:acl     valid-acl
    :title   "title"
    :message "description"})
-
-(defn debug [m]
-  (println "DEBUG DEBUG DEBUG DEBUG: " m)
-  m)
 
 (deftest lifecycle
 
@@ -61,14 +60,13 @@
                          :body (json/write-str valid-entry))
                 (t/is-status 201)
                 (t/location))
-        abs-uri (str "/" uri)]
+        abs-uri (str c/service-context uri)]
 
     (is uri)
 
     ;; verify that the new entry is accessible
     (-> (session (ring-app))
         (request abs-uri)
-        (debug)
         (t/is-status 200)
         (t/does-body-contain valid-entry))
 
@@ -85,15 +83,15 @@
         (authorize "root" "admin_password")
         (request abs-uri
                  :request-method :put
-                 :body (json/write-str {:name "new title"}))
+                 :body (json/write-str {:title "new title"}))
         (t/is-status 200))
 
     ;; check that update was done
     (-> (session (ring-app))
         (request abs-uri)
         (t/is-status 200)
-        (t/is-key-value :name "new title")
-        (t/is-key-value :description "description"))
+        (t/is-key-value :title "new title")
+        (t/is-key-value :message "description"))
 
     ;; delete the entry
     (-> (session (ring-app))

@@ -73,6 +73,11 @@
     (json/read (io/reader body) :key-fn keyword :eof-error? false :eof-value {})
     {}))
 
+(defn json->body
+  "Converts a clojure data structure into a string."
+  [json]
+  (json/write-str json))
+
 (defn correct-resource? [resource-uri resource]
   "Checks that the resourceURI attribute in the given resource matches
    the desired one."
@@ -88,7 +93,7 @@
       (let [msg (checker resource)]
         (if msg
           (throw (ex-info (str "resource does not satisfy defined schema\n" msg)
-                          {:schema schema
+                          {:schema   schema
                            :resource resource}))
           resource)))))
 
@@ -169,9 +174,16 @@
 
 (defn bad-method
   "Returns a ring reponse with a 405 error -- invalid method."
-  []
-  (-> (r/response {:status 405 :message "invalid method"})
-      (r/status 405)))
+  ([]
+   (-> (r/response {:status  405
+                    :message "invalid method"})
+       (r/status 405)))
+  ([{:keys [request-method uri]}]
+   (-> (r/response {:status         405
+                    :request-method request-method
+                    :uri            uri
+                    :message        (str "invalid method (" (name request-method) + ") for " + uri)})
+       (r/status 405))))
 
 (defn not-found
   "Returns a ring reponse with a 405 error -- invalid method."
@@ -181,7 +193,25 @@
 
 (defn unauthorized
   "Returns a ring reponse with a 403 error -- unauthorized."
-  []
-  (-> (r/response {:status 403 :message "unauthorized"})
-      (r/status 403)))
+  ([]
+   (-> (r/response {:status 403 :message "unauthorized"})
+       (r/status 403)))
+  ([{:keys [request-method uri]}]
+   (-> (r/response {:status         403
+                    :request-method request-method
+                    :uri            uri
+                    :message        (str "unauthorized (" (name request-method) + ") for " + uri)})
+       (r/status 403))))
+
+(defn conflict
+  "Returns a ring reponse with a 409 error -- conflict."
+  ([]
+   (-> (r/response {:status 409 :message "conflict"})
+       (r/status 409)))
+  ([{:keys [request-method uri]}]
+   (-> (r/response {:status         409
+                    :request-method request-method
+                    :uri            uri
+                    :message        (str "conflict (" (name request-method) + ") for " + uri)})
+       (r/status 409))))
 

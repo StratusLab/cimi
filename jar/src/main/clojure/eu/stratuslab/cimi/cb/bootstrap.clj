@@ -10,7 +10,9 @@
     [eu.stratuslab.cimi.cb.views :as views]
     [eu.stratuslab.cimi.cb.utils :as cbutils]
     [couchbase-clj.client :as cbc]
-    [cemerick.friend.credentials :as creds]))
+    [cemerick.friend.credentials :as creds]
+    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
+    [eu.stratuslab.cimi.resources.utils.utils :as u]))
 
 (defn create-views
   "Ensure that the views necessary for searching the database
@@ -57,7 +59,7 @@
                  :enabled    true
                  :roles      ["::ADMIN"]
                  :email      "change_me@example.com"}]
-      (if (= 201 (:status (user/add cb-client admin)))
+      (if (= 201 (:status (crud/add {:body (u/json->body admin) :cb-client cb-client})))
         (log/warn "User/admin entry created; initial password is" password)
         (log/info "User/admin entry NOT created")))
     (catch Exception e
