@@ -83,6 +83,19 @@
       [:h4 {:class "modal-title" :id "error-dialog-title"}]]
      [:div {:class "modal-body" :id "error-dialog-body"}]]]])
 
+(def confirm-action
+  [:div {:class "modal fade" :id "confirm-action"
+         :tabindex "-1" :role "dialog"
+         :aria-labelledby "confirm-action-title" :aria-hidden "true"}
+   [:div {:class "modal-dialog"}
+    [:div {:class "modal-content"}
+     [:div {:class "modal-header"}
+      [:h4 {:class "modal-title" :id "confirm-action-title"} "Confirm?"]]
+     [:div {:class "modal-body" :id "confirm-action-body"}]
+     [:div {:class "modal-footer" :id "confirm-action-footer"}
+      [:button {:id "cancel-action" :type "button" :class "btn btn-default" :data-dismiss "modal"} "Cancel"]
+      [:button {:id "do-action" :type "button" :class "btn btn-danger danger" :data-dismiss "modal"} "Delete"]]]]])
+
 (def content
   [:main
    [:div {:id "operations" :class "pull-right"}]
@@ -152,6 +165,7 @@
       contents
       footer]
      dialog
+     confirm-action
      scripts]))
 
 (defn browser-page

@@ -118,6 +118,25 @@ function render_error(request) {
                    request.responseText);
 }
 
+function confirm_action(msg, callback) {
+    msg = msg || '';
+	d3.select('#confirm-action-body').selectAll('*').remove();
+    d3.select('#confirm-action-body').append('p').text(msg);
+
+    $('#confirm-action').modal('show');
+
+    $('#cancel-action').click(function(){
+        $('#confirm-action').modal('hide');
+        if (callback) callback(false);
+    });
+
+    $('#do-action').click(function(){
+        $('#confirm-action').modal('hide');
+        if (callback) callback(true);
+    });
+}
+
+
 function render_operations(o, ops) {
 	o.selectAll('div').remove();
 
@@ -529,19 +548,21 @@ function finish_view() {
 }
 
 function delete_resource(id, url, return_url) {
-	if (confirm('Delete resource ' + id + '?')) {
-		var xhr = d3.xhr(url, 'application/json');
-		xhr.send('DELETE', '',
-		    function(error, json) {
-			    if (error) {
-				    render_message('Error: delete failed (' + id + ')', JSON.stringify(json));
-			    } else {
-				    window.location = return_url;
-			    }
-		    });
-	} else {
-		render_message('Cancelled', 'Delete cancelled.');
-	}
+    confirm_action('Delete resource ' + id + '?',
+        function(confirmed) {
+            if (confirmed) {
+                var xhr = d3.xhr(url, 'application/json');
+                xhr.send('DELETE', '',
+                    function(error, json) {
+                        if (error) {
+                            render_message('Error: delete failed (' + id + ')', JSON.stringify(json));
+                        } else {
+                            window.location = return_url;
+                        }
+                    });
+            }
+        }
+    );
 }
 
 function start_edit() {
@@ -615,18 +636,19 @@ function cancel_add() {
 }
 
 function do_action(action, url) {
-	if (confirm('Perform action ' + action + '?')) {
-		var xhr = d3.xhr(url, 'application/json');
-		xhr.send('POST', '',
-		    function(error, json) {
-			    if (error) {
-				    render_message('Error: action ' + action + ' failed', JSON.stringify(json));
-			    } else {
-				    update_window();
-			    }
-		    });
-	} else {
-		render_message('Cancelled', 'Action ' + action + ' cancelled.');
-	}
+    confirm_action('Perform action ' + action + '?',
+        function(confirmed) {
+            if (confirmed) {
+                var xhr = d3.xhr(url, 'application/json');
+                xhr.send('POST', '',
+                    function(error, json) {
+                        if (error) {
+                            render_message('Error: action ' + action + ' failed', JSON.stringify(json));
+                        } else {
+                            update_window();
+                        }
+                    });
+            }
+        })
 }
 

@@ -121,10 +121,6 @@
              :rules [{:principal (:username m) :type "USER" :right "VIEW"}]}]
     (assoc m :acl acl)))
 
-(defn dump-entry [m]
-  (pprint m)
-  m)
-
 ;;
 ;; User resources use the username as the record identifier
 ;; and not a UUID.
