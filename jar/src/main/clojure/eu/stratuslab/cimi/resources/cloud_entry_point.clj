@@ -20,7 +20,6 @@
     [clojure.tools.logging :as log]
     [couchbase-clj.client :as cbc]
     [schema.core :as s]
-    [eu.stratuslab.cimi.resources.impl.schema :as schema]
     [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
@@ -73,7 +72,7 @@
 (defmethod c/set-operations resource-uri
            [resource]
   (if (a/can-modify? (:acl resource))
-    (let [ops [{:rel (:edit schema/action-uri) :href "#"}]]
+    (let [ops [{:rel (:edit c/action-uri) :href "#"}]]
       (assoc resource :operations ops))
     (dissoc resource :operations)))
 

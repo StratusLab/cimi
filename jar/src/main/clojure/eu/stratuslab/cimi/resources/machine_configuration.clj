@@ -83,7 +83,7 @@
   "Adds the collection operations to the given resource."
   [resource]
   (if (a/can-modify? collection-acl)
-    (let [ops [{:rel (:add schema/action-uri) :href base-uri}]]
+    (let [ops [{:rel (:add c/action-uri) :href base-uri}]]
       (assoc resource :operations ops))
     resource))
 
@@ -92,8 +92,8 @@
   [resource]
   (if (a/can-modify? (:acl resource))
     (let [href (:id resource)
-          ops [{:rel (:edit schema/action-uri) :href href}
-               {:rel (:delete schema/action-uri) :href href}]]
+          ops [{:rel (:edit c/action-uri) :href href}
+               {:rel (:delete c/action-uri) :href href}]]
       (assoc resource :operations ops))
     resource))
 

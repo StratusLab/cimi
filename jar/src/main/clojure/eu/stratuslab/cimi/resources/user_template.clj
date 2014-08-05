@@ -79,22 +79,6 @@
            [resource]
   (validate-fn resource))
 
-(defmethod c/set-operations resource-uri
-           [resource]
-  (if (a/can-modify? (:acl resource))
-    (let [href (:id resource)
-          ops [{:rel (:edit schema/action-uri) :href href}
-               {:rel (:delete schema/action-uri) :href href}]]
-      (assoc resource :operations ops))
-    (dissoc resource :operations)))
-
-(defmethod c/set-operations collection-uri
-           [resource]
-  (if (a/can-modify? collection-acl)
-    (let [ops [{:rel (:add schema/action-uri) :href resource-name}]]
-      (assoc resource :operations ops))
-    (dissoc resource :operations)))
-
 ;;
 ;; CRUD operations
 ;;

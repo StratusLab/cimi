@@ -19,7 +19,6 @@
   (:require
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
-    [eu.stratuslab.cimi.resources.impl.schema :as schema]
     [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
@@ -71,22 +70,6 @@
 (defmethod c/validate resource-uri
            [resource]
   (validate-fn resource))
-
-(defmethod c/set-operations resource-uri
-           [resource]
-  (if (a/can-modify? (:acl resource))
-    (let [href (:id resource)
-          ops [{:rel (:edit schema/action-uri) :href href}
-               {:rel (:delete schema/action-uri) :href href}]]
-      (assoc resource :operations ops))
-    (dissoc resource :operations)))
-
-(defmethod c/set-operations collection-uri
-           [resource]
-  (if (a/can-modify? collection-acl)
-    (let [ops [{:rel (:add schema/action-uri) :href resource-name}]]
-      (assoc resource :operations ops))
-    (dissoc resource :operations)))
 
 (defmethod crud/add-acl resource-name
            [resource resource-name]

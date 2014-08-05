@@ -160,7 +160,7 @@
             configs (u/viewable-resources cb-client resource-name principals opts)
             configs (map c/set-operations configs)
             collection (c/set-operations {:resourceURI collection-uri
-                                          :id          collection-name
+                                          :id          resource-name
                                           :count       (count configs)})]
         (r/response (if (empty? collection)
                       collection

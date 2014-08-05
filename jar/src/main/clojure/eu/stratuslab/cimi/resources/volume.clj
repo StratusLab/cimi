@@ -18,10 +18,10 @@
   (:require
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
-    [eu.stratuslab.cimi.resources.impl.schema :as schema]
     [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
+    [eu.stratuslab.cimi.resources.volume-template :as vt]
     [eu.stratuslab.cimi.resources.job :as job]
     [eu.stratuslab.cimi.cb.views :as views]
     [eu.stratuslab.cimi.resources.impl.common :as c]
@@ -57,69 +57,11 @@
   [uuid]
   (str resource-name "/" uuid))
 
-(def volume-states (s/enum "CREATING" "AVAILABLE" "CAPTURING" "DELETING" "ERROR"))
-
 ;;
 ;; Volume Related Schemas
 ;;
 
-(def image-states (s/enum "CREATING" "AVAILABLE" "DELETING" "ERROR"))
-
-(def VolumeConfigurationAttrs
-  {(s/optional-key :type)     c/NonBlankString
-   (s/optional-key :format)   c/NonBlankString
-   (s/optional-key :capacity) c/PosInt})
-
-(def VolumeConfigurationAttrs
-  {(s/optional-key :type)     c/NonBlankString
-   (s/optional-key :format)   c/NonBlankString
-   (s/optional-key :capacity) c/PosInt})
-
-(def VolumeConfiguration
-  (merge c/CommonAttrs
-         c/AclAttr
-         {(s/optional-key :type)   c/NonBlankString
-          (s/optional-key :format) c/NonBlankString
-          :capacity                c/PosInt}))
-
-(def VolumeImageAttrs
-  {(s/optional-key :state)         image-states
-   (s/optional-key :imageLocation) c/ResourceLink
-   (s/optional-key :bootable)      s/Bool})
-
-(def VolumeImage
-  (merge c/CommonAttrs
-         c/AclAttr
-         {:state         image-states
-          :imageLocation c/ResourceLink
-          :bootable      s/Bool}))
-
-(def VolumeConfigurationRef
-  (merge VolumeConfigurationAttrs
-         {(s/optional-key :href) c/NonBlankString}))
-
-(def VolumeImageRef
-  (merge VolumeImageAttrs
-         {(s/optional-key :href) c/NonBlankString}))
-
-;; TODO: Add real schema once Meters are supported.
-(def MeterTemplateRef
-  {})
-
-(def MeterTemplateRefs
-  (s/both [MeterTemplateRef] c/NotEmpty))
-
-;; TODO: Add real schema once EventLogs are supported.
-(def EventLogTemplateRef
-  {})
-
-(def VolumeTemplate
-  (merge c/CommonAttrs
-         c/AclAttr
-         {:volumeConfig                      VolumeConfigurationRef
-          (s/optional-key :volumeImage)      VolumeImageRef
-          (s/optional-key :meterTemplates)   MeterTemplateRefs
-          (s/optional-key :eventLogTemplate) EventLogTemplateRef}))
+(def volume-states (s/enum "CREATING" "AVAILABLE" "CAPTURING" "DELETING" "ERROR"))
 
 (def Volume
   (merge c/CommonAttrs
@@ -128,23 +70,12 @@
           :type                      c/NonBlankString
           :capacity                  c/PosInt
           (s/optional-key :bootable) s/Bool
-          (s/optional-key :eventLog) c/NonBlankString
-          }))
-
-(def VolumeTemplateAttrs
-  {(s/optional-key :volumeConfig)     VolumeConfigurationRef
-   (s/optional-key :volumeImage)      VolumeImageRef
-   (s/optional-key :meterTemplates)   MeterTemplateRefs
-   (s/optional-key :eventLogTemplate) EventLogTemplateRef})
-
-(def VolumeTemplateRef
-  (merge VolumeTemplateAttrs
-         {(s/optional-key :href) c/NonBlankString}))
+          (s/optional-key :eventLog) c/NonBlankString}))
 
 (def VolumeCreate
   (merge c/CreateAttrs
          c/AclAttr
-         {:volumeTemplate VolumeTemplateRef}))
+         {:volumeTemplate vt/VolumeTemplateRef}))
 
 (def validate (u/create-validation-fn Volume))
 
@@ -154,7 +85,7 @@
   "Adds the collection operations to the given resource."
   [resource]
   (if (a/can-modify? collection-acl)
-    (let [ops [{:rel (:add schema/action-uri) :href base-uri}]]
+    (let [ops [{:rel (:add c/action-uri) :href base-uri}]]
       (assoc resource :operations ops))
     resource))
 
@@ -162,8 +93,8 @@
   "Adds the resource operations to the given resource."
   [resource]
   (let [href (:id resource)
-        ops [{:rel (:edit schema/action-uri) :href href}
-             {:rel (:delete schema/action-uri) :href href}]]
+        ops [{:rel (:edit c/action-uri) :href href}
+             {:rel (:delete c/action-uri) :href href}]]
     (assoc resource :operations ops)))
 
 (defn volume-skeleton [uri entry]

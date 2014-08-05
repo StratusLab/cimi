@@ -15,18 +15,35 @@
 ;
 
 (ns eu.stratuslab.cimi.resources.impl.common
-  (:import (org.joda.time DateTime))
   (:require
     [clojure.tools.logging :as log]
     [clojure.string :as str]
     [schema.core :as s]
-    [eu.stratuslab.cimi.resources.utils.utils :as u]))
+    [eu.stratuslab.cimi.resources.utils.utils :as u]
+    [eu.stratuslab.cimi.resources.utils.auth-utils :as a]))
 
 (def ^:const cimi-schema-uri "http://schemas.dmtf.org/cimi/1/")
 
 (def ^:const stratuslab-cimi-schema-uri "http://stratuslab.eu/cimi/1/")
 
 (def ^:const service-context "/cimi/")
+
+;;
+;; actions
+;;
+
+(def ^:const valid-actions
+  #{:add :edit :delete
+    :start :stop :restart :pause :suspend
+    :export :import :capture :snapshot})
+
+(def ^:const action-uri
+  (let [root "http://schemas.dmtf.org/cimi/1/Action/"
+        m (into {} (map (fn [k] [k (str root (name k))]) valid-actions))]
+    (assoc m :add "add" :edit "edit" :delete "delete")))
+
+(def ^:const valid-action-uris
+  (vals action-uri))
 
 ;;
 ;; schema definitions for basic types
@@ -211,10 +228,20 @@
 (defmulti set-operations
           "Adds the authorized resource operations to the resource based on the current
            user and the resource's ACL.  Dispatches on the value of resourceURI.
-           For any unknown dispatch value, the method throws an exception."
+           For any unregistered resourceURI, the default implementation will add the
+           'add' action for a Collection and the 'edit' and 'delete' actions for resources,
+           if the current user has the MODIFY right."
           :resourceURI)
 
 (defmethod set-operations :default
            [resource]
-  (throw (ex-info (str "unknown resource type: " (:resourceURI resource)) resource)))
+  (if (a/can-modify? (:acl resource))
+    (let [href (:id resource)
+          resourceURI (:resourceURI resource)
+          ops (if (.endsWith resourceURI "Collection")
+                [{:rel (:add action-uri) :href href}]
+                [{:rel (:edit action-uri) :href href}
+                 {:rel (:delete action-uri) :href href}])]
+      (assoc resource :operations ops))
+    (dissoc resource :operations)))
 

@@ -80,8 +80,7 @@
       (authorize "root" "admin_password")
       (request base-uri)
       (t/is-status 200)
-      (t/is-resource-uri collection-uri)
-      (t/is-count zero?))
+      (t/is-resource-uri collection-uri))                   ;; Don't check count; may not be zero because of admin user.
 
   ;; add a new entry
   (let [uri (-> (session (ring-app))

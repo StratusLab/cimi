@@ -1,6 +1,6 @@
-(ns eu.stratuslab.cimi.resources.volume-image-test
+(ns eu.stratuslab.cimi.resources.volume-template-lifecycle-test
   (:require
-    [eu.stratuslab.cimi.resources.volume-image :refer :all]
+    [eu.stratuslab.cimi.resources.volume-template :refer :all]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
     [ring.util.response :as rresp]
@@ -18,29 +18,29 @@
 
 (def valid-entry
   {:acl {:owner {:principal "::ADMIN" :type "ROLE"}}
-   :state "CREATING"
-   :imageLocation {:href "GWE_nifKGCcXiFk42XaLrS8LQ-J"}
-   :bootable true})
-
-(deftest test-image-id-check
-  (let [id "GWE_nifKGCcXiFk42XaLrS8LQ-J"]
-    (is (= id (image-id {:imageLocation {:href id}})))
-    (is (nil? (image-id {:imageLocation {:href "BAD"}})))
-    (is (nil? (image-id {})))))
+   :volumeConfig {:href "VolumeConfiguration/uuid"}
+   :volumeImage {:href "VolumeImage/mkplaceid"}})
 
 (deftest lifecycle
 
-  ;; anonymous create fails
+  ;; anonymous create will fail
   (-> (session (ring-app))
       (request base-uri
                :request-method :post
                :body (json/write-str valid-entry))
       (t/is-status 403))
 
-  ;; anonymous query fails
+  ;; anonymous query will also fail
   (-> (session (ring-app))
       (request base-uri)
       (t/is-status 403))
+
+  ;; user query will succeed
+  (-> (session (ring-app))
+      (authorize "jane" "user_password")
+      (request base-uri)
+      (t/is-status 200)
+      (t/is-count zero?))
 
   ;; add a new entry
   (let [uri (-> (session (ring-app))
@@ -68,7 +68,7 @@
                       (t/is-status 200)
                       (t/is-resource-uri collection-uri)
                       (t/is-count pos?)
-                      (t/entries :volumeImages))]
+                      (t/entries :volumeTemplates))]
       (is ((set (map :id entries)) uri)))
 
     ;; delete the entry
@@ -76,8 +76,13 @@
         (authorize "jane" "user_password")
         (request abs-uri
                  :request-method :delete)
-        (t/is-status 202)
-        (t/has-job))))
+        (t/is-status 200))
+
+    ;; ensure that it really is gone
+    (-> (session (ring-app))
+        (authorize "jane" "user_password")
+        (request abs-uri)
+        (t/is-status 404))))
 
 (deftest bad-methods
   (let [resource-uri (str base-uri "/" (u/random-uuid))]

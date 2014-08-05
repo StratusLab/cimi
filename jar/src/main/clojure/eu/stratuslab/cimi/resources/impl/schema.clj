@@ -24,19 +24,6 @@
 
 (def ^:const resource-uri "http://schemas.dmtf.org/cimi/1/")
 
-(def ^:const valid-actions
-  #{:add :edit :delete
-    :start :stop :restart :pause :suspend
-    :export :import :capture :snapshot})
-
-(def ^:const action-uri
-  (let [root "http://schemas.dmtf.org/cimi/1/Action/"
-        m (into {} (map (fn [k] [k (str root (name k))]) valid-actions))]
-    (assoc m :add "add" :edit "edit" :delete "delete")))
-
-(def ^:const valid-action-uris
-  (vals action-uri))
-
 (def ValidCpuArch
   (s/enum "68000" "Alpha" "ARM" "Itanium" "MIPS" "PA_RISC"
           "POWER" "PowerPC" "x86" "x86_64" "zArchitecture", "SPARC"))

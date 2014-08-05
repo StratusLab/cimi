@@ -21,7 +21,6 @@
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
     [clojure.data.json :as json]
-    [eu.stratuslab.cimi.resources.impl.schema :as schema]
     [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
@@ -78,7 +77,7 @@
   "Adds the collection operations to the given resource."
   [resource]
   (if (a/can-modify? collection-acl)
-    (let [ops [{:rel (:add schema/action-uri) :href base-uri}]]
+    (let [ops [{:rel (:add c/action-uri) :href base-uri}]]
       (assoc resource :operations ops))
     resource))
 
@@ -87,8 +86,8 @@
   [resource]
   (if (a/can-modify? (:acl resource))
     (let [href (:id resource)
-          ops [{:rel (:edit schema/action-uri) :href href}
-               {:rel (:delete schema/action-uri) :href href}]]
+          ops [{:rel (:edit c/action-uri) :href href}
+               {:rel (:delete c/action-uri) :href href}]]
       (assoc resource :operations ops))
     resource))
 
