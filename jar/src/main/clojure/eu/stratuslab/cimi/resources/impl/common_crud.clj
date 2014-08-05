@@ -23,7 +23,8 @@
     [ring.util.response :as r]
     [couchbase-clj.client :as cbc]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
-    [eu.stratuslab.cimi.resources.impl.common :as c]))
+    [eu.stratuslab.cimi.resources.impl.common :as c]
+    [cemerick.friend :as friend]))
 
 (defn resource-name-dispatch
   [request]
@@ -63,6 +64,13 @@
            [request]
   (u/bad-method request))
 
+;;
+;; Determine the identifier for a new resource.
+;; This is normally a random UUID, but may require
+;; specialization, for example using the username for
+;; user resources.
+;;
+
 (defmulti new-identifier
           (fn [resource-name json]
             resource-name))
@@ -71,8 +79,21 @@
            [resource-name json]
   (u/random-uuid))
 
+;;
+;; Determine the ACL to use for a new resource.
+;; The default is to leave the :acl key blank.
+;;
+
+(defmulti add-acl
+          (fn [json resource-name]
+            resource-name))
+
+(defmethod add-acl :default
+           [json resource-name]
+  json)
+
 (defn get-add-fn
-  [resource-name collection-acl resource-uri add-acl]
+  [resource-name collection-acl resource-uri]
   (fn [{:keys [cb-client body] :as request}]
     (if (a/can-modify? collection-acl)
       (let [json (u/body->json body)
@@ -82,8 +103,8 @@
                       (assoc :id uri)
                       (assoc :resourceURI resource-uri)
                       (u/update-timestamps)
-                      (add-acl)                             ;; special ACL for these messages
-                      (c/validate))]
+                      (add-acl resource-name)
+                      #_(c/validate))]
         (if (cbc/add-json cb-client uri entry)
           (r/created uri)
           (r/status (r/response (str "cannot create " uri)) 400)))

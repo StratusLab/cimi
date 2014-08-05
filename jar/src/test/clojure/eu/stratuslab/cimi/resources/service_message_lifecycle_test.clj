@@ -1,4 +1,4 @@
-(ns eu.stratuslab.cimi.resources.service-message-test
+(ns eu.stratuslab.cimi.resources.service-message-lifecycle-test
   (:require
     [eu.stratuslab.cimi.resources.service-message :refer :all]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
@@ -105,7 +105,7 @@
         (request abs-uri)
         (t/is-status 404))))
 
-#_(deftest bad-methods
+(deftest bad-methods
   (let [resource-uri (str base-uri "/" (u/random-uuid))]
     (doall
       (for [[uri method] [[base-uri :options]

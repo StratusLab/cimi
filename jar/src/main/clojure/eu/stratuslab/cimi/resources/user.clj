@@ -47,8 +47,6 @@
 
 (def ^:const collection-uri (str c/stratuslab-cimi-schema-uri collection-name))
 
-(def ^:const base-uri (str c/service-context resource-name))
-
 (def collection-acl {:owner {:principal "::ADMIN"
                              :type      "ROLE"}
                      :rules [{:principal "::USER"
@@ -109,17 +107,11 @@
       (assoc resource :operations ops))
     (dissoc resource :operations)))
 
-
-;;
-;; special method
-;;
-
-(defn add-acl
-  "ACL allowing the users to view but not modify their entries."
-  [m]
+(defmethod crud/add-acl resource-name
+           [resource resource-name]
   (let [acl {:owner {:principal "::ADMIN" :type "ROLE"}
-             :rules [{:principal (:username m) :type "USER" :right "VIEW"}]}]
-    (assoc m :acl acl)))
+             :rules [{:principal (:username resource) :type "USER" :right "VIEW"}]}]
+    (assoc resource :acl acl)))
 
 ;;
 ;; User resources use the username as the record identifier
@@ -133,7 +125,7 @@
 ;; CRUD operations
 ;;
 
-(def add-impl (crud/get-add-fn resource-name collection-acl resource-uri add-acl))
+(def add-impl (crud/get-add-fn resource-name collection-acl resource-uri))
 
 (defmethod crud/add resource-name
            [request]

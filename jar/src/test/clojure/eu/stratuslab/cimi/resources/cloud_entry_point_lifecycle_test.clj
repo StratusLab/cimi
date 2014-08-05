@@ -1,4 +1,4 @@
-(ns eu.stratuslab.cimi.resources.cloud-entry-point-test
+(ns eu.stratuslab.cimi.resources.cloud-entry-point-lifecycle-test
   (:require
     [eu.stratuslab.cimi.resources.cloud-entry-point :refer :all]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
@@ -13,7 +13,7 @@
 (use-fixtures :once t/temp-bucket-fixture)
 
 (defn ring-app []
-  (t/make-ring-app (t/concat-routes routes/final-routes)))
+  (t/make-ring-app (t/concat-routes [routes])))
 
 (deftest lifecycle
 
@@ -22,7 +22,7 @@
 
   ;; retrieve cloud entry point anonymously
   (-> (session (ring-app))
-      (request "/")
+      (request base-uri)
       (t/is-status 200)
       (t/is-resource-uri resource-uri)
       (t/is-operation-absent "edit"))
@@ -31,7 +31,7 @@
   (-> (session (ring-app))
       (authorize "jane" "user_password")
       (content-type "application/json")
-      (request "/"
+      (request base-uri
                :request-method :put
                :body (json/write-str {:name "dummy"}))
       (t/is-status 403))
@@ -39,7 +39,7 @@
   ;; retrieve cloud entry point as root
   (-> (session (ring-app))
       (authorize "root" "admin_password")
-      (request "/")
+      (request base-uri)
       (t/is-status 200)
       (t/is-resource-uri resource-uri)
       (t/is-operation-present "edit"))
@@ -49,7 +49,7 @@
   (-> (session (ring-app))
       (authorize "root" "admin_password")
       (content-type "application/json")
-      (request "/"
+      (request base-uri
                :request-method :put
                :body (json/write-str {:name "dummy"}))
       (t/is-status 200)
@@ -60,7 +60,7 @@
   ;; verify that subsequent reads find the right data
   (-> (session (ring-app))
       (authorize "jane" "user_password")
-      (request "/")
+      (request base-uri)
       (t/is-status 200)
       (t/is-resource-uri resource-uri)
       (t/is-operation-absent "edit")

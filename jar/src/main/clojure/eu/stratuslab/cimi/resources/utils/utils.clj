@@ -70,7 +70,9 @@
    returned."
   [body]
   (if body
-    (json/read (io/reader body) :key-fn keyword :eof-error? false :eof-value {})
+    (if (string? body)
+      (json/read-str body :key-fn keyword :eof-error? false :eof-value {})
+      (json/read (io/reader body) :key-fn keyword :eof-error? false :eof-value {}))
     {}))
 
 (defn json->body
@@ -182,7 +184,7 @@
    (-> (r/response {:status         405
                     :request-method request-method
                     :uri            uri
-                    :message        (str "invalid method (" (name request-method) + ") for " + uri)})
+                    :message        (str "invalid method (" (name request-method) ") for " uri)})
        (r/status 405))))
 
 (defn not-found
@@ -200,7 +202,7 @@
    (-> (r/response {:status         403
                     :request-method request-method
                     :uri            uri
-                    :message        (str "unauthorized (" (name request-method) + ") for " + uri)})
+                    :message        (str "unauthorized (" (name request-method) ") for " uri)})
        (r/status 403))))
 
 (defn conflict
@@ -212,6 +214,6 @@
    (-> (r/response {:status         409
                     :request-method request-method
                     :uri            uri
-                    :message        (str "conflict (" (name request-method) + ") for " + uri)})
+                    :message        (str "conflict (" (name request-method) ") for " uri)})
        (r/status 409))))
 

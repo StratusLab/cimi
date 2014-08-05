@@ -26,7 +26,8 @@
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.resources.utils.dynamic-load :as dyn]
     [compojure.core :refer [defroutes GET POST PUT DELETE ANY]]
-    [ring.util.response :as r]))
+    [ring.util.response :as r]
+    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]))
 
 ;;
 ;; utilities
@@ -38,6 +39,7 @@
 
 (def ^:const base-uri "/cimi")
 
+;; FIXME: Determine if add-acl method should be implemented and used for CEP.
 (def resource-acl {:owner {:principal "::ADMIN" :type "ROLE"}
                    :rules [{:principal "::ANON" :type "ROLE" :right "VIEW"}]})
 
@@ -55,18 +57,21 @@
 (def resource-links
   (into {} (dyn/get-resource-links)))
 
+(def stripped-keys
+  (concat (keys resource-links) [:baseURI :operations]))
+
 ;;
 ;; define validation function and add to standard multi-method
 ;;
 
 (def validate-fn (u/create-validation-fn CloudEntryPoint))
-(defmethod c/validate [resource-uri nil]
+(defmethod c/validate resource-uri
            [resource]
   (validate-fn resource))
 
 
 (defmethod c/set-operations resource-uri
-  [resource]
+           [resource]
   (if (a/can-modify? (:acl resource))
     (let [ops [{:rel (:edit schema/action-uri) :href "#"}]]
       (assoc resource :operations ops))
@@ -93,52 +98,55 @@
                                                   :persist   :master
                                                   :replicate :zero})))
 
-(defn retrieve
-  "Returns the data associated with the CloudEntryPoint.  This combines
-   the values of the common attributes in the database with the baseURI
-   from the web container and the generated resource links."
-  [cb-client baseURI]
-  (if-let [cep (cbc/get-json cb-client resource-name)]
-    (r/response (-> cep
-                    (assoc :baseURI baseURI)
-                    (merge resource-links)
-                    (c/set-operations)))
-    (r/not-found nil)))
+(defn retrieve-impl
+  [{:keys [baseURI cb-client] :as request}]
+  (if (a/can-view? resource-acl)
+    (if-let [cep (cbc/get-json cb-client resource-name)]
+      (r/response (-> cep
+                      (assoc :baseURI baseURI)
+                      (merge resource-links)
+                      (c/set-operations)))
+      (r/not-found nil))
+    (u/unauthorized request)))
+
+(defmethod crud/retrieve resource-name
+           [request]
+  (retrieve-impl request))
 
 ;; FIXME: Implementation should use CAS functions to avoid update conflicts.
-(defn edit
-  "Update the cloud entry point attributes.  Note that only the common
-  resource attributes can be updated.  The active resource collections
-  cannot be changed.  For correct behavior, the cloud entry point must
-  have been previously initialized.  Returns nil."
-  [cb-client baseURI entry]
-  (if-let [current (cbc/get-json cb-client resource-name)]
-    (let [db-doc (->> (select-keys entry [:name :description :properties])
-                      (merge current)
-                      (u/update-timestamps))
-          doc (-> db-doc
-                  (assoc :baseURI baseURI)
-                  (merge resource-links)
-                  (c/set-operations)
-                  (c/validate))]
-      (if (cbc/set-json cb-client resource-name db-doc)
-        (r/response doc)
-        (r/status (r/response nil) 409)))
-    (r/not-found nil)))
+(defn edit-impl
+  [{:keys [cb-client body] :as request}]
+  (if (a/can-modify? resource-acl)
+    (if-let [current (cbc/get-json cb-client resource-name)]
+      (if (a/can-modify? (:acl current))
+        (let [json (u/body->json body)
+              updated (->> (assoc json :baseURI "http://example.org")
+                           (u/strip-service-attrs)
+                           (merge current)
+                           (u/update-timestamps)
+                           (merge resource-links)
+                           (c/set-operations)
+                           (c/validate))
+              stripped (apply dissoc updated stripped-keys)]
+          (if (cbc/set-json cb-client resource-name stripped)
+            (r/response updated)
+            (u/conflict request)))
+        (u/unauthorized request))
+      (r/not-found nil))
+    (u/unauthorized request)))
+
+(defmethod crud/edit resource-name
+           [request]
+  (edit-impl request))
 
 ;;
 ;; CloudEntryPoint doesn't follow the usual /cimi/ResourceName/UUID
 ;; pattern, so the routes must be defined explicitly.
 ;;
 (defroutes routes
-           (GET base-uri {:keys [cb-client base-uri] :as request}
-                (if (a/can-view? resource-acl)
-                  (retrieve cb-client base-uri)
-                  (u/unauthorized)))
-           (PUT base-uri {:keys [cb-client base-uri body] :as request}
-                (if (a/can-modify? resource-acl)
-                  (let [json (u/body->json body)]
-                    (edit cb-client base-uri json))
-                  (u/unauthorized)))
+           (GET base-uri request
+                (crud/retrieve (assoc-in request [:params :resource-name] resource-name)))
+           (PUT base-uri request
+                (crud/edit (assoc-in request [:params :resource-name] resource-name)))
            (ANY base-uri request
-                (u/bad-method)))
+                (u/bad-method request)))

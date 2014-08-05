@@ -12,7 +12,8 @@
     [couchbase-clj.client :as cbc]
     [cemerick.friend.credentials :as creds]
     [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
-    [eu.stratuslab.cimi.resources.utils.utils :as u]))
+    [eu.stratuslab.cimi.resources.utils.utils :as u]
+    [cemerick.friend :as friend]))
 
 (defn create-views
   "Ensure that the views necessary for searching the database
@@ -31,7 +32,11 @@
     (log/info "created CloudEntryPoint")
     (do
       (log/warn "did NOT create CloudEntryPoint")
-      (let [status (:status (cep/retrieve cb-client "http://example.org/"))]
+      (let [status (:status (crud/retrieve {:resourceURI    cep/resource-uri
+                                            :uri            "/cimi/"
+                                            :baseURI        "http://example.org/"
+                                            :request-method :GET
+                                            :cb-client      cb-client}))]
         (if (= 200 status)
           (log/info "CloudEntryPoint exists")
           (log/error "problem retrieving CloudEntryPoint"))))))
@@ -58,12 +63,22 @@
                  :password   (creds/hash-bcrypt password)
                  :enabled    true
                  :roles      ["::ADMIN"]
-                 :email      "change_me@example.com"}]
-      (if (= 201 (:status (crud/add {:body (u/json->body admin) :cb-client cb-client})))
-        (log/warn "User/admin entry created; initial password is" password)
-        (log/info "User/admin entry NOT created")))
+                 :email      "change_me@example.com"}
+          identity-map {:current         "admin"
+                        :authentications {"admin" {:identity "admin"
+                                                   :roles    ["::ADMIN"]}}}]
+      (binding [friend/*identity* identity-map]
+        (if (= 201 (:status (crud/add (merge identity-map
+                                             {:body           (u/json->body admin)
+                                              :uri            "dummy"
+                                              :request-method :POST
+                                              :cb-client      cb-client
+                                              :params         {:resource-name "User"}}))))
+          (log/warn "User/admin entry created; initial password is" password)
+          (log/info "User/admin entry NOT created"))))
     (catch Exception e
-      (log/error "Error occurred while trying to create User/admin entry" (str e)))))
+      (.printStackTrace e)
+      (log/error "Error occurred while trying to create User/admin entry:" (str e)))))
 
 (defn bootstrap
   "Bootstraps the Couchbase database by creating the CloudEntryPoint

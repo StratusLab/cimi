@@ -88,11 +88,8 @@
       (assoc resource :operations ops))
     (dissoc resource :operations)))
 
-;;
-;; special method
-;;
-
-(defn add-acl [resource]
+(defmethod crud/add-acl resource-name
+           [resource resource-name]
   (assoc resource :acl {:owner {:principal "::ADMIN"
                                 :type      "ROLE"}
                         :rules [{:principal "::ANON"
@@ -103,7 +100,7 @@
 ;; CRUD operations
 ;;
 
-(def add-impl (crud/get-add-fn resource-name collection-acl resource-uri add-acl))
+(def add-impl (crud/get-add-fn resource-name collection-acl resource-uri))
 
 (defmethod crud/add resource-name
            [request]
