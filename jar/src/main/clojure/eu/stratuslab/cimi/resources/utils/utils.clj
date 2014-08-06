@@ -88,16 +88,17 @@
 (defn create-validation-fn
   "Creates a validation function that compares a resource against the
    given schema.  The generated function raises an exception with the
-   violations of the schema or the resource itself if everything's OK."
+   violations of the schema and a 400 ring response. If everything's
+   OK, then the resource itself is returned."
   [schema]
   (let [checker (s/checker schema)]
     (fn [resource]
-      (let [msg (checker resource)]
-        (if msg
-          (throw (ex-info (str "resource does not satisfy defined schema\n" msg)
-                          {:schema   schema
-                           :resource resource}))
-          resource)))))
+      (if-let [msg (checker resource)]
+        (let [msg (str "resource does not satisfy defined schema: " msg)
+              response (-> (r/response msg)
+                           (r/status 400))]
+          (throw (ex-info msg response)))
+        resource))))
 
 (defn get-resource
   "Gets the resource identified by its URI from Couchbase.  If the URI is nil,

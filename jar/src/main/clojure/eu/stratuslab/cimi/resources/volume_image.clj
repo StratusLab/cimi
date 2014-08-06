@@ -33,7 +33,8 @@
     [ring.util.response :as r]
     [clojure.tools.logging :as log]
     [schema.core :as s]
-    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]))
+    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
+    [cemerick.friend :as friend]))
 
 (def ^:const resource-tag :volumeImages)
 
@@ -44,8 +45,6 @@
 (def ^:const resource-uri (str c/cimi-schema-uri resource-name))
 
 (def ^:const collection-uri (str c/cimi-schema-uri collection-name))
-
-(def ^:const base-uri (str c/service-context resource-name))
 
 (def collection-acl {:owner {:principal "::ADMIN"
                              :type      "ROLE"}
@@ -85,6 +84,10 @@
 (defmethod c/validate resource-uri
            [resource]
   (validate-fn resource))
+
+(defmethod crud/add-acl resource-name
+           [resource resource-name]
+  (a/add-acl resource (friend/current-authentication)))
 
 ;;
 ;; CRUD operations

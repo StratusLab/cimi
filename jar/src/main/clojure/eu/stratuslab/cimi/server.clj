@@ -13,6 +13,7 @@
     [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
     [eu.stratuslab.cimi.middleware.base-uri :refer [wrap-base-uri]]
     [eu.stratuslab.cimi.middleware.couchbase-store :refer [couchbase-store]]
+    [eu.stratuslab.cimi.middleware.exception-handler :refer [wrap-exceptions]]
     [eu.stratuslab.cimi.routes :as routes]
     [cemerick.friend :as friend]
     [cemerick.friend.workflows :as workflows]
@@ -70,6 +71,7 @@
                               :credential-fn       (constantly nil)
                               :workflows           workflows})
         (handler/site {:session {:store (couchbase-store cb-client)}})
+        (wrap-exceptions)
         (wrap-base-uri)
         (wrap-cb-client cb-client)
         (expose-metrics-as-json "/cimi/metrics" default-registry {:pretty-print? true})

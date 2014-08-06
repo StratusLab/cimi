@@ -14,11 +14,25 @@
 ; limitations under the License.
 ;
 
-(ns eu.stratuslab.cimi.middleware.exception-handler)
+(ns eu.stratuslab.cimi.middleware.exception-handler
+  (:require
+    [clojure.tools.logging :as log]
+    [ring.util.response :as r]))
+
+(defn treat-unexpected-exception
+  [e]
+  (let [msg (str "Unexpected exception thrown: " (str e))
+        body {:status 500 :message msg}
+        response (-> (r/response body)
+                     (r/status 500))]
+    (log/error msg)
+    response))
 
 (defn wrap-exceptions [f]
   (fn [request]
     (try (f request)
          (catch Exception e
-           {:status 500
-            :body "Exception caught"}))))
+           (let [response (ex-data e)]
+             (if (r/response? response)
+               response
+               (treat-unexpected-exception e)))))))

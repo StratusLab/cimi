@@ -104,7 +104,7 @@
                       (assoc :resourceURI resource-uri)
                       (u/update-timestamps)
                       (add-acl resource-name)
-                      #_(c/validate))]
+                      (c/validate))]
         (if (cbc/add-json cb-client uri entry)
           (r/created uri)
           (r/status (r/response (str "cannot create " uri)) 400)))

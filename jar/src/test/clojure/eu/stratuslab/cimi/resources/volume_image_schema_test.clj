@@ -19,7 +19,8 @@
     [eu.stratuslab.cimi.resources.volume-image :refer :all]
     [schema.core :as s]
     [expectations :refer :all]
-    [eu.stratuslab.cimi.resources.utils.utils :as u]))
+    [eu.stratuslab.cimi.resources.utils.utils :as u]
+    [eu.stratuslab.cimi.resources.impl.common :as c]))
 
 (def valid-acl {:owner {:principal "::ADMIN"
                         :type      "ROLE"}
@@ -39,6 +40,9 @@
               :resourceURI resource-uri
               :created "1964-08-25T10:00:00.0Z"
               :updated "1964-08-25T10:00:00.0Z")]
+
+  (expect image (c/validate image))
+  (expect Exception (c/validate (assoc valid-entry :invalid "BAD")))
 
   (expect nil? (s/check VolumeImage image))
   (expect (s/check VolumeImage (dissoc image :state)))
