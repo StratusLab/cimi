@@ -25,13 +25,20 @@
                          :type      "ROLE"
                          :right     "VIEW"}]})
 
+(def valid-state-content
+  {:resName  "resName"
+   :resource "resource"
+   :resType  "resType"
+   :state    "pending"
+   :previous "pending"})
+
 (def valid-entry
-  {:name "title"
-   :description "description"
-   :timestamp "2013-10-31T10:00:00.00Z"
-   :type "unknown"
-   :outcome "Unknown"
-   :severity "critical"})
+  {:timestamp "1964-08-25T00:00:00.000Z"
+   :outcome   "Pending"
+   :severity  "low"
+   :contact   "admin@example.com"
+   :type      "state"
+   :content   valid-state-content})
 
 (deftest lifecycle
 
