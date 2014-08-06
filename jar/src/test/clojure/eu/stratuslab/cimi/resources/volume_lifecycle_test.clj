@@ -1,4 +1,4 @@
-(ns eu.stratuslab.cimi.resources.volume-test
+(ns eu.stratuslab.cimi.resources.volume-lifecycle-test
   (:require
     [eu.stratuslab.cimi.resources.volume :refer :all]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
@@ -7,16 +7,26 @@
     [clojure.test :refer :all]
     [clojure.data.json :as json]
     [peridot.core :refer :all]
-    [eu.stratuslab.cimi.routes :as routes]))
+    [eu.stratuslab.cimi.routes :as routes]
+    [eu.stratuslab.cimi.resources.impl.common :as c]))
 
-(use-fixtures :each t/temp-bucket-fixture)
+(use-fixtures :each t/flush-bucket-fixture)
+
+(use-fixtures :once t/temp-bucket-fixture)
+
+(def ^:const base-uri (str c/service-context resource-name))
 
 (defn ring-app []
   (t/make-ring-app (t/concat-routes routes/final-routes)))
 
+(def valid-acl {:owner {:principal "::ADMIN"
+                        :type      "ROLE"}
+                :rules [{:principal "::USER"
+                         :type      "ROLE"
+                         :right     "VIEW"}]})
+
 (def valid-entry
-  {:acl {:owner {:principal "::ADMIN" :type "ROLE"}}
-   :state "CREATING"
+  {:state "CREATING"
    :type "http://schemas.cimi.stratuslab.eu/normal"
    :capacity 1024
    :bootable true
@@ -39,34 +49,52 @@
   (-> (session (ring-app))
       (request base-uri
                :request-method :post
-               :body (json/write-str valid-template))
+               :body (json/write-str valid-entry))
       (t/is-status 403))
+
+  (println "DEBUG 1")
 
   ;; anonymous query should also fail
   (-> (session (ring-app))
       (request base-uri)
       (t/is-status 403))
 
-  ;; create a volume from a template
+  (println "DEBUG 2")
+
+  ;; try adding invalid entry
+  (-> (session (ring-app))
+      (authorize "jane" "user_password")
+      (request base-uri
+               :request-method :post
+               :body (json/write-str (assoc valid-entry :invalid "BAD")))
+      (t/is-status 400))
+
+  (println "DEBUG 3")
+
+  ;; add a new entry
   (let [uri (-> (session (ring-app))
                 (authorize "jane" "user_password")
                 (request base-uri
                          :request-method :post
-                         :body (json/write-str valid-template))
+                         :body (json/write-str valid-entry))
                 (t/is-status 201)
-                (t/has-job)
+                (t/dump)
                 (t/location))
-        abs-uri (str "/" uri)]
+        abs-uri (str c/service-context uri)]
 
     (is uri)
 
-    ;; check that volume was created
+    (println "DEBUG 4")
+
+    ;; verify that the new entry is accessible
     (-> (session (ring-app))
         (authorize "jane" "user_password")
         (request abs-uri)
         (t/is-status 200)
-        (t/is-key-value :name "template")
-        (t/is-key-value :description "dummy template"))
+        (dissoc :acl)                                       ;; ACL added automatically
+        (t/does-body-contain valid-entry))
+
+    (println "DEBUG 5")
 
     ;; query to see that entry is listed
     (let [entries (-> (session (ring-app))
@@ -78,13 +106,22 @@
                       (t/entries :volumes))]
       (is ((set (map :id entries)) uri)))
 
-    ;; delete the entry -- asynchronous
+    (println "DEBUG 6")
+
+    ;; delete the entry
     (-> (session (ring-app))
         (authorize "jane" "user_password")
         (request abs-uri
                  :request-method :delete)
-        (t/is-status 202)
-        (t/has-job))))
+        (t/is-status 200))
+
+    (println "DEBUG 7")
+
+    ;; ensure that it really is gone
+    (-> (session (ring-app))
+        (authorize "jane" "user_password")
+        (request abs-uri)
+        (t/is-status 404))))
 
 (deftest bad-methods
   (let [resource-uri (str base-uri "/" (u/random-uuid))]

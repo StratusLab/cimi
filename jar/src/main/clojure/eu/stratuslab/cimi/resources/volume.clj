@@ -28,7 +28,9 @@
     [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]
     [schema.core :as s]
-    [clojure.tools.logging :as log]))
+    [clojure.tools.logging :as log]
+    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
+    [cemerick.friend :as friend]))
 
 (def ^:const resource-tag :volumes)
 
@@ -40,25 +42,16 @@
 
 (def ^:const collection-uri (str c/cimi-schema-uri collection-name))
 
-(def ^:const base-uri (str c/service-context resource-name))
-
 (def collection-acl {:owner {:principal "::ADMIN"
                              :type      "ROLE"}
                      :rules [{:principal "::USER"
                               :type      "ROLE"
                               :right     "MODIFY"}]})
 
-;; FIXME: Needed?
-(def ^:const create-uri (str c/cimi-schema-uri resource-name "Create"))
-
-(defn uuid->uri
-  "Convert a uuid into the URI for a MachineConfiguration resource.
-   The URI must not have a leading slash."
-  [uuid]
-  (str resource-name "/" uuid))
+(def ^:const create-uri (str c/cimi-schema-uri resource-name "Create")) ;; FIXME: NEEDED?
 
 ;;
-;; Volume Related Schemas
+;; schemas
 ;;
 
 (def volume-states (s/enum "CREATING" "AVAILABLE" "CAPTURING" "DELETING" "ERROR"))
@@ -77,25 +70,24 @@
          c/AclAttr
          {:volumeTemplate vt/VolumeTemplateRef}))
 
-(def validate (u/create-validation-fn Volume))
+(def validate-create (u/create-validation-fn VolumeCreate)) ;; FIXME: NEEDED?
 
-(def validate-create (u/create-validation-fn VolumeCreate))
+;;
+;; multimethods for validation and operations
+;;
 
-(defn add-cops
-  "Adds the collection operations to the given resource."
-  [resource]
-  (if (a/can-modify? collection-acl)
-    (let [ops [{:rel (:add c/action-uri) :href base-uri}]]
-      (assoc resource :operations ops))
-    resource))
+(def validate-fn (u/create-validation-fn Volume))
+(defmethod c/validate resource-uri
+           [resource]
+  (validate-fn resource))
 
-(defn add-rops
-  "Adds the resource operations to the given resource."
-  [resource]
-  (let [href (:id resource)
-        ops [{:rel (:edit c/action-uri) :href href}
-             {:rel (:delete c/action-uri) :href href}]]
-    (assoc resource :operations ops)))
+(defmethod crud/add-acl resource-name
+           [resource resource-name]
+  (a/add-acl resource (friend/current-authentication)))
+
+;;
+;; functions for special handling of templates
+;;
 
 (defn volume-skeleton [uri entry]
   (if (u/correct-resource? create-uri entry)
@@ -120,7 +112,7 @@
                              :state :type :capacity
                              :bootable :images :meters :eventLog])
       (assoc :acl {:owner {:principal "::ADMIN" :type "ROLE"}}) ;; FIXME: Add real user ACL!
-      (validate)))
+      (c/validate)))
 
 (defn template->params [template]
   (let [params (select-keys template [:type :format :capacity :bootable])]
@@ -133,7 +125,8 @@
    passed into this method."
   [cb-client entry]
   (validate-create entry)
-  (let [uri (uuid->uri (u/random-uuid))
+  (let [json entry                                          ;; FIXME: THIS IS WRONG!
+        uri (str resource-name "/" (crud/new-identifier resource-name json))
         template (create-req->template cb-client uri entry)
         volume (template->volume template)
         params (template->params template)]
@@ -148,88 +141,36 @@
           (r/response)
           (r/status 400)))))
 
-(defn retrieve
-  "Returns the data associated with the requested Volume
-   entry (identified by the uuid)."
-  [cb-client uuid]
-  (if-let [json (cbc/get-json cb-client (uuid->uri uuid))]
-    (r/response (add-rops json))
-    (r/not-found nil)))
+;;
+;; CRUD operations
+;;
 
-;; FIXME: Implementation should use CAS functions to avoid update conflicts.
-(defn edit
-  "Updates the given resource with the new information.  This will
-   validate the new entry before updating it."
-  [cb-client uuid entry]
-  (let [uri (uuid->uri uuid)]
-    (if-let [current (cbc/get-json cb-client uri)]
-      (let [updated (->> entry
-                         (u/strip-service-attrs)
-                         (merge current)
-                         (u/update-timestamps)
-                         (add-rops)
-                         (validate))]
-        (if (cbc/set-json cb-client uri updated)
-          (r/response updated)
-          (r/status (r/response nil) 409)))                 ;; conflict
-      (r/not-found nil))))
+(def add-impl (crud/get-add-fn resource-name collection-acl resource-uri))
 
-(defn delete
-  "Submits an asynchronous request to delete the volume.
-   The job is responsible for deleting the Volume resource
-   if the delete request is successful.  The response will
-   always return an accepted (202) code."
-  [cb-client uuid]
-  (job/launch cb-client (uuid->uri uuid) "delete"))
+(defmethod crud/add resource-name
+           [request]
+  (add-impl request))
 
-(defn query
-  "Searches the database for resources of this type, taking into
-   account the given options."
-  [cb-client & [opts]]
-  (let [q (cbq/create-query (merge {:include-docs true
-                                    :key          resource-uri
-                                    :limit        100
-                                    :stale        false
-                                    :on-error     :continue}
-                                   opts))
-        v (views/get-view cb-client :resource-uri)
+(def retrieve-impl (crud/get-retrieve-fn resource-name))
 
-        volumes (->> (cbc/query cb-client v q)
-                     (map cbc/view-doc-json)
-                     (map add-rops))
-        collection (add-cops {:resourceURI collection-uri
-                              :id          base-uri
-                              :count       (count volumes)})]
-    (r/response (if (empty? volumes)
-                  collection
-                  (assoc collection :volumes volumes)))))
+(defmethod crud/retrieve resource-name
+           [request]
+  (retrieve-impl request))
 
-#_(defroutes collection-routes
-           (POST base-uri {:keys [cb-client body]}
-                 (if (a/can-modify? collection-acl)
-                   (let [json (u/body->json body)]
-                     (add cb-client json))
-                   (u/unauthorized)))
-           (GET base-uri {:keys [cb-client body]}
-                (if (a/can-view? collection-acl)
-                  (let [json (u/body->json body)]
-                    (query cb-client json))
-                  (u/unauthorized)))
-           (ANY base-uri []
-                (u/bad-method)))
+(def edit-impl (crud/get-edit-fn resource-name))
 
-#_(def resource-routes
-  (let-routes [uri (str base-uri "/:uuid")]
-              (GET uri [uuid :as {cb-client :cb-client}]
-                   (retrieve cb-client uuid))
-              (PUT uri [uuid :as {cb-client :cb-client body :body}]
-                   (let [json (u/body->json body)]
-                     (edit cb-client uuid json)))
-              (DELETE uri [uuid :as {cb-client :cb-client}]
-                      (delete cb-client uuid))
-              (ANY uri []
-                   (u/bad-method))))
+(defmethod crud/edit resource-name
+           [request]
+  (edit-impl request))
 
-#_(defroutes routes
-           collection-routes
-           resource-routes)
+(def delete-impl (crud/get-delete-fn resource-name))
+
+(defmethod crud/delete resource-name
+           [request]
+  (delete-impl request))
+
+(def query-impl (crud/get-query-fn resource-name collection-acl collection-uri collection-name resource-tag))
+
+(defmethod crud/query resource-name
+           [request]
+  (query-impl request))
