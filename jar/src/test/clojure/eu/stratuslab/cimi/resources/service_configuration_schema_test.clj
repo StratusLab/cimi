@@ -30,7 +30,7 @@
   {:service  "authn"
    :instance "first"})
 
-(let [uri (uuid->uri "authn.first")
+(let [uri (str resource-name "/authn.first")
       sc (assoc valid-sc-entry
            :id uri
            :acl valid-acl

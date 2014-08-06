@@ -82,15 +82,30 @@
    (s/optional-key :detail) c/NonBlankString
    :initiator               c/NonBlankString})
 
+;; FIXME: Determine the actual schema to be used for audit events.
+(def CADFContent
+  (s/both
+    {s/Keyword s/Any}
+    c/NotEmpty))
+
+(def CommonEventAttrs
+  {:timestamp                c/Timestamp
+   :outcome                  outcome-values
+   :severity                 severity-values
+   (s/optional-key :contact) c/NonBlankString})
+
 (def Event
-  (merge c/CommonAttrs
-         c/AclAttr
-         {:timestamp                c/Timestamp
-          :type                     c/NonBlankString
-          (s/optional-key :content) (s/either StateContent AlarmContent ModelContent AccessContent)
-          :outcome                  outcome-values
-          :severity                 severity-values
-          (s/optional-key :contact) c/NonBlankString}))
+  (s/either
+    (merge c/CommonAttrs c/AclAttr CommonEventAttrs
+           {:type (s/eq "state") :content StateContent})
+    (merge c/CommonAttrs c/AclAttr CommonEventAttrs
+           {:type (s/eq "alarm") :content AlarmContent})
+    (merge c/CommonAttrs c/AclAttr CommonEventAttrs
+           {:type (s/eq "model") :content ModelContent})
+    (merge c/CommonAttrs c/AclAttr CommonEventAttrs
+           {:type (s/eq "access") :content AccessContent})
+    (merge c/CommonAttrs c/AclAttr CommonEventAttrs
+           {:type #"http://schemas\.dmtf\.org/cloud/audit/1\.0/.*" :content CADFContent})))
 
 ;;
 ;; multimethods for validation and operations

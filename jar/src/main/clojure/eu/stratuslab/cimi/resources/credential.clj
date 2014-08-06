@@ -22,11 +22,16 @@
     [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.credential-template :as ct]
-    [eu.stratuslab.cimi.cb.crud-utils :as db]))
+    [eu.stratuslab.cimi.cb.crud-utils :as db]
+    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
+    [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
+    [cemerick.friend :as friend]))
 
 ;;
 ;; utilities
 ;;
+
+(def ^:const resource-tag :credentials)
 
 (def ^:const resource-name "Credential")
 
@@ -36,68 +41,62 @@
 
 (def ^:const collection-uri (str c/cimi-schema-uri collection-name))
 
-(def ^:const base-uri (str c/service-context resource-name))
-
 (def collection-acl {:owner {:principal "::ADMIN"
                              :type      "ROLE"}
                      :rules [{:principal "::USER"
                               :type      "ROLE"
                               :right     "VIEW"}]})
 
-(def ^:const template-name (str resource-name "Template"))
-
-(def ^:const template-uri (str c/cimi-schema-uri template-name))
-
-(defn uuid->id
-  [uuid]
-  (str resource-name "/" uuid))
-
 ;;
 ;; credential schema
 ;;
 
 (def Credential
-  (merge c/CommonAttrs ct/CommonCredentialAttributes))
+  ct/CredentialTemplate)
 
 ;;
-;; standard CRUD functions for credentials
+;; multimethods for validation and operations
 ;;
 
-(defn create
-  "Adds a new credential to the database given the information in the
-   template; returns the id of the created credential."
-  [template]
-  (let [resource (-> template
-                     (c/validate-template)
-                     (c/template->resource))]
-    (->> (u/random-uuid)
-         (uuid->id)
-         (assoc resource :id)
-         (u/update-timestamps)
-         (c/validate)
-         (db/create-resource)
-         (:id))))
+(def validate-fn (u/create-validation-fn Credential))
+(defmethod c/validate resource-uri
+           [resource]
+  (validate-fn resource))
 
-(defn retrieve
-  [id]
-  (db/retrieve-resource id))
+(defmethod crud/add-acl resource-name
+           [resource resource-name]
+  (a/add-acl resource (friend/current-authentication)))
 
-(defn update
-  "Updates an existing credential in the database.  The identifier
-   must be part of the credential itself under the :id key. Returns
-   the updated resource."
-  [resource]
-  (->> resource
-       (u/update-timestamps)
-       (c/validate)
-       (db/update-resource)))
+;;
+;; CRUD operations
+;;
 
-(defn delete
-  "Removes the credential associated with the id from the database."
-  [id]
-  (db/delete-resource id))
+(def add-impl (crud/get-add-fn resource-name collection-acl resource-uri))
 
-(defn resource-ids
-  "Provides a list of all of the credential ids in the database."
-  []
-  (db/all-resource-ids resource-name))
+(defmethod crud/add resource-name
+           [request]
+  (add-impl request))
+
+(def retrieve-impl (crud/get-retrieve-fn resource-name))
+
+(defmethod crud/retrieve resource-name
+           [request]
+  (retrieve-impl request))
+
+(def edit-impl (crud/get-edit-fn resource-name))
+
+(defmethod crud/edit resource-name
+           [request]
+  (edit-impl request))
+
+(def delete-impl (crud/get-delete-fn resource-name))
+
+(defmethod crud/delete resource-name
+           [request]
+  (delete-impl request))
+
+(def query-impl (crud/get-query-fn resource-name collection-acl collection-uri collection-name resource-tag))
+
+(defmethod crud/query resource-name
+           [request]
+  (query-impl request))
