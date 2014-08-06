@@ -27,7 +27,9 @@
     [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]
     [schema.core :as s]
-    [clojure.tools.logging :as log]))
+    [clojure.tools.logging :as log]
+    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
+    [cemerick.friend :as friend]))
 
 (def ^:const resource-tag :events)
 
@@ -39,18 +41,11 @@
 
 (def ^:const collection-uri (str c/cimi-schema-uri collection-name))
 
-(def ^:const base-uri (str c/service-context resource-name))
-
 (def collection-acl {:owner {:principal "::ADMIN"
                              :type      "ROLE"}
                      :rules [{:principal "::USER"
                               :type      "ROLE"
                               :right     "VIEW"}]})
-
-(defn uuid->uri
-  "Convert the uuid into a URI for the Event resource."
-  [uuid]
-  (str resource-name "/" uuid))
 
 ;;
 ;; Event
@@ -90,126 +85,56 @@
 (def Event
   (merge c/CommonAttrs
          c/AclAttr
-         {:timestamp                s/Inst
+         {:timestamp                c/Timestamp
           :type                     c/NonBlankString
           (s/optional-key :content) (s/either StateContent AlarmContent ModelContent AccessContent)
           :outcome                  outcome-values
           :severity                 severity-values
           (s/optional-key :contact) c/NonBlankString}))
 
-(def validate (u/create-validation-fn Event))
+;;
+;; multimethods for validation and operations
+;;
 
-(defn add-cops
-  "Adds the collection operations to the given resource."
-  [resource]
-  (if (a/can-modify? collection-acl)
-    (let [ops [{:rel (:add c/action-uri) :href base-uri}]]
-      (assoc resource :operations ops))
-    resource))
+(def validate-fn (u/create-validation-fn Event))
+(defmethod c/validate resource-uri
+           [resource]
+  (validate-fn resource))
 
-(defn add-rops
-  "Adds the resource operations to the given resource."
-  [resource]
-  (let [href (:id resource)
-        ops [{:rel (:edit c/action-uri) :href href}
-             {:rel (:delete c/action-uri) :href href}]]
-    (assoc resource :operations ops)))
+(defmethod crud/add-acl resource-name
+           [resource resource-name]
+  (a/add-acl resource (friend/current-authentication)))
 
-(defn add
-  "Add a new Event to the database."
-  [cb-client entry]
-  (let [uri (uuid->uri (u/random-uuid))
-        entry (-> entry
-                  (u/strip-service-attrs)
-                  (merge {:id          uri
-                          :resourceURI resource-uri})
-                  (u/update-timestamps)
-                  (validate))]
-    (if (cbc/add-json cb-client uri entry)
-      (r/created uri)
-      (r/status (r/response (str "cannot create " uri)) 400))))
+;;
+;; CRUD operations
+;;
 
-(defn retrieve
-  "Returns the data associated with the requested Job
-   entry (identified by the uuid)."
-  [cb-client uuid]
-  (if-let [json (cbc/get-json cb-client (uuid->uri uuid))]
-    (r/response (add-rops json))
-    (r/not-found nil)))
+(def add-impl (crud/get-add-fn resource-name collection-acl resource-uri))
 
-;; FIXME: Implementation should use CAS functions to avoid update conflicts.
-(defn edit
-  "Updates the given resource with the new information.  This will
-   validate the new entry before updating it."
-  [cb-client uuid entry]
-  (let [uri (uuid->uri uuid)]
-    (if-let [current (cbc/get-json cb-client uri)]
-      (let [updated (->> entry
-                         (u/strip-service-attrs)
-                         (merge current)
-                         (u/update-timestamps)
-                         (add-rops)
-                         (validate))]
-        (if (cbc/set-json cb-client uri updated)
-          (r/response updated)
-          (r/status (r/response nil) 409)))                 ;; conflict
-      (r/not-found nil))))
+(defmethod crud/add resource-name
+           [request]
+  (add-impl request))
 
-(defn delete
-  "Deletes the named event."
-  [cb-client uuid]
-  (if (cbc/delete cb-client (uuid->uri uuid))
-    (r/response nil)
-    (r/not-found nil)))
+(def retrieve-impl (crud/get-retrieve-fn resource-name))
 
-(defn query
-  "Searches the database for resources of this type, taking into
-   account the given options."
-  [cb-client & [opts]]
-  (let [q (cbq/create-query (merge {:include-docs true
-                                    :key          resource-uri
-                                    :limit        100
-                                    :stale        false
-                                    :on-error     :continue}
-                                   opts))
-        v (views/get-view cb-client :resource-uri)
+(defmethod crud/retrieve resource-name
+           [request]
+  (retrieve-impl request))
 
-        configs (->> (cbc/query cb-client v q)
-                     (map cbc/view-doc-json)
-                     (map add-rops))
-        collection (add-cops {:resourceURI collection-uri
-                              :id          base-uri
-                              :count       (count configs)})]
-    (r/response (if (empty? configs)
-                  collection
-                  (assoc collection :events configs)))))
+(def edit-impl (crud/get-edit-fn resource-name))
 
-#_(defroutes collection-routes
-           (POST base-uri {:keys [cb-client body]}
-                 (if (a/can-modify? collection-acl)
-                   (let [json (u/body->json body)]
-                     (add cb-client json))
-                   (u/unauthorized)))
-           (GET base-uri {:keys [cb-client body]}
-                (if (a/can-view? collection-acl)
-                  (let [json (u/body->json body)]
-                    (query cb-client json))
-                  (u/unauthorized)))
-           (ANY base-uri []
-                (u/bad-method)))
+(defmethod crud/edit resource-name
+           [request]
+  (edit-impl request))
 
-#_(def resource-routes
-  (let-routes [uri (str base-uri "/:uuid")]
-              (GET uri [uuid :as {cb-client :cb-client}]
-                   (retrieve cb-client uuid))
-              (PUT uri [uuid :as {cb-client :cb-client body :body}]
-                   (let [json (u/body->json body)]
-                     (edit cb-client uuid json)))
-              (DELETE uri [uuid :as {cb-client :cb-client}]
-                      (delete cb-client uuid))
-              (ANY uri []
-                   (u/bad-method))))
+(def delete-impl (crud/get-delete-fn resource-name))
 
-#_(defroutes routes
-           collection-routes
-           resource-routes)
+(defmethod crud/delete resource-name
+           [request]
+  (delete-impl request))
+
+(def query-impl (crud/get-query-fn resource-name collection-acl collection-uri collection-name resource-tag))
+
+(defmethod crud/query resource-name
+           [request]
+  (query-impl request))

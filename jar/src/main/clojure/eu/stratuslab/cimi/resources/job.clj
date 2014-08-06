@@ -26,7 +26,9 @@
     [ring.util.response :as r]
     [clojure.walk :as w]
     [schema.core :as s]
-    [clojure.tools.logging :as log]))
+    [clojure.tools.logging :as log]
+    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
+    [cemerick.friend :as friend]))
 
 (def ^:const resource-tag :jobs)
 
@@ -220,37 +222,49 @@
           (r/response)
           (r/status 500)))))
 
-#_(defroutes collection-routes
-           (POST base-uri {:keys [cb-client body]}
-                 (if (a/can-modify? collection-acl)
-                   (let [json (u/body->json body)]
-                     (add cb-client json))
-                   (u/unauthorized)))
-           (GET base-uri {:keys [cb-client body]}
-                (if (a/can-view? collection-acl)
-                  (let [json (u/body->json body)]
-                    (query cb-client json))
-                  (u/unauthorized)))
-           (ANY base-uri {}
-                (u/bad-method)))
+;;
+;; multimethods for validation and operations
+;;
 
+(def validate-fn (u/create-validation-fn Job))
+(defmethod c/validate resource-uri
+           [resource]
+  (validate-fn resource))
 
-#_(def resource-routes
-  (let-routes [uri (str base-uri "/:uuid")]
-              (GET uri [uuid :as {cb-client :cb-client}]
-                   (retrieve cb-client uuid))
-              (PUT uri [uuid :as {cb-client :cb-client body :body}]
-                   (let [json (u/body->json body)]
-                     (edit cb-client uuid json)))
-              (DELETE uri [uuid :as {cb-client :cb-client}]
-                      (delete cb-client uuid))
-              (POST (str uri "/:action") [uuid action :as {:keys [cb-client body]}]
-                    (let [json (u/body->json body)]
-                      (action cb-client uuid action json)))
-              (ANY uri {}
-                   (u/bad-method))))
+(defmethod crud/add-acl resource-name
+           [resource resource-name]
+  (a/add-acl resource (friend/current-authentication)))
 
-#_(defroutes routes
-           collection-routes
-           resource-routes)
+;;
+;; CRUD operations
+;;
 
+(def add-impl (crud/get-add-fn resource-name collection-acl resource-uri))
+
+(defmethod crud/add resource-name
+           [request]
+  (add-impl request))
+
+(def retrieve-impl (crud/get-retrieve-fn resource-name))
+
+(defmethod crud/retrieve resource-name
+           [request]
+  (retrieve-impl request))
+
+(def edit-impl (crud/get-edit-fn resource-name))
+
+(defmethod crud/edit resource-name
+           [request]
+  (edit-impl request))
+
+(def delete-impl (crud/get-delete-fn resource-name))
+
+(defmethod crud/delete resource-name
+           [request]
+  (delete-impl request))
+
+(def query-impl (crud/get-query-fn resource-name collection-acl collection-uri collection-name resource-tag))
+
+(defmethod crud/query resource-name
+           [request]
+  (query-impl request))
