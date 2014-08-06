@@ -30,7 +30,8 @@
     [ring.util.response :as r]
     [cemerick.friend :as friend]
     [schema.core :as s]
-    [clojure.tools.logging :as log]))
+    [clojure.tools.logging :as log]
+    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]))
 
 (def ^:const resource-tag :serviceConfigurations)
 
@@ -42,18 +43,11 @@
 
 (def ^:const collection-uri (str c/stratuslab-cimi-schema-uri collection-name))
 
-(def ^:const base-uri (str c/service-context resource-name))
-
 (def collection-acl {:owner {:principal "::ADMIN"
                              :type      "ROLE"}})
 
-(defn uuid->uri
-  "Convert uuid to a ServiceConfiguration resource.  The UUID
-   is the concatenation of the :service and :instance values.
-   If the :instance isn't set (a general configuration file), then
-   the UUID is just the value of the :service key."
-  [uuid]
-  (str resource-name "/" uuid))
+(def resource-acl {:owner {:principal "::ADMIN"
+                           :type      "ROLE"}})
 
 ;;
 ;; Service configuration files.  (StratusLab extension.)
@@ -62,137 +56,56 @@
   (merge c/CommonAttrs
          c/AclAttr
          {:service                   c/NonBlankString
-          (s/optional-key :instance) c/NonBlankString}))
+          (s/optional-key :instance) c/NonBlankString
+          s/Keyword                  s/Any}))
 
-(def validate (u/create-validation-fn ServiceConfiguration))
+;;
+;; multimethods for validation and operations
+;;
 
-(defn add-cops
-  "Adds the collection operations to the given resource."
-  [resource]
-  (if (a/can-modify? collection-acl)
-    (let [ops [{:rel (:add c/action-uri) :href base-uri}]]
-      (assoc resource :operations ops))
-    resource))
+(defmethod crud/new-identifier resource-name
+           [resource-name {:keys [service instance] :or {instance "default"}}]
+  (str service "." instance))
 
-(defn add-rops
-  "Adds the resource operations to the given resource."
-  [resource]
-  (if (a/can-modify? (:acl resource))
-    (let [href (:id resource)
-          ops [{:rel (:edit c/action-uri) :href href}
-               {:rel (:delete c/action-uri) :href href}]]
-      (assoc resource :operations ops))
-    resource))
+(def validate-fn (u/create-validation-fn ServiceConfiguration))
+(defmethod c/validate resource-uri
+           [resource]
+  (validate-fn resource))
 
-(defn add-acl
-  "ACL allowing only the administrators to view and modify
-  the service configurations."
-  [m]
-  (let [acl {:owner {:principal "::ADMIN" :type "ROLE"}}]
-    (assoc m :acl acl)))
+(defmethod crud/add-acl resource-name
+           [resource resource-name]
+  (assoc resource :acl resource-acl))
 
-(defn add
-  "Adds a new ServiceConfiguration to the database."
-  ([cb-client] (add cb-client {}))
+;;
+;; CRUD operations
+;;
 
-  ([cb-client entry]
-   (let [uuid (->> entry
-                   ((juxt :service :instance))
-                   (remove nil?)
-                   (str/join "."))
-         uri (uuid->uri uuid)
-         entry (-> entry
-                   (u/strip-service-attrs)
-                   (assoc :id uri)
-                   (assoc :resourceURI resource-uri)
-                   (u/update-timestamps)
-                   (add-acl)
-                   (validate))]
-     (if (cbc/add-json cb-client uri entry)
-       (r/created uri)
-       (r/status (r/response (str "cannot create " uri)) 400)))))
+(def add-impl (crud/get-add-fn resource-name collection-acl resource-uri))
 
-(defn retrieve
-  "Returns the ServiceConfiguration associated with this UUID."
-  [cb-client uuid]
-  (if-let [json (cbc/get-json cb-client (uuid->uri uuid))]
-    (if (a/can-view? (friend/current-authentication) (:acl json))
-      (r/response (add-rops json))
-      (u/unauthorized))
-    (r/not-found nil)))
+(defmethod crud/add resource-name
+           [request]
+  (add-impl request))
 
-;; FIXME: Implementation should use CAS functions to avoid update conflicts.
-(defn edit
-  "Updates the given resource with the new information.  This will
-   validate the new entry before updating it."
-  [cb-client uuid entry]
-  (let [uri (uuid->uri uuid)]
-    (if-let [current (cbc/get-json cb-client uri)]
-      (if (a/can-modify? (friend/current-authentication) (:acl current))
-        (let [updated (->> entry
-                           (u/strip-service-attrs)
-                           (merge current)
-                           (u/update-timestamps)
-                           (add-rops)
-                           (validate))]
-          (if (cbc/set-json cb-client uri updated)
-            (r/response updated)
-            (r/status (r/response nil) 409)))               ;; conflict
-        (u/unauthorized))
-      (r/not-found nil))))
+(def retrieve-impl (crud/get-retrieve-fn resource-name))
 
-(defn delete
-  "Deletes the named ServiceConfiguration."
-  [cb-client uuid]
-  (let [uri (uuid->uri uuid)]
-    (if-let [current (cbc/get-json cb-client uri)]
-      (if (a/can-modify? (friend/current-authentication) (:acl current))
-        (if (cbc/delete cb-client uri)
-          (r/response nil)
-          (r/not-found nil))
-        (u/unauthorized))
-      (r/not-found nil))))
+(defmethod crud/retrieve resource-name
+           [request]
+  (retrieve-impl request))
 
-(defn query
-  "Searches the database for resources of this type, taking into
-   account the given options."
-  [cb-client & [opts]]
-  (let [principals (a/authn->principals (friend/current-authentication))
-        configs (u/viewable-resources cb-client resource-name principals opts)
-        configs (map add-rops configs)
-        collection (add-cops {:resourceURI collection-uri
-                              :id          base-uri
-                              :count       (count configs)})]
-    (r/response (if (empty? collection)
-                  collection
-                  (assoc collection :serviceConfigurations configs)))))
+(def edit-impl (crud/get-edit-fn resource-name))
 
-#_(defroutes collection-routes
-           (POST base-uri {:keys [cb-client body]}
-                 (if (a/can-modify? collection-acl)
-                   (let [json (u/body->json body)]
-                     (add cb-client json))
-                   (u/unauthorized)))
-           (GET base-uri {:keys [cb-client body]}
-                (if (a/can-view? collection-acl)
-                  (let [json (u/body->json body)]
-                    (query cb-client json))
-                  (u/unauthorized)))
-           (ANY base-uri []
-                (u/bad-method)))
+(defmethod crud/edit resource-name
+           [request]
+  (edit-impl request))
 
-#_(def resource-routes
-  (let-routes [uri (str base-uri "/:uuid")]
-              (GET uri [uuid :as {cb-client :cb-client}]
-                   (retrieve cb-client uuid))
-              (PUT uri [uuid :as {cb-client :cb-client body :body}]
-                   (let [json (u/body->json body)]
-                     (edit cb-client uuid json)))
-              (DELETE uri [uuid :as {cb-client :cb-client}]
-                      (delete cb-client uuid))
-              (ANY uri []
-                   (u/bad-method))))
+(def delete-impl (crud/get-delete-fn resource-name))
 
-#_(defroutes routes
-           collection-routes
-           resource-routes)
+(defmethod crud/delete resource-name
+           [request]
+  (delete-impl request))
+
+(def query-impl (crud/get-query-fn resource-name collection-acl collection-uri collection-name resource-tag))
+
+(defmethod crud/query resource-name
+           [request]
+  (query-impl request))

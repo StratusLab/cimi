@@ -27,20 +27,20 @@
                          :right     "VIEW"}]})
 
 (def valid-sc-entry
-  {:acl      valid-acl
-   :service  "authn"
+  {:service  "authn"
    :instance "first"})
 
 (let [uri (uuid->uri "authn.first")
       sc (assoc valid-sc-entry
            :id uri
+           :acl valid-acl
            :resourceURI resource-uri
            :created  "1964-08-25T10:00:00.0Z"
            :updated  "1964-08-25T10:00:00.0Z")]
 
   (expect nil? (s/check ServiceConfiguration sc))
   (expect nil? (s/check ServiceConfiguration (dissoc sc :instance)))
-  (expect (s/check ServiceConfiguration (assoc sc :bad "BAD"))))
+  (expect nil? (s/check ServiceConfiguration (assoc sc :other "OK"))))
 
 
 (run-tests [*ns*])
