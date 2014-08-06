@@ -31,7 +31,8 @@
     [eu.stratuslab.cimi.resources.event-log-template :as el]
     [eu.stratuslab.cimi.resources.meter-template :as mt]
     [clojure.tools.logging :as log]
-    [schema.core :as s]))
+    [schema.core :as s]
+    [cemerick.friend :as friend]))
 
 (def ^:const resource-tag :volumeTemplates)
 
@@ -42,8 +43,6 @@
 (def ^:const resource-uri (str c/cimi-schema-uri resource-name))
 
 (def ^:const collection-uri (str c/cimi-schema-uri collection-name))
-
-(def ^:const base-uri (str c/service-context resource-name))
 
 (def collection-acl {:owner {:principal "::ADMIN"
                              :type      "ROLE"}
@@ -84,14 +83,9 @@
            [resource]
   (validate-fn resource))
 
-;; FIXME: Change the ACL to something reasonable.
 (defmethod crud/add-acl resource-name
            [resource resource-name]
-  (assoc resource :acl {:owner {:principal "::ADMIN"
-                                :type      "ROLE"}
-                        :rules [{:principal "::ANON"
-                                 :type      "ROLE"
-                                 :right     "VIEW"}]}))
+  (a/add-acl resource (friend/current-authentication)))
 
 ;;
 ;; CRUD operations

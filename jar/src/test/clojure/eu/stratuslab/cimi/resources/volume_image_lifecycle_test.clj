@@ -51,7 +51,6 @@
       (request base-uri
                :request-method :post
                :body (json/write-str (assoc valid-entry :invalid "BAD")))
-      (t/dump)
       (t/is-status 400))
 
   ;; add a new entry

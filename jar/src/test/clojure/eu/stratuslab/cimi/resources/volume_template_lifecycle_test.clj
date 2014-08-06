@@ -7,40 +7,49 @@
     [clojure.test :refer :all]
     [clojure.data.json :as json]
     [peridot.core :refer :all]
-    [eu.stratuslab.cimi.routes :as routes]))
+    [eu.stratuslab.cimi.routes :as routes]
+    [eu.stratuslab.cimi.resources.impl.common :as c]))
 
 (use-fixtures :each t/flush-bucket-fixture)
 
 (use-fixtures :once t/temp-bucket-fixture)
 
+(def ^:const base-uri (str c/service-context resource-name))
+
 (defn ring-app []
   (t/make-ring-app (t/concat-routes routes/final-routes)))
 
+(def valid-acl {:owner {:principal "::ADMIN"
+                        :type      "ROLE"}
+                :rules [{:principal "::USER"
+                         :type      "ROLE"
+                         :right     "VIEW"}]})
+
 (def valid-entry
-  {:acl {:owner {:principal "::ADMIN" :type "ROLE"}}
-   :volumeConfig {:href "VolumeConfiguration/uuid"}
-   :volumeImage {:href "VolumeImage/mkplaceid"}})
+  {:volumeConfig {:href "VolumeConfiguration/uuid"}
+   :volumeImage {:href "VolumeImage/uuid"}})
 
 (deftest lifecycle
 
-  ;; anonymous create will fail
+  ;; anonymous create should fail
   (-> (session (ring-app))
       (request base-uri
                :request-method :post
                :body (json/write-str valid-entry))
       (t/is-status 403))
 
-  ;; anonymous query will also fail
+  ;; anonymous query should also fail
   (-> (session (ring-app))
       (request base-uri)
       (t/is-status 403))
 
-  ;; user query will succeed
+  ;; try adding invalid entry
   (-> (session (ring-app))
       (authorize "jane" "user_password")
-      (request base-uri)
-      (t/is-status 200)
-      (t/is-count zero?))
+      (request base-uri
+               :request-method :post
+               :body (json/write-str (assoc valid-entry :invalid "BAD")))
+      (t/is-status 400))
 
   ;; add a new entry
   (let [uri (-> (session (ring-app))
@@ -50,7 +59,7 @@
                          :body (json/write-str valid-entry))
                 (t/is-status 201)
                 (t/location))
-        abs-uri (str "/" uri)]
+        abs-uri (str c/service-context uri)]
 
     (is uri)
 
@@ -59,6 +68,7 @@
         (authorize "jane" "user_password")
         (request abs-uri)
         (t/is-status 200)
+        (dissoc :acl)                                       ;; ACL added automatically
         (t/does-body-contain valid-entry))
 
     ;; query to see that entry is listed
