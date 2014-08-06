@@ -30,6 +30,12 @@
   [request]
   (get-in request [:params :resource-name]))
 
+(defn resource-name-and-action-dispatch
+  [request]
+  (-> request
+      :params
+      (juxt :resource-name :action)))
+
 (defmulti add resource-name-dispatch)
 
 (defmethod add :default
@@ -61,6 +67,12 @@
 (defmulti delete resource-name-dispatch)
 
 (defmethod delete :default
+           [request]
+  (u/bad-method request))
+
+(defmulti do-action resource-name-and-action-dispatch)
+
+(defmethod do-action :default
            [request]
   (u/bad-method request))
 
@@ -159,10 +171,12 @@
             principals (a/authn->principals)
             configs (u/viewable-resources cb-client resource-name principals opts)
             configs (map c/set-operations configs)
-            collection (c/set-operations {:resourceURI collection-uri
+            collection (c/set-operations {:acl         collection-acl
+                                          :resourceURI collection-uri
                                           :id          resource-name
                                           :count       (count configs)})]
         (r/response (if (empty? collection)
                       collection
                       (assoc collection collection-key configs))))
       (u/unauthorized request))))
+

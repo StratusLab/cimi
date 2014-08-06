@@ -27,6 +27,13 @@
               (ANY uri request
                    (u/bad-method request))))
 
+(def action-routes
+  (let-routes [uri "/cimi/:resource-name/:uuid/:action"]
+              (POST uri request
+                   (crud/do-action request))
+              (ANY uri request
+                   (u/bad-method request))))
+
 (def final-routes
   [collection-routes
    resource-routes

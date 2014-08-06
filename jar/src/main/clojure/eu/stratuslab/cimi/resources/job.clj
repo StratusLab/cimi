@@ -40,8 +40,6 @@
 
 (def ^:const collection-uri (str c/cimi-schema-uri collection-name))
 
-(def ^:const base-uri (str c/service-context resource-name))
-
 (def collection-acl {:owner {:principal "::ADMIN"
                              :type      "ROLE"}
                      :rules [{:principal "::USER"
@@ -58,7 +56,7 @@
   (str resource-name "/" uuid))
 
 ;;
-;; Job schema
+;; schema
 ;;
 
 (def job-states (s/enum "QUEUED" "RUNNING" "FAILED" "SUCCESS" "STOPPING" "STOPPED"))
@@ -77,29 +75,14 @@
           (s/optional-key :parentJob)          c/NonBlankString
           (s/optional-key :nestedJobs)         c/NonEmptyStrList}))
 
-(def validate (u/create-validation-fn Job))
+;;
+;; special functions to facilitate programmatic management of jobs by other resources
+;;
 
 (defn set-timestamp
   "Copies the updated timestamp to the timeOfStatusChange field."
   [{:keys [updated] :as entry}]
   (assoc entry :timeOfStatusChange updated))
-
-(defn add-cops
-  "Adds the collection operations to the given resource."
-  [resource]
-  (if (a/can-modify? collection-acl)
-    (let [ops [{:rel (:add c/action-uri) :href base-uri}]]
-      (assoc resource :operations ops))
-    resource))
-
-(defn add-rops
-  "Adds the resource operations to the given resource."
-  [resource]
-  (let [href (:id resource)
-        ops [{:rel (:edit c/action-uri) :href href}
-             {:rel (:delete c/action-uri) :href href}
-             {:rel (:stop c/action-uri) :href (str href "/stop")}]]
-    (assoc resource :operations ops)))
 
 (defn create
   "Creates a new job and adds it to the database.  Unlike the add function
@@ -115,76 +98,9 @@
                           :progress    0})
                   (u/update-timestamps)
                   (set-timestamp)
-                  (validate))]
+                  (c/validate))]
     (if (cbc/add-json cb-client uri entry)
       uri)))
-
-(defn add
-  "Add a new Job to the database."
-  [cb-client entry]
-  (if-let [uri (create cb-client entry)]
-    (r/created uri)
-    (r/status (r/response (str "cannot create job")) 400)))
-
-(defn retrieve
-  "Returns the data associated with the requested Job
-   entry (identified by the uuid)."
-  [cb-client uuid]
-  (if-let [json (cbc/get-json cb-client (uuid->uri uuid))]
-    (r/response (add-rops json))
-    (r/not-found nil)))
-
-;; FIXME: Implementation should use CAS functions to avoid update conflicts.
-(defn edit
-  "Updates the given resource with the new information.  This will
-   validate the new entry before updating it."
-  [cb-client uuid entry]
-  (let [uri (uuid->uri uuid)]
-    (if-let [current (cbc/get-json cb-client uri)]
-      (let [updated (->> entry
-                         (u/strip-service-attrs)
-                         (merge current)
-                         (u/update-timestamps)
-                         (add-rops)
-                         (validate))]
-        (if (cbc/set-json cb-client uri updated)
-          (r/response updated)
-          (r/status (r/response nil) 409)))                 ;; conflict
-      (r/not-found nil))))
-
-(defn delete
-  "Deletes the named machine configuration."
-  [cb-client uuid]
-  (if (cbc/delete cb-client (uuid->uri uuid))
-    (r/response nil)
-    (r/not-found nil)))
-
-(defn action
-  "Perform an action on the given resource."
-  [cb-client uuid action params]
-  (r/created (uuid->uri uuid)))
-
-(defn query
-  "Searches the database for resources of this type, taking into
-   account the given options."
-  [cb-client & [opts]]
-  (let [q (cbq/create-query (merge {:include-docs true
-                                    :key          resource-uri
-                                    :limit        100
-                                    :stale        false
-                                    :on-error     :continue}
-                                   opts))
-        v (views/get-view cb-client :resource-uri)
-
-        configs (->> (cbc/query cb-client v q)
-                     (map cbc/view-doc-json)
-                     (map add-rops))
-        collection (add-cops {:resourceURI collection-uri
-                              :id          base-uri
-                              :count       (count configs)})]
-    (r/response (if (empty? configs)
-                  collection
-                  (assoc collection :jobs configs)))))
 
 (defn value-as-string
   "Converts non-collection values to a string. "
@@ -213,7 +129,7 @@
   (let [job-map (merge
                   {:acl job-acl :targetResource uri :action action}
                   (properties-map props))]
-    (if-let [job-resp (add cb-client job-map)]
+    (if-let [job-resp (crud/add job-map)]                   ;; FIXME: job-map needs to be ring request!
       (let [job-uri (get-in job-resp [:headers "Location"])]
         (-> (r/response nil)
             (r/status 202)
@@ -234,6 +150,17 @@
 (defmethod crud/add-acl resource-name
            [resource resource-name]
   (a/add-acl resource (friend/current-authentication)))
+
+;; specialized to allow the "stop" action
+(defmethod c/set-operations resource-uri
+           [resource]
+  (if (a/can-modify? (:acl resource))
+    (let [href (:id resource)
+          ops [{:rel (:edit c/action-uri) :href href}
+               {:rel (:delete c/action-uri) :href href}
+               {:rel (:stop c/action-uri) :href (str href "/stop")}]]
+      (assoc resource :operations ops))
+    (dissoc resource :operations)))
 
 ;;
 ;; CRUD operations
@@ -268,3 +195,16 @@
 (defmethod crud/query resource-name
            [request]
   (query-impl request))
+
+(defn do-action
+  [{{:keys [uuid action]} :params cb-client :cb-client :as request}]
+  (if-let [json (->> (str resource-name "/" uuid)
+                     (cbc/get-json cb-client))]
+    (if (a/can-modify? (:acl json))
+      (if (= action "stop")
+        (log/info "STOP action for job" uuid)               ;; FIXME: Provide real implementation!
+        (-> (r/response (str "unknown action: " action))
+            (r/status 400)))
+      (u/unauthorized request))
+    (r/not-found nil)))
+
