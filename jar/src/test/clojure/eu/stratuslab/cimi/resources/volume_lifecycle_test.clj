@@ -52,14 +52,10 @@
                :body (json/write-str valid-entry))
       (t/is-status 403))
 
-  (println "DEBUG 1")
-
   ;; anonymous query should also fail
   (-> (session (ring-app))
       (request base-uri)
       (t/is-status 403))
-
-  (println "DEBUG 2")
 
   ;; try adding invalid entry
   (-> (session (ring-app))
@@ -69,8 +65,6 @@
                :body (json/write-str (assoc valid-entry :invalid "BAD")))
       (t/is-status 400))
 
-  (println "DEBUG 3")
-
   ;; add a new entry
   (let [uri (-> (session (ring-app))
                 (authorize "jane" "user_password")
@@ -78,13 +72,10 @@
                          :request-method :post
                          :body (json/write-str valid-entry))
                 (t/is-status 201)
-                (t/dump)
                 (t/location))
         abs-uri (str c/service-context uri)]
 
     (is uri)
-
-    (println "DEBUG 4")
 
     ;; verify that the new entry is accessible
     (-> (session (ring-app))
@@ -93,8 +84,6 @@
         (t/is-status 200)
         (dissoc :acl)                                       ;; ACL added automatically
         (t/does-body-contain valid-entry))
-
-    (println "DEBUG 5")
 
     ;; query to see that entry is listed
     (let [entries (-> (session (ring-app))
@@ -106,16 +95,12 @@
                       (t/entries :volumes))]
       (is ((set (map :id entries)) uri)))
 
-    (println "DEBUG 6")
-
     ;; delete the entry
     (-> (session (ring-app))
         (authorize "jane" "user_password")
         (request abs-uri
                  :request-method :delete)
         (t/is-status 200))
-
-    (println "DEBUG 7")
 
     ;; ensure that it really is gone
     (-> (session (ring-app))
