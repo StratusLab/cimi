@@ -1,2 +1,3 @@
 dependency-reduced-pom.xml
 test-runner.clj
+cimi.log
