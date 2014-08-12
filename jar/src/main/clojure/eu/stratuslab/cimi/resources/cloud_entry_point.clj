@@ -18,15 +18,15 @@
   of other resources within the server."
   (:require
     [clojure.tools.logging :as log]
-    [couchbase-clj.client :as cbc]
     [schema.core :as s]
     [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.resources.utils.dynamic-load :as dyn]
-    [compojure.core :refer [defroutes GET POST PUT DELETE ANY]]
+    [compojure.core :refer [defroutes GET PUT ANY]]
     [ring.util.response :as r]
-    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]))
+    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
+    [eu.stratuslab.cimi.db.dbops :as db]))
 
 ;;
 ;; utilities
@@ -70,11 +70,12 @@
 
 
 (defmethod c/set-operations resource-uri
-           [resource]
-  (if (a/can-modify? (:acl resource))
-    (let [ops [{:rel (:edit c/action-uri) :href "#"}]]
-      (assoc resource :operations ops))
-    (dissoc resource :operations)))
+           [resource request]
+  (try
+    (a/modifiable? resource request)
+    (assoc resource :operations [{:rel (:edit c/action-uri) :href "#"}])
+    (catch Exception e
+      (dissoc resource :operations))))
 
 ;;
 ;; CRUD operations
@@ -87,52 +88,40 @@
 
    NOTE: Unlike other resources, the :id is 'CloudEntryPoint'
    rather than the relative URI for the resource."
-  [cb-client]
-
+  []
   (let [record (-> {:acl         resource-acl
                     :id          resource-name
                     :resourceURI resource-uri}
                    (u/update-timestamps))]
-    (cbc/add-json cb-client resource-name record {:observe   true
-                                                  :persist   :master
-                                                  :replicate :zero})))
+    (db/add record)))
 
 (defn retrieve-impl
-  [{:keys [baseURI cb-client] :as request}]
-  (if (a/can-view? resource-acl)
-    (if-let [cep (cbc/get-json cb-client resource-name)]
-      (r/response (-> cep
-                      (assoc :baseURI baseURI)
-                      (merge resource-links)
-                      (c/set-operations)))
-      (r/not-found nil))
-    (u/unauthorized request)))
+  [{:keys [baseURI] :as request}]
+  (a/viewable? {:acl resource-acl} request)
+  (let [cep (db/retrieve resource-name)]
+    (r/response (-> cep
+                    (assoc :baseURI baseURI)
+                    (merge resource-links)
+                    (c/set-operations request)))))
 
 (defmethod crud/retrieve resource-name
            [request]
   (retrieve-impl request))
 
-;; FIXME: Implementation should use CAS functions to avoid update conflicts.
 (defn edit-impl
-  [{:keys [cb-client body] :as request}]
-  (if (a/can-modify? resource-acl)
-    (if-let [current (cbc/get-json cb-client resource-name)]
-      (if (a/can-modify? (:acl current))
-        (let [json (u/body->json body)
-              updated (->> (assoc json :baseURI "http://example.org")
-                           (u/strip-service-attrs)
-                           (merge current)
-                           (u/update-timestamps)
-                           (merge resource-links)
-                           (c/set-operations)
-                           (c/validate))
-              stripped (apply dissoc updated stripped-keys)]
-          (if (cbc/set-json cb-client resource-name stripped)
-            (r/response updated)
-            (u/conflict request)))
-        (u/unauthorized request))
-      (r/not-found nil))
-    (u/unauthorized request)))
+  [{:keys [body] :as request}]
+  (let [current (-> (db/retrieve resource-name)
+                    (a/modifiable? request))]
+    (let [new (-> (u/body->json body)
+                  (assoc :baseURI "http://example.org")
+                  (u/strip-service-attrs))
+          updated (-> (merge current new)
+                      (u/update-timestamps)
+                      (merge resource-links)
+                      (c/set-operations request)
+                      (c/validate))
+          stripped (apply dissoc updated stripped-keys)]
+      (db/edit stripped))))
 
 (defmethod crud/edit resource-name
            [request]

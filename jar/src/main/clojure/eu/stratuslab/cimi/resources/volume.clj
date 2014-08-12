@@ -16,21 +16,18 @@
 (ns eu.stratuslab.cimi.resources.volume
   "Utilities for managing the CRUD features for volumes."
   (:require
-    [couchbase-clj.client :as cbc]
-    [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.resources.volume-template :as vt]
     [eu.stratuslab.cimi.resources.job :as job]
-    [eu.stratuslab.cimi.cb.views :as views]
     [eu.stratuslab.cimi.resources.impl.common :as c]
-    [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
+    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
     [ring.util.response :as r]
     [schema.core :as s]
     [clojure.tools.logging :as log]
-    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
-    [cemerick.friend :as friend]))
+    [cemerick.friend :as friend]
+    [eu.stratuslab.cimi.db.dbops :as db]))
 
 (def ^:const resource-tag :volumes)
 
@@ -48,7 +45,7 @@
                               :type      "ROLE"
                               :right     "MODIFY"}]})
 
-(def ^:const create-uri (str c/cimi-schema-uri resource-name "Create")) ;; FIXME: NEEDED?
+(def ^:const create-uri (str c/cimi-schema-uri resource-name "Create"))
 
 ;;
 ;; schemas
@@ -70,7 +67,7 @@
          c/AclAttr
          {:volumeTemplate vt/VolumeTemplateRef}))
 
-(def validate-create (u/create-validation-fn VolumeCreate)) ;; FIXME: NEEDED?
+(def validate-create (u/create-validation-fn VolumeCreate))
 
 ;;
 ;; multimethods for validation and operations
@@ -78,6 +75,11 @@
 
 (def validate-fn (u/create-validation-fn Volume))
 (defmethod c/validate resource-uri
+           [resource]
+  (validate-fn resource))
+
+(def validate-fn (u/create-validation-fn VolumeCreate))
+(defmethod c/validate create-uri
            [resource]
   (validate-fn resource))
 
@@ -99,11 +101,11 @@
         (assoc :state "CREATING" :id uri))
     (throw (Exception. (str create-uri " resource required")))))
 
-(defn create-req->template [cb-client uri create-req]
+(defn create-req->template [uri create-req]
   (let [skeleton (volume-skeleton uri create-req)
         volumeTemplate (:volumeTemplate create-req)
-        volume-config (u/resolve-href cb-client (:volumeConfig volumeTemplate))
-        volume-image (u/resolve-href cb-client (:volumeImage volumeTemplate))]
+        volume-config (u/resolve-href (:volumeConfig volumeTemplate))
+        volume-image (u/resolve-href (:volumeImage volumeTemplate))]
     (merge volume-config volume-image skeleton)))
 
 (defn template->volume [template]
@@ -123,27 +125,55 @@
 (defn add
   "Add a new Volume to the database based on the VolumeTemplate
    passed into this method."
-  [cb-client entry]
+  [entry]
   (validate-create entry)
   (let [json entry                                          ;; FIXME: THIS IS WRONG!
-        uri (str resource-name "/" (crud/new-identifier resource-name json))
-        template (create-req->template cb-client uri entry)
+        uri (crud/new-identifier resource-name json)
+        template (create-req->template uri entry)
         volume (template->volume template)
         params (template->params template)]
-    (if (cbc/add-json cb-client uri volume)
-      (let [job-resp (job/launch cb-client uri "create" params)]
-        (if (= 202 (:status job-resp))
-          (-> job-resp
-              (r/status 201)
-              (r/header "Location" uri))
-          job-resp))
-      (-> (str "cannot create " uri)
-          (r/response)
-          (r/status 400)))))
+    (db/add volume)
+    (let [job-resp (job/launch uri "create" params)]
+      (if (= 202 (:status job-resp))
+        (-> job-resp
+            (r/status 201)
+            (r/header "Location" uri))
+        job-resp))))
 
 ;;
 ;; CRUD operations
 ;;
+
+(defn correct-resource-uri?
+  [{:keys [resourceURI] :as resource} expected-resource-uri]
+  (if (= resourceURI expected-resource-uri)
+    resource
+    (let [msg (str "resourceURI mismatch: " expected-resource-uri " (expected) != " resourceURI " (actual)")
+          resp (-> (r/response msg)
+                   (r/status 400))]
+      (throw (ex-info msg resp)))))
+
+(defn create->template [create-tpl]
+  (let [skeleton (volume-skeleton uri create-req)
+        volumeTemplate (:volumeTemplate create-req)
+        volume-config (u/resolve-href (:volumeConfig volumeTemplate))
+        volume-image (u/resolve-href (:volumeImage volumeTemplate))]
+    (merge volume-config volume-image skeleton)))
+
+(defn add-impl [{:keys [body] :as request}]
+  (a/modifiable? {:acl collection-acl} request)
+  (let [json (u/body->json body)
+        uri (crud/new-identifier resource-name json)]
+    (-> json
+        (correct-resource-uri? create-uri)
+        (create->template)
+        (u/strip-service-attrs)
+        (assoc :id uri)
+        (assoc :resourceURI resource-uri)
+        (u/update-timestamps)
+        (crud/add-acl resource-name)
+        (c/validate)
+        (db/add))))
 
 (def add-impl (crud/get-add-fn resource-name collection-acl resource-uri))
 

@@ -65,7 +65,7 @@
     (is (thrown? Exception (get-resource t/*test-cb-client* "BAD URI")))))
 
 (deftest check-resolve-href-identities
-  (are [x] (= x (resolve-href t/*test-cb-client* x))
+  (are [x] (= x (resolve-href x))
            1
            "a"
            [1 2 3]
@@ -77,13 +77,13 @@
   (let [data1 {:name "BAD" :alpha "A" :beta "B"}]
     (cbc/add-json t/*test-cb-client* "Data/1" data1)
 
-    (are [x correct] (= correct (resolve-href t/*test-cb-client* x))
+    (are [x correct] (= correct (resolve-href x))
                      {:href "Data/1"} {:alpha "A" :beta "B"}
                      {:href "Data/1" :name "BAD"} {:alpha "A" :beta "B"}
                      {:href "Data/1" :alpha "OK"} {:alpha "OK" :beta "B"}
                      {:href "Data/1" :alpha "OK" :beta "OK"} {:alpha "OK" :beta "OK"}
                      ))
-  (is (thrown? Exception (resolve-href t/*test-cb-client* {:href "Data/BAD"}))))
+  (is (thrown? Exception (resolve-href {:href "Data/BAD"}))))
 
 (deftest check-resolve-hrefs
   (let [data1 {:name "BAD" :value "BAD" :other "OK"}

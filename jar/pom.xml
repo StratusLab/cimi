@@ -113,6 +113,11 @@
       </dependency>
       
       <dependency>
+        <groupId>fs</groupId>
+        <artifactId>fs</artifactId>
+      </dependency>
+      
+      <dependency>
         <groupId>instaparse</groupId>
         <artifactId>instaparse</artifactId>
       </dependency>
@@ -139,11 +144,6 @@
         <groupId>peridot</groupId>
         <artifactId>peridot</artifactId>
         <scope>test</scope>
-      </dependency>
-      
-      <dependency>
-        <groupId>fs</groupId>
-        <artifactId>fs</artifactId>
       </dependency>
       
       <dependency>

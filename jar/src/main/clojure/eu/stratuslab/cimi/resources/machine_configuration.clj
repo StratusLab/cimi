@@ -17,21 +17,14 @@
 (ns eu.stratuslab.cimi.resources.machine-configuration
   "Utilities for managing the CRUD features for machine configurations."
   (:require
-    [clojure.string :as str]
-    [couchbase-clj.client :as cbc]
-    [couchbase-clj.query :as cbq]
-    [clojure.data.json :as json]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.resources.impl.common :as c]
-    [eu.stratuslab.cimi.cb.views :as views]
-    [eu.stratuslab.cimi.resources.impl.schema :as schema]
-    [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
+    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
     [ring.util.response :as r]
     [cemerick.friend :as friend]
     [schema.core :as s]
-    [clojure.tools.logging :as log]
-    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]))
+    [clojure.tools.logging :as log]))
 
 (def ^:const resource-tag :machineConfigs)
 
@@ -53,6 +46,10 @@
 ;; MachineConfiguration
 ;;
 
+(def ValidCpuArch
+  (s/enum "68000" "Alpha" "ARM" "Itanium" "MIPS" "PA_RISC"
+          "POWER" "PowerPC" "x86" "x86_64" "zArchitecture", "SPARC"))
+
 (def Disk
   {:capacity                         c/PosInt
    :format                           c/NonBlankString
@@ -66,7 +63,7 @@
          c/AclAttr
          {:cpu                    c/PosInt
           :memory                 c/PosInt
-          :cpuArch                schema/ValidCpuArch
+          :cpuArch                ValidCpuArch
           (s/optional-key :disks) Disks}))
 
 ;;

@@ -28,7 +28,7 @@
    if not, it will create one.  The CloudEntryPoint is the core
    resource of the service and must exist."
   [cb-client]
-  (if (cep/add cb-client)
+  (if (cep/add)
     (log/info "created CloudEntryPoint")
     (do
       (log/warn "did NOT create CloudEntryPoint")

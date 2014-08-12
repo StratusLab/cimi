@@ -18,7 +18,8 @@
   "Utilities for dealing with authn and authz decisions"
   (:require
     [ring.util.response :as r]
-    [cemerick.friend :as friend]))
+    [cemerick.friend :as friend]
+    [eu.stratuslab.cimi.resources.utils.utils :as u]))
 
 (defn owner-type
   "Returns the type of the owner in the given ACL as a keyword.
@@ -117,21 +118,17 @@
              (first)
              (keyword))))))
 
-(defn can-view?
-  ([acl]
-   (can-view? (friend/current-authentication) acl))
-  ([authn acl]
-   (#{:VIEW :MODIFY :ALL} (access-right authn acl))))
+(defn viewable?
+  [{:keys [acl] :as resource} request]
+  (let [authn (friend/current-authentication request)]
+    (if (#{:VIEW :MODIFY :ALL} (access-right authn acl))
+      resource
+      (u/ex-unauthorized request))))
 
-(defn can-modify?
-  ([acl]
-   (can-modify? (friend/current-authentication) acl))
-  ([authn acl]
-   (#{:MODIFY :ALL} (access-right authn acl))))
-
-(defn can-modify-acl?
-  ([acl]
-   (can-modify-acl? (friend/current-authentication) acl))
-  ([authn acl]
-   (#{:ALL} (access-right authn acl))))
+(defn modifiable?
+  [{:keys [acl] :as resource} request]
+  (let [authn (friend/current-authentication request)]
+    (if (#{:MODIFY :ALL} (access-right authn acl))
+      resource
+      (u/ex-unauthorized request))))
 

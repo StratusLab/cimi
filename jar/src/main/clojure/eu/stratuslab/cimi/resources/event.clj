@@ -17,14 +17,9 @@
   "Resources containing information about service events concerning
    specific resources."
   (:require
-    [clojure.string :as str]
-    [couchbase-clj.client :as cbc]
-    [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
-    [eu.stratuslab.cimi.cb.views :as views]
     [eu.stratuslab.cimi.resources.impl.common :as c]
-    [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]
     [schema.core :as s]
     [clojure.tools.logging :as log]

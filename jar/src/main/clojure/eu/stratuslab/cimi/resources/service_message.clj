@@ -17,14 +17,10 @@
   "Allows administrators to provide general service messages for users.
    It is recommended that the message be formatted in Markdown format."
   (:require
-    [couchbase-clj.client :as cbc]
-    [couchbase-clj.query :as cbq]
     [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
-    [eu.stratuslab.cimi.resources.job :as job]
-    [eu.stratuslab.cimi.cb.views :as views]
     [ring.util.response :as r]
     [clojure.tools.logging :as log]))
 

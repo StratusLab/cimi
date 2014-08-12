@@ -17,14 +17,11 @@
 (ns eu.stratuslab.cimi.resources.impl.common-crud
   (:require
     [clojure.tools.logging :as log]
-    [clojure.string :as str]
-    [eu.stratuslab.cimi.resources.utils.utils :as u]
-    [schema.core :as s]
     [ring.util.response :as r]
-    [couchbase-clj.client :as cbc]
+    [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.resources.impl.common :as c]
-    [cemerick.friend :as friend]))
+    [eu.stratuslab.cimi.db.dbops :as db]))
 
 (defn resource-name-dispatch
   [request]
@@ -89,7 +86,7 @@
 
 (defmethod new-identifier :default
            [resource-name json]
-  (u/random-uuid))
+  (str resource-name "/" (u/random-uuid)))
 
 ;;
 ;; Determine the ACL to use for a new resource.
@@ -104,79 +101,78 @@
            [json resource-name]
   json)
 
+;;
+;; Generic implementations of standard CRUD operations
+;; that should be appropriate for most resources.
+;;
+
 (defn get-add-fn
   [resource-name collection-acl resource-uri]
-  (fn [{:keys [cb-client body] :as request}]
-    (if (a/can-modify? collection-acl)
-      (let [json (u/body->json body)
-            uri (str resource-name "/" (new-identifier resource-name json)) ;; method for finding ID may differ between resources
-            entry (-> json
-                      (u/strip-service-attrs)
-                      (assoc :id uri)
-                      (assoc :resourceURI resource-uri)
-                      (u/update-timestamps)
-                      (add-acl resource-name)
-                      (c/validate))]
-        (if (cbc/add-json cb-client uri entry)
-          (r/created uri)
-          (r/status (r/response (str "cannot create " uri)) 400)))
-      (u/unauthorized request))))
+  (fn [{:keys [body] :as request}]
+    (a/modifiable? {:acl collection-acl} request)
+    (let [json (u/body->json body)
+          uri (new-identifier resource-name json)]
+      (-> json
+          (u/strip-service-attrs)
+          (assoc :id uri)
+          (assoc :resourceURI resource-uri)
+          (u/update-timestamps)
+          (add-acl resource-name)
+          (c/validate)
+          (db/add)))))
 
 (defn get-retrieve-fn
   [resource-name]
-  (fn [{{uuid :uuid} :params cb-client :cb-client :as request}]
-    (if-let [json (->> (str resource-name "/" uuid)
-                       (cbc/get-json cb-client))]
-      (if (a/can-view? (:acl json))
-        (r/response (c/set-operations json))
-        (u/unauthorized request))
-      (r/not-found nil))))
+  (fn [{{uuid :uuid} :params :as request}]
+    (-> (str resource-name "/" uuid)
+        (db/retrieve)
+        (a/viewable? request)
+        (c/set-operations request)
+        (r/response))))
 
-;; FIXME: Implementation should use CAS functions to avoid update conflicts.
 (defn get-edit-fn
   [resource-name]
-  (fn [{{uuid :uuid} :params cb-client :cb-client body :body :as request}]
-    (let [uri (str resource-name "/" uuid)]
-      (if-let [current (cbc/get-json cb-client uri)]
-        (if (a/can-modify? (:acl current))
-          (let [json (u/body->json body)
-                updated (->> json
-                             (u/strip-service-attrs)
-                             (merge current)
-                             (u/update-timestamps)
-                             (c/validate))]
-            (if (cbc/set-json cb-client uri updated)
-              (r/response updated)
-              (u/conflict request)))
-          (u/unauthorized request))
-        (r/not-found nil)))))
+  (fn [{{uuid :uuid} :params body :body :as request}]
+    (let [current (-> (str resource-name "/" uuid)
+                      (db/retrieve)
+                      (a/modifiable? request))]
+      (->> (u/body->json body)
+           (u/strip-service-attrs)
+           (merge current)
+           (u/update-timestamps)
+           (c/validate)
+           (db/edit)))))
 
 (defn get-delete-fn
   [resource-name]
-  (fn [{{uuid :uuid} :params cb-client :cb-client :as request}]
-    (let [uri (str resource-name "/" uuid)]
-      (if-let [current (cbc/get-json cb-client uri)]
-        (if (a/can-modify? (:acl current))
-          (if (cbc/delete cb-client uri)
-            (r/response nil)
-            (r/not-found nil))
-          (u/unauthorized request))
-        (r/not-found nil)))))
+  (fn [{{uuid :uuid} :params :as request}]
+    (-> (str resource-name "/" uuid)
+        (db/retrieve)
+        (a/modifiable? request)
+        (db/delete))))
+
+(defn wrap-collection-fn
+  [resource-name collection-acl collection-uri collection-key]
+  (fn [resources]
+    (let [n (count resources)
+          skeleton {:acl         collection-acl
+                    :resourceURI collection-uri
+                    :id          resource-name
+                    :count       n}]
+      (if (zero? n)
+        skeleton
+        (assoc skeleton collection-key resources)))))
 
 (defn get-query-fn
-  [resource-name collection-acl collection-uri collection-name collection-key]
-  (fn [{:keys [cb-client body] :as request}]
-    (if (a/can-view? collection-acl)
-      (let [opts (u/body->json body)
-            principals (a/authn->principals)
-            configs (u/viewable-resources cb-client resource-name principals opts)
-            configs (map c/set-operations configs)
-            collection (c/set-operations {:acl         collection-acl
-                                          :resourceURI collection-uri
-                                          :id          resource-name
-                                          :count       (count configs)})]
-        (r/response (if (empty? collection)
-                      collection
-                      (assoc collection collection-key configs))))
-      (u/unauthorized request))))
+  [resource-name collection-acl collection-uri collection-key]
+  (let [wrapper (wrap-collection-fn resource-name collection-acl collection-uri collection-key)]
+    (fn [{:keys [body] :as request}]
+      (a/viewable? {:acl collection-acl} request)
+      (let [options (u/body->json body)
+            collection (->> (a/authn->principals)
+                            (assoc options :principals)
+                            (db/query resource-name)
+                            (map #(c/set-operations % request))
+                            (wrapper))]
+        (c/set-operations collection request)))))
 

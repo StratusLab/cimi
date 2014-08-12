@@ -234,14 +234,14 @@
           :resourceURI)
 
 (defmethod set-operations :default
-           [resource]
-  (if (a/can-modify? (:acl resource))
-    (let [href (:id resource)
-          resourceURI (:resourceURI resource)
-          ops (if (.endsWith resourceURI "Collection")
-                [{:rel (:add action-uri) :href href}]
-                [{:rel (:edit action-uri) :href href}
-                 {:rel (:delete action-uri) :href href}])]
+           [{:keys [id resourceURI] :as resource} request]
+  (try
+    (a/modifiable? resource request)
+    (let [ops (if (.endsWith resourceURI "Collection")
+                [{:rel (:add action-uri) :href id}]
+                [{:rel (:edit action-uri) :href id}
+                 {:rel (:delete action-uri) :href id}])]
       (assoc resource :operations ops))
-    (dissoc resource :operations)))
+    (catch Exception e
+      (dissoc resource :operations))))
 

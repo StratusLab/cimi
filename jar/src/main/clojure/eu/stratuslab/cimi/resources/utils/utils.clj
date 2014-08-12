@@ -28,7 +28,8 @@
     [clj-time.core :as time]
     [clj-time.format :as time-fmt]
     [schema.core :as s]
-    [ring.util.response :as r])
+    [ring.util.response :as r]
+    [eu.stratuslab.cimi.db.dbops :as db])
   (:import
     [java.util UUID Date]))
 
@@ -157,10 +158,10 @@
   "If the given value is a map and contains the key :href, then the referenced
    resource is merged with the map (with the map values having priority).  The
    :href attribute itself is removed along with any common attributes."
-  [cb-client v]
+  [v]
   (if (map? v)
     (if-let [uri (:href v)]
-      (-> (get-resource cb-client uri)
+      (-> (db/retrieve uri)
           (merge v)
           (dissoc :href)
           (strip-common-attrs))
@@ -173,7 +174,7 @@
    values provided locally.  If a reference is found, the common attributes
    are also removed from the map."
   [cb-client v]
-  (w/prewalk (partial resolve-href cb-client) v))
+  (w/prewalk resolve-href v))
 
 (defn bad-method
   "Returns a ring reponse with a 405 error -- invalid method."
@@ -217,4 +218,41 @@
                     :uri            uri
                     :message        (str "conflict (" (name request-method) ") for " uri)})
        (r/status 409))))
+
+(defn ex-response
+  [msg code {:keys [request-method uri] :as request}]
+  (let [body {:status code
+              :request-method (name request-method)
+              :uri uri
+              :message msg}
+        resp (-> (r/response body)
+                 (r/status code))]
+    (ex-info msg resp)))
+
+(defn ex-client
+  ([{:keys [request-method uri] :as request}]
+   (ex-client request (str "bad request (" (name request-method) ") for " uri)))
+
+  ([{:keys [request-method uri] :as request} msg]
+   (ex-response msg 400 request)))
+
+(defn ex-unauthorized
+  [{:keys [request-method uri] :as request}]
+  (-> (str "unauthorized (" (name request-method) ") for " uri)
+      (ex-response 403 request)))
+
+(defn ex-not-found
+  [{:keys [request-method uri] :as request}]
+  (-> (str  uri "not found (" (name request-method) ")")
+      (ex-response 404 request)))
+
+(defn ex-bad-method
+  [{:keys [request-method uri] :as request}]
+  (-> (str "unsupported method (" (name request-method) ") for " uri)
+      (ex-response 405 request)))
+
+(defn ex-conflict
+  [{:keys [request-method uri] :as request}]
+  (-> (str "conflict (" (name request-method) ") for " uri)
+      (ex-response 409 request)))
 

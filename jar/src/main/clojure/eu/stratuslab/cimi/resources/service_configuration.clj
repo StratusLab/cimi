@@ -17,21 +17,15 @@
 (ns eu.stratuslab.cimi.resources.service-configuration
   "Management of the configuration of the cloud services."
   (:require
-    [clojure.string :as str]
-    [couchbase-clj.client :as cbc]
-    [couchbase-clj.query :as cbq]
-    [clojure.data.json :as json]
     [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
-    [eu.stratuslab.cimi.cb.views :as views]
     [eu.stratuslab.cimi.resources.impl.common :as c]
-    [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
+    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
     [ring.util.response :as r]
     [cemerick.friend :as friend]
     [schema.core :as s]
-    [clojure.tools.logging :as log]
-    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]))
+    [clojure.tools.logging :as log]))
 
 (def ^:const resource-tag :serviceConfigurations)
 
@@ -65,7 +59,7 @@
 
 (defmethod crud/new-identifier resource-name
            [resource-name {:keys [service instance] :or {instance "default"}}]
-  (str service "." instance))
+  (str resource-name "/" (str service "." instance)))
 
 (def validate-fn (u/create-validation-fn ServiceConfiguration))
 (defmethod c/validate resource-uri

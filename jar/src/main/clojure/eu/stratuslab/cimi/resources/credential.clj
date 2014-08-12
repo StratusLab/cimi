@@ -22,7 +22,6 @@
     [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.credential-template :as ct]
-    [eu.stratuslab.cimi.cb.crud-utils :as db]
     [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [cemerick.friend :as friend]))

@@ -21,19 +21,13 @@
    NOTE: Unlike for other resources, the unique identifier (UUID) for
    VolumeImages are the base64-encoded SHA-1 hash of the image."
   (:require
-    [couchbase-clj.client :as cbc]
-    [couchbase-clj.query :as cbq]
-    [eu.stratuslab.cimi.resources.impl.schema :as schema]
     [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
-    [eu.stratuslab.cimi.resources.job :as job]
-    [eu.stratuslab.cimi.cb.views :as views]
-    [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
+    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
     [ring.util.response :as r]
     [clojure.tools.logging :as log]
     [schema.core :as s]
-    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
     [cemerick.friend :as friend]))
 
 (def ^:const resource-tag :volumeImages)

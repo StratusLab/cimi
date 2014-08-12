@@ -16,19 +16,16 @@
 (ns eu.stratuslab.cimi.resources.job
   "Utilities for managing the CRUD features for jobs."
   (:require
-    [couchbase-clj.client :as cbc]
-    [couchbase-clj.query :as cbq]
+    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
-    [eu.stratuslab.cimi.cb.views :as views]
     [eu.stratuslab.cimi.resources.impl.common :as c]
-    [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]
     [clojure.walk :as w]
     [schema.core :as s]
     [clojure.tools.logging :as log]
-    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
-    [cemerick.friend :as friend]))
+    [cemerick.friend :as friend]
+    [eu.stratuslab.cimi.db.dbops :as db]))
 
 (def ^:const resource-tag :jobs)
 
@@ -88,19 +85,18 @@
   "Creates a new job and adds it to the database.  Unlike the add function
    this returns just the job URI (or nil if there is an error).  This is
    useful when creating jobs in the process of manipulating other resources."
-  [cb-client entry]
-  (let [uri (uuid->uri (u/random-uuid))
-        entry (-> entry
-                  (u/strip-service-attrs)
-                  (merge {:id          uri
-                          :resourceURI resource-uri
-                          :state       "QUEUED"
-                          :progress    0})
-                  (u/update-timestamps)
-                  (set-timestamp)
-                  (c/validate))]
-    (if (cbc/add-json cb-client uri entry)
-      uri)))
+  [cb-client resource]
+  (-> resource
+      (assoc :id (uuid->uri (u/random-uuid)))
+      (u/strip-service-attrs)
+      (merge {:id          uri
+              :resourceURI resource-uri
+              :state       "QUEUED"
+              :progress    0})
+      (u/update-timestamps)
+      (set-timestamp)
+      (c/validate)
+      (db/add)))
 
 (defn value-as-string
   "Converts non-collection values to a string. "
@@ -125,7 +121,7 @@
    the CIMI-Job-URI header set.  If the optional props arguments is
    given then the values will be used for job properties.  All of the
    keys and values in the properties will by transformed to strings."
-  [cb-client uri action & [props]]
+  [uri action & [props]]
   (let [job-map (merge
                   {:acl job-acl :targetResource uri :action action}
                   (properties-map props))]
@@ -153,14 +149,16 @@
 
 ;; specialized to allow the "stop" action
 (defmethod c/set-operations resource-uri
-           [resource]
-  (if (a/can-modify? (:acl resource))
+           [resource request]
+  (try
+    (a/modifiable? resource request)
     (let [href (:id resource)
           ops [{:rel (:edit c/action-uri) :href href}
                {:rel (:delete c/action-uri) :href href}
                {:rel (:stop c/action-uri) :href (str href "/stop")}]]
       (assoc resource :operations ops))
-    (dissoc resource :operations)))
+    (catch Exception e
+      (dissoc resource :operations))))
 
 ;;
 ;; CRUD operations
@@ -196,15 +194,17 @@
            [request]
   (query-impl request))
 
+;; FIXME: Provide real implementation!
+(defn do-stop
+  [{:keys [id] :as job}]
+  (log/info "STOP action for job" id))
+
 (defn do-action
-  [{{:keys [uuid action]} :params cb-client :cb-client :as request}]
-  (if-let [json (->> (str resource-name "/" uuid)
-                     (cbc/get-json cb-client))]
-    (if (a/can-modify? (:acl json))
-      (if (= action "stop")
-        (log/info "STOP action for job" uuid)               ;; FIXME: Provide real implementation!
-        (-> (r/response (str "unknown action: " action))
-            (r/status 400)))
-      (u/unauthorized request))
-    (r/not-found nil)))
+  [{{:keys [uuid action]} :params :as request}]
+  (let [job (->> (str resource-name "/" uuid)
+                 (db/retrieve)
+                 (a/modifiable? request))]
+    (cond
+      (= action "stop") (do-stop job)
+      :else (throw (u/ex-client request (str "unknown action: " action))))))
 

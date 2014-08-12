@@ -20,20 +20,11 @@
    from external sources (LDAP, VOMS proxies, etc.) are not managed by
    these resources."
   (:require
-    [clojure.string :as str]
-    [clojure.pprint :refer [pprint]]
-    [couchbase-clj.client :as cbc]
-    [couchbase-clj.query :as cbq]
-    [clojure.data.json :as json]
-    [eu.stratuslab.cimi.resources.impl.schema :as schema]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
-    [eu.stratuslab.cimi.cb.views :as views]
     [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
-    [compojure.core :refer [defroutes let-routes GET POST PUT DELETE ANY]]
     [ring.util.response :as r]
-    [cemerick.friend :as friend]
     [schema.core :as s]
     [clojure.tools.logging :as log]))
 
@@ -103,7 +94,7 @@
 ;;
 (defmethod crud/new-identifier resource-name
            [resource-name json]
-  (:username json))
+  (str resource-name "/" (:username json)))
 
 ;;
 ;; CRUD operations
