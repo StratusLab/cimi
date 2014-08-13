@@ -1,29 +1,23 @@
 (ns eu.stratuslab.cimi.server
   "Implementation of the ring application used to create the
    servlet instance for a web application container."
-  (:require
-    [clojure.tools.logging :as log]
-    [couchbase-clj.client :as cbc]
-    [compojure.handler :as handler]
-    [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
-    [eu.stratuslab.authn.workflows.authn-workflows :as aw]
-    [eu.stratuslab.cimi.couchbase-cfg :refer [read-cfg]]
-    [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
-    [eu.stratuslab.cimi.middleware.base-uri :refer [wrap-base-uri]]
-    [eu.stratuslab.cimi.middleware.couchbase-store :refer [couchbase-store]]
-    [eu.stratuslab.cimi.middleware.exception-handler :refer [wrap-exceptions]]
-    [eu.stratuslab.cimi.db.dbops :as db]
-    [eu.stratuslab.cimi.db.couchbase :as db-cb]
-    [eu.stratuslab.cimi.db.cb.utils :as db-cb-utils]
-    [eu.stratuslab.cimi.routes :as routes]
-    [cemerick.friend :as friend]
-    [cemerick.friend.workflows :as workflows]
-    [cemerick.friend.credentials :as creds]
-    [metrics.core :refer [default-registry]]
-    [metrics.ring.instrument :refer [instrument]]
-    [metrics.ring.expose :refer [expose-metrics-as-json]]
-    [metrics.jvm.core :refer [instrument-jvm]]
-    [org.httpkit.server :refer [run-server]]))
+  (:require [cemerick.friend :as friend]
+            [clojure.tools.logging :as log]
+            [compojure.handler :as handler]
+            [eu.stratuslab.authn.workflows.authn-workflows :as aw]
+            [eu.stratuslab.cimi.db.cb.utils :as db-cb-utils]
+            [eu.stratuslab.cimi.db.couchbase :as db-cb]
+            [eu.stratuslab.cimi.db.dbops :as db]
+            [eu.stratuslab.cimi.middleware.base-uri :refer [wrap-base-uri]]
+            [eu.stratuslab.cimi.middleware.exception-handler :refer [wrap-exceptions]]
+            [eu.stratuslab.cimi.routes :as routes]
+            [metrics.core :refer [default-registry]]
+            [metrics.jvm.core :refer [instrument-jvm]]
+            [metrics.ring.expose :refer [expose-metrics-as-json]]
+            [metrics.ring.instrument :refer [instrument]]
+            [org.httpkit.server :refer [run-server]]
+            [ring.middleware.json :refer [wrap-json-body
+                                          wrap-json-response]]))
 
 (defn set-dbops-value
   [cb-cfg-file]

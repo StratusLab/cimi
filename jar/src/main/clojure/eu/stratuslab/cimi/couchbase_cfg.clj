@@ -1,10 +1,8 @@
 (ns eu.stratuslab.cimi.couchbase-cfg
-  (:require
-    [clojure.string :as s]
-    [clojure-ini.core :refer [read-ini]]
-    [clojure.tools.logging :as log])
-  (:import
-    [java.net URI]))
+  (:require [clojure-ini.core :refer [read-ini]]
+            [clojure.string :as s]
+            [clojure.tools.logging :as log])
+  (:import (java.net URI)))
 
 (defn hostport->uri
   "Creates a Couchbase URI from an argument of the form host:port.  The

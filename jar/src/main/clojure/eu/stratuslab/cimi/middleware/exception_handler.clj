@@ -15,9 +15,8 @@
 ;
 
 (ns eu.stratuslab.cimi.middleware.exception-handler
-  (:require
-    [clojure.tools.logging :as log]
-    [ring.util.response :as r]))
+  (:require [clojure.tools.logging :as log]
+            [ring.util.response :as r]))
 
 (defn treat-unexpected-exception
   [e]

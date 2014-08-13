@@ -2,11 +2,9 @@
   "Session store using Couchbase for storage.  The sessions will
    only live for the TTL (in seconds) given.  Reading or writing
    the session will update the expiration time."
-  (:require
-    [clojure.edn :as edn]
-    [ring.middleware.session.store :refer [SessionStore]]
-    [couchbase-clj.client :as cbc])
-  (:import java.util.UUID))
+  (:require [couchbase-clj.client :as cbc]
+            [ring.middleware.session.store :refer [SessionStore]])
+  (:import (java.util UUID)))
 
 (def ^:const default-ttl (* 15 60)) ; 15 minute TTL in seconds
 

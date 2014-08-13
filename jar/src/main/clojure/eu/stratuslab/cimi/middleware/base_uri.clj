@@ -15,9 +15,7 @@
 ;
 
 (ns eu.stratuslab.cimi.middleware.base-uri
-  "middleware to add the :base-uri key and value to the request"
-  (:require
-    [clojure.tools.logging :as log]))
+  "middleware to add the :base-uri key and value to the request")
 
 (defn get-host-port
   "Get the host:port value for the request, preferring the 'host'

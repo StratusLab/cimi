@@ -1,11 +1,11 @@
 (ns eu.stratuslab.cimi.routes
   "Primary routing table for CIMI application."
-  (:require
-    [eu.stratuslab.cimi.resources.utils.dynamic-load :as dyn]
-    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
-    [eu.stratuslab.cimi.resources.utils.utils :as u]
-    [compojure.core :refer [defroutes let-routes routes POST GET PUT DELETE ANY]]
-    [compojure.route :as route]))
+  (:require [compojure.core :refer [ANY DELETE GET POST PUT let-routes
+                                    routes]]
+            [compojure.route :as route]
+            [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
+            [eu.stratuslab.cimi.resources.utils.dynamic-load :as dyn]
+            [eu.stratuslab.cimi.resources.utils.utils :as u]))
 
 (def collection-routes
   (let-routes [uri "/cimi/:resource-name"]

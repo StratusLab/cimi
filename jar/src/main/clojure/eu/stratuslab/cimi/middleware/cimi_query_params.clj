@@ -1,6 +1,6 @@
 (ns eu.stratuslab.cimi.middleware.cimi-query-params
-  (:require [ring.middleware.params :refer [wrap-params]]
-            [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [ring.middleware.params :refer [wrap-params]]))
 
 (defn parse-int
   "Parses the given string as an integer.  If the value cannot be
