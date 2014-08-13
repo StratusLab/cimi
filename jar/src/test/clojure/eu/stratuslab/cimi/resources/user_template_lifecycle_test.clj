@@ -26,7 +26,9 @@
     [peridot.core :refer :all]
     [eu.stratuslab.cimi.resources.common.schema :as c]))
 
-(use-fixtures :each t/temp-bucket-fixture)
+(use-fixtures :once t/temp-bucket-fixture)
+
+(use-fixtures :each t/flush-bucket-fixture)
 
 (defn ring-app []
   (t/make-ring-app (t/concat-routes routes/final-routes)))
@@ -136,7 +138,7 @@
         (authorize "root" "admin_password")
         (request abs-uri
                  :request-method :delete)
-        (t/is-status 200))
+        (t/is-status 204))
 
     ;; ensure that it really is gone
     (-> (session (ring-app))

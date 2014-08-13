@@ -8,9 +8,9 @@
     [peridot.core :refer :all]
     [eu.stratuslab.cimi.app.routes :as routes]))
 
-(use-fixtures :each t/flush-bucket-fixture)
-
 (use-fixtures :once t/temp-bucket-fixture)
+
+(use-fixtures :each t/flush-bucket-fixture)
 
 (defn ring-app []
   (t/make-ring-app (t/concat-routes [routes])))

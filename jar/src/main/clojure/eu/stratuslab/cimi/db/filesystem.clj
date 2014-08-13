@@ -69,7 +69,7 @@
               (r/status 201)
               (r/header "Location" id)))
         (let [msg (str id " already exists")]
-          (throw (u/ex-response 409 msg id))))))
+          (throw (u/ex-conflict {:uri id :request-method :post}))))))
 
   (retrieve
     [this id]
@@ -77,7 +77,7 @@
       (if (fs/exists? fname)
         (deserialize-file fname)
         (let [msg (str id " doesn't exist")]
-          (throw (u/ex-response 404 msg id))))))
+          (throw (u/ex-not-found {:uri id :request-method :get}))))))
 
   (edit
     [this {:keys [id] :as resource}]
@@ -85,7 +85,7 @@
       (if (fs/exists? fname)
         (serialize-file fname resource)
         (let [msg (str id " doesn't exist")]
-          (throw (u/ex-response 404 msg id))))))
+          (throw (u/ex-not-found {:uri id :request-method :put}))))))
 
   (delete
     [this {:keys [id] :as resource}]
@@ -96,7 +96,7 @@
           (-> (r/response msg)
               (r/status 204)))
         (let [msg (str id " doesn't exist")]
-          (throw (u/ex-response 404 msg id))))))
+          (throw (u/ex-not-found {:uri id :request-method :delete}))))))
 
   (query
     [this collection-id options]
@@ -104,6 +104,6 @@
       (if (fs/directory? dname)
         (map deserialize-file (map #(str dname "/" %) (fs/list-dir dname)))
         (let [msg (str collection-id " isn't a collection")]
-          (throw (u/ex-response 400 msg collection-id))))))
+          (throw (u/ex-client {:uri collection-id :request-method :post}))))))
 
   )

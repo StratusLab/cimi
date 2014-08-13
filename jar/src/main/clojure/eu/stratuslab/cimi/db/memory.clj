@@ -60,7 +60,7 @@
       (dosync
         (if (get-in @dbref path)
           (let [msg (str id " already exists")]
-            (throw (u/ex-response 409 msg id)))
+            (throw (u/ex-conflict {:uri id :request-method :post})))
           (do
             (alter dbref update-in path (constantly resource))
             (-> (r/response (str "created " id))
@@ -72,7 +72,7 @@
     (let [path (id->path id)]
       (or (get-in @dbref path)
           (let [msg (str id " doesn't exist")]
-            (throw (u/ex-response 404 msg id))))))
+            (throw (u/ex-not-found {:uri id :request-method :get}))))))
 
   (edit
     [this {:keys [id] :as resource}]
@@ -83,7 +83,7 @@
             (alter dbref update-in path (constantly resource))
             resource)
           (let [msg (str id " doesn't exist")]
-            (throw (u/ex-response 404 msg id)))))))
+            (throw (u/ex-not-found {:uri id :request-method :put})))))))
 
   (delete
     [this {:keys [id] :as resource}]
@@ -96,7 +96,7 @@
                 (r/response)
                 (r/status 204)))
           (let [msg (str id " doesn't exist")]
-            (throw (u/ex-response 404 msg id)))))))
+            (throw (u/ex-not-found {:uri id :request-method :delete})))))))
 
   (query
     [this collection-id options]
@@ -106,6 +106,6 @@
           (vals (get-in @dbref path))
           [])
         (let [msg (str collection-id " isn't a collection")]
-          (throw (u/ex-response 400 msg collection-id))))))
+          (throw (u/ex-client {:uri collection-id :request-method :get}))))))
 
   )

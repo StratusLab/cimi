@@ -16,15 +16,17 @@
 
 (ns eu.stratuslab.cimi.middleware.exception-handler
   (:require [clojure.tools.logging :as log]
-            [ring.util.response :as r]))
+            [ring.util.response :as r]
+            [clj-stacktrace.repl :refer [pst-str]]))
 
 (defn treat-unexpected-exception
   [e]
   (let [msg (str "Unexpected exception thrown: " (str e))
+        st (pst-str e)
         body {:status 500 :message msg}
         response (-> (r/response body)
                      (r/status 500))]
-    (log/error msg)
+    (log/error (str msg "\n" st))
     response))
 
 (defn wrap-exceptions [f]

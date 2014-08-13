@@ -123,12 +123,12 @@
   (let [authn (friend/current-authentication request)]
     (if (#{:VIEW :MODIFY :ALL} (access-right authn acl))
       resource
-      (u/ex-unauthorized request))))
+      (throw (u/ex-unauthorized request)))))
 
 (defn modifiable?
   [{:keys [acl] :as resource} request]
   (let [authn (friend/current-authentication request)]
     (if (#{:MODIFY :ALL} (access-right authn acl))
       resource
-      (u/ex-unauthorized request))))
+      (throw (u/ex-unauthorized request)))))
 

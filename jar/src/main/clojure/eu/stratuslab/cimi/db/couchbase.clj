@@ -43,36 +43,33 @@
   (add
     [this {:keys [id] :as resource}]
     (if (cbc/add-json cb-client id resource)
-      (-> (r/response (str "created " id))
+      (-> (r/response (str "created " {:uri id :request-method :post}))
           (r/status 201)
           (r/header "Location" id))
-      (let [msg (str id " already exists")]
-        (throw (u/ex-response 409 msg id)))))
+      (throw (u/ex-conflict {:uri id :request-method :post}))))
 
   (retrieve
     [this id]
     (or
       (cbc/get-json cb-client id)
-      (let [msg (str id " doesn't exist")]
-        (throw (u/ex-response 404 msg id)))))
+      (throw (u/ex-not-found {:uri id :request-method :get}))))
 
   (edit
     [this {:keys [id] :as resource}]
     (if (cbc/set-json cb-client id resource)
       (r/response resource)
-      (throw (u/ex-response 409 (str "error updating " id) nil))))
+      (throw (u/ex-conflict {:uri id :request-method :put}))))
 
   (delete
     [this {:keys [id] :as resource}]
     (if (cbc/delete cb-client id)
       (-> (r/response (str id " deleted"))
           (r/status 204))
-      (throw (u/ex-response 404 (str id " doesn't exist") id))))
+      (throw (u/ex-not-found {:uri id :request-method :delete}))))
 
   (query
-    [this collection-id options]
-    (let [principals (a/authn->principals)]
-      (u/viewable-resources cb-client collection-id principals options)))
+    [this collection-id {:keys [principals] :as options}]
+    (u/viewable-resources cb-client collection-id principals {}))
 
   )
 

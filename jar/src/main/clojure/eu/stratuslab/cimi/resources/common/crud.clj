@@ -174,5 +174,6 @@
                             (db/query resource-name)
                             (map #(c/set-operations % request))
                             (wrapper))]
-        (c/set-operations collection request)))))
+        (-> (c/set-operations collection request)
+            (r/response))))))
 

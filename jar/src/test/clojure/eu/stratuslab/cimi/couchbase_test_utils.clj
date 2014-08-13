@@ -163,7 +163,7 @@
         mgr (ClusterManager. [(URI. mgr-uri)] "admin" "ADMIN4")]
     (try
       (.createNamedBucket mgr BucketType/COUCHBASE bucket 512 0 password true)
-      #_(set-cb-logging) ;; seems to cause failures on newest Couchbase version
+      #_(set-cb-logging) ;; causes failures on newest Couchbase version
       (Thread/sleep 1000) ;; ensure bucket is loaded before running tests
       (let [cb-client (-> cb-cfg
                           (cbc/create-client))]

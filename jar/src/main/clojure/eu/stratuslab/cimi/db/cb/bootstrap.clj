@@ -86,6 +86,6 @@
   [cb-client]
   (cbutils/wait-until-ready cb-client)
   (create-views cb-client)
-  (create-admin cb-client)
-  (create-cep cb-client)
+  ;(create-admin cb-client) ;; FIXME: move outside of couchbase implementation
+  ;(create-cep cb-client) ;; FIXME: move outside of couchbase implementation
   (views/views-available? cb-client))

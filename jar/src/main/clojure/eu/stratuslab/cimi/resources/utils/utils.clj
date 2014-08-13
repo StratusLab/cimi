@@ -222,8 +222,8 @@
 (defn ex-response
   [msg code {:keys [request-method uri] :as request}]
   (let [body {:status code
-              :request-method (name request-method)
-              :uri uri
+              :request-method (name (or request-method "unknown"))
+              :uri (or uri "unknown")
               :message msg}
         resp (-> (r/response body)
                  (r/status code))]

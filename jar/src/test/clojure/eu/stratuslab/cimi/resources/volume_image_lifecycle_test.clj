@@ -88,7 +88,7 @@
         (authorize "jane" "user_password")
         (request abs-uri
                  :request-method :delete)
-        (t/is-status 200))
+        (t/is-status 204))
 
     ;; ensure that it really is gone
     (-> (session (ring-app))
