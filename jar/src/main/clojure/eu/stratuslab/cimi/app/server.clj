@@ -1,4 +1,4 @@
-(ns eu.stratuslab.cimi.server
+(ns eu.stratuslab.cimi.app.server
   "Implementation of the ring application used to create the
    servlet instance for a web application container."
   (:require [cemerick.friend :as friend]
@@ -10,7 +10,7 @@
             [eu.stratuslab.cimi.db.dbops :as db]
             [eu.stratuslab.cimi.middleware.base-uri :refer [wrap-base-uri]]
             [eu.stratuslab.cimi.middleware.exception-handler :refer [wrap-exceptions]]
-            [eu.stratuslab.cimi.routes :as routes]
+            [eu.stratuslab.cimi.app.routes :as routes]
             [metrics.core :refer [default-registry]]
             [metrics.jvm.core :refer [instrument-jvm]]
             [metrics.ring.expose :refer [expose-metrics-as-json]]

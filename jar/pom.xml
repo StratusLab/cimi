@@ -125,6 +125,7 @@
         <groupId>slamhound</groupId>
         <artifactId>slamhound</artifactId>
         <version>1.5.5</version>
+        <scope>test</scope>
       </dependency>
 
       <dependency>
@@ -263,7 +264,7 @@
           <configuration>
             <archive>
               <manifest>
-                <mainClass>eu.stratuslab.cimi.main</mainClass>
+                <mainClass>eu.stratuslab.cimi.app.main</mainClass>
               </manifest>
             </archive>
             <descriptorRefs>
@@ -295,7 +296,7 @@
               <phase>compile</phase>
               <configuration>
                 <namespaces>
-                  <namespace>eu.stratuslab.cimi.main</namespace>
+                  <namespace>eu.stratuslab.cimi.app.main</namespace>
                 </namespaces>
                 <compileDeclaredNamespaceOnly>true</compileDeclaredNamespaceOnly>
               </configuration>

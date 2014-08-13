@@ -16,7 +16,7 @@
 
 (ns eu.stratuslab.cimi.db.cb.utils
   (:require
-    [eu.stratuslab.cimi.couchbase-cfg :as cfg]
+    [eu.stratuslab.cimi.app.couchbase-cfg :as cfg]
     [clojure.tools.logging :as log]
     [couchbase-clj.client :as cbc])
   (:import

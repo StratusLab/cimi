@@ -1,4 +1,4 @@
-(ns eu.stratuslab.cimi.couchbase-cfg
+(ns eu.stratuslab.cimi.app.couchbase-cfg
   (:require [clojure-ini.core :refer [read-ini]]
             [clojure.string :as s]
             [clojure.tools.logging :as log])
@@ -19,7 +19,7 @@
         nil))))
 
 (defn hostports->uris
-  "Converts the string containing host:port values separated by 
+  "Converts the string containing host:port values separated by
    whitespace into a list of of Couchbase URIs.  If the argument
    is nil, then a list with a single URI pointing to the localhost
    will be returned."

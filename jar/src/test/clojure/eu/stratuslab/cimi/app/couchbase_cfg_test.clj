@@ -1,6 +1,6 @@
-(ns eu.stratuslab.cimi.couchbase-cfg-test
+(ns eu.stratuslab.cimi.app.couchbase-cfg-test
   (:require
-    [eu.stratuslab.cimi.couchbase-cfg :refer :all]
+    [eu.stratuslab.cimi.app.couchbase-cfg :refer :all]
     [clojure.test :refer [deftest are is]])
   (:import
     [java.net URI]

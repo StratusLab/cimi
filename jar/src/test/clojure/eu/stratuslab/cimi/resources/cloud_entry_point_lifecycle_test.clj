@@ -6,7 +6,7 @@
     [clojure.test :refer :all]
     [clojure.data.json :as json]
     [peridot.core :refer :all]
-    [eu.stratuslab.cimi.routes :as routes]))
+    [eu.stratuslab.cimi.app.routes :as routes]))
 
 (use-fixtures :each t/flush-bucket-fixture)
 

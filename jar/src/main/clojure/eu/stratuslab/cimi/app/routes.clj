@@ -1,4 +1,4 @@
-(ns eu.stratuslab.cimi.routes
+(ns eu.stratuslab.cimi.app.routes
   "Primary routing table for CIMI application."
   (:require [compojure.core :refer [ANY DELETE GET POST PUT let-routes
                                     routes]]

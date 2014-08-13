@@ -18,7 +18,7 @@
     [eu.stratuslab.cimi.resources.user :refer :all]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
-    [eu.stratuslab.cimi.routes :as routes]
+    [eu.stratuslab.cimi.app.routes :as routes]
     [ring.util.response :as rresp]
     [clojure.test :refer :all]
     [clojure.data.json :as json]
