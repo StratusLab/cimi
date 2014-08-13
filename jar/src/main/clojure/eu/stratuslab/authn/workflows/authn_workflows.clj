@@ -1,7 +1,6 @@
 (ns eu.stratuslab.authn.workflows.authn-workflows
   (:require
     [clojure.tools.logging :as log]
-    [clojure.set :as set]
     [clojure.string :as str]
     [couchbase-clj.client :as cbc]
     [cemerick.friend :as friend]
@@ -12,7 +11,6 @@
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.authn.workflows.client-certificate :as cwf]
     [eu.stratuslab.authn.ldap :as ldap]
-    [eu.stratuslab.cimi.resources.impl.schema :as schema]
     [eu.stratuslab.cimi.resources.service-configuration :as sc]
     [schema.core :as s]))
 

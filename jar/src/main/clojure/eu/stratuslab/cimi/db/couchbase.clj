@@ -19,7 +19,7 @@
   (:require
     [ring.util.response :as r]
     [eu.stratuslab.cimi.db.protocol :refer [Operations]]
-    [eu.stratuslab.cimi.cb.bootstrap :as cbinit]
+    [eu.stratuslab.cimi.db.cb.bootstrap :as cbinit]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [couchbase-clj.client :as cbc]
     [clojure.tools.logging :as log]

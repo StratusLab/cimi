@@ -17,7 +17,7 @@
 (ns eu.stratuslab.cimi.resources.utils.utils
   "General utilities for dealing with resources."
   (:require
-    [eu.stratuslab.cimi.cb.views :as views]
+    [eu.stratuslab.cimi.db.cb.views :as views]
     [clojure.walk :as w]
     [clojure.set :as set]
     [couchbase-clj.client :as cbc]

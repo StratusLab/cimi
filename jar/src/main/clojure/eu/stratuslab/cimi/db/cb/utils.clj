@@ -14,10 +14,18 @@
 ; limitations under the License.
 ;
 
-(ns eu.stratuslab.cimi.cb.utils
+(ns eu.stratuslab.cimi.db.cb.utils
   (:require
+    [eu.stratuslab.cimi.couchbase-cfg :as cfg]
     [clojure.tools.logging :as log]
-    [couchbase-clj.client :as cbc]))
+    [couchbase-clj.client :as cbc])
+  (:import
+    [java.net URI]))
+
+(def cb-client-defaults {:uris     [(URI/create "http://localhost:8091/pools")]
+                         :bucket   "default"
+                         :username ""
+                         :password ""})
 
 (defn not-degraded?
   "Returns true if the given server statistics indicate that the server
@@ -51,4 +59,26 @@
               (log/error "timeout while waiting for Couchbase server(s) to become ready")
               false)
             (recur)))))))
+
+(defn create-cb-client
+  "Creates a Couchbase client instance from the given configuration.
+   If the argument is nil, then the default connection parameters
+   are used."
+  [cb-cfg]
+
+  ;; force logging to use SLF4J facade
+  (System/setProperty "net.spy.log.LoggerImpl" "net.spy.memcached.compat.log.SLF4JLogger")
+
+  (log/info "create Couchbase client")
+  (if-let [cfg (cfg/read-cfg cb-cfg)]
+    (try
+      (cbc/create-client cfg)
+      (catch Exception e
+        (log/error "error creating couchbase client" (str e))
+        (cbc/create-client cb-client-defaults)))
+    (do
+      (log/warn "using default couchbase configuration")
+      (cbc/create-client cb-client-defaults))))
+
+
 

@@ -85,12 +85,11 @@
   "Creates a new job and adds it to the database.  Unlike the add function
    this returns just the job URI (or nil if there is an error).  This is
    useful when creating jobs in the process of manipulating other resources."
-  [cb-client resource]
+  [resource]
   (-> resource
       (assoc :id (uuid->uri (u/random-uuid)))
       (u/strip-service-attrs)
-      (merge {:id          uri
-              :resourceURI resource-uri
+      (merge {:resourceURI resource-uri
               :state       "QUEUED"
               :progress    0})
       (u/update-timestamps)
@@ -188,7 +187,7 @@
            [request]
   (delete-impl request))
 
-(def query-impl (crud/get-query-fn resource-name collection-acl collection-uri collection-name resource-tag))
+(def query-impl (crud/get-query-fn resource-name collection-acl collection-uri resource-tag))
 
 (defmethod crud/query resource-name
            [request]

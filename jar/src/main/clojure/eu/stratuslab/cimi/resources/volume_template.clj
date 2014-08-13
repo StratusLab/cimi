@@ -21,7 +21,6 @@
   (:require
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
-    [eu.stratuslab.cimi.resources.impl.schema :as schema]
     [eu.stratuslab.cimi.resources.impl.common :as c]
     [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
@@ -115,7 +114,7 @@
            [request]
   (delete-impl request))
 
-(def query-impl (crud/get-query-fn resource-name collection-acl collection-uri collection-name resource-tag))
+(def query-impl (crud/get-query-fn resource-name collection-acl collection-uri resource-tag))
 
 (defmethod crud/query resource-name
            [request]

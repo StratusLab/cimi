@@ -1,4 +1,4 @@
-(ns eu.stratuslab.cimi.cb.bootstrap
+(ns eu.stratuslab.cimi.db.cb.bootstrap
   "Provides the utility to provide the necessary views and objects
    in the Couchbase database for minimal operation of the CIMI
    service."
@@ -7,8 +7,8 @@
     [clojure.tools.logging :as log]
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
     [eu.stratuslab.cimi.resources.user :as user]
-    [eu.stratuslab.cimi.cb.views :as views]
-    [eu.stratuslab.cimi.cb.utils :as cbutils]
+    [eu.stratuslab.cimi.db.cb.views :as views]
+    [eu.stratuslab.cimi.db.cb.utils :as cbutils]
     [couchbase-clj.client :as cbc]
     [cemerick.friend.credentials :as creds]
     [eu.stratuslab.cimi.resources.impl.common-crud :as crud]

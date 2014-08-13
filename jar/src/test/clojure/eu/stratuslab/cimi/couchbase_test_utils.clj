@@ -17,20 +17,22 @@
 (ns eu.stratuslab.cimi.couchbase-test-utils
   (:require
     [couchbase-clj.client :as cbc]
-    [eu.stratuslab.cimi.cb.bootstrap :refer [bootstrap]]
-    [eu.stratuslab.cimi.middleware.cb-client :refer [wrap-cb-client]]
+    [eu.stratuslab.cimi.db.cb.bootstrap :refer [bootstrap]]
     [eu.stratuslab.cimi.middleware.base-uri :refer [wrap-base-uri]]
     [eu.stratuslab.cimi.middleware.exception-handler :refer [wrap-exceptions]]
     [eu.stratuslab.cimi.resources.utils.utils :as utils]
-    [eu.stratuslab.cimi.cb.utils :as cbutils]
-    [eu.stratuslab.cimi.cb.views :as views]
+    [eu.stratuslab.cimi.db.cb.utils :as cbutils]
+    [eu.stratuslab.cimi.db.cb.views :as views]
     [cemerick.friend :as friend]
     [cemerick.friend.workflows :as workflows]
     [cemerick.friend.credentials :as creds]
     [compojure.core :as cc]
     [clojure.test :refer [is]]
     [clojure.pprint :refer [pprint]]
-    [clojure.tools.logging :as log])
+    [clojure.tools.logging :as log]
+    [eu.stratuslab.cimi.db.cb.utils :as db-cb-utils]
+    [eu.stratuslab.cimi.db.couchbase :as db-cb]
+    [eu.stratuslab.cimi.db.dbops :as db])
   (:import
     [java.net URI]
     [com.couchbase.client ClusterManager CouchbaseClient]
@@ -120,7 +122,6 @@
                             :credential-fn           #(creds/bcrypt-credential-fn test-users %)
                             :workflows               [(workflows/http-basic)]})
       (wrap-exceptions)
-      (wrap-cb-client *test-cb-client*)
       (wrap-base-uri)))
 
 (defn set-cb-logging []
@@ -157,19 +158,23 @@
         password "pswd"
         cb-cfg {:uris     [(URI. node-uri)]
                 :bucket   bucket
-                :username bucket
+                :username bucket                            ;; ignored
                 :password password}
         mgr (ClusterManager. [(URI. mgr-uri)] "admin" "ADMIN4")]
     (try
       (.createNamedBucket mgr BucketType/COUCHBASE bucket 512 0 password true)
       #_(set-cb-logging) ;; seems to cause failures on newest Couchbase version
-      (Thread/sleep 2000) ;; ensure bucket is loaded before running tests
-      (binding [*test-cb-client* (cbc/create-client cb-cfg)]
-        (try
-          (bootstrap *test-cb-client*)
-          (f)
-          (finally
-            (if-not (cbc/shutdown *test-cb-client* 2000)
-              (log/warn "shutdown of couchbase client failed")))))
+      (Thread/sleep 1000) ;; ensure bucket is loaded before running tests
+      (let [cb-client (-> cb-cfg
+                          (cbc/create-client))]
+        (binding [*test-cb-client* cb-client]
+          (try
+            (-> cb-client
+                (db-cb/create)
+                (db/set-impl!))
+            (db/bootstrap)
+            (f)
+            (finally
+              (db/close)))))
       (finally
         (.deleteBucket mgr bucket)))))

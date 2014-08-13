@@ -16,19 +16,26 @@
 
 (ns eu.stratuslab.cimi.db.dbops
   (:require
-    [eu.stratuslab.cimi.db.protocol :as p]))
+    [eu.stratuslab.cimi.db.protocol :as p]
+    [clojure.tools.logging :as log]))
 
 (def ^:dynamic *dbops*)
 
 (defn set-impl!
   [dbops]
-  (alter-var-root *dbops* (constantly dbops)))
+  (alter-var-root #'*dbops* (constantly dbops)))
 
 (defn bootstrap []
-  (p/bootstrap *dbops*))
+  (try
+    (p/bootstrap *dbops*)
+    (catch Exception e
+      (log/error "error bootstrapping database operations protocol: " (str e)))))
 
 (defn close []
-  (p/close *dbops*))
+  (try
+    (p/close *dbops*)
+    (catch Exception e
+      (log/error "error closing database operations protocol: " (str e)))))
 
 (defn add [resource]
   (p/add *dbops* resource))

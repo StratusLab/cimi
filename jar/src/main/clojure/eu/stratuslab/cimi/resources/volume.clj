@@ -154,8 +154,8 @@
       (throw (ex-info msg resp)))))
 
 (defn create->template [create-tpl]
-  (let [skeleton (volume-skeleton uri create-req)
-        volumeTemplate (:volumeTemplate create-req)
+  (let [skeleton (volume-skeleton (:id create-tpl) create-tpl)
+        volumeTemplate (:volumeTemplate create-tpl)
         volume-config (u/resolve-href (:volumeConfig volumeTemplate))
         volume-image (u/resolve-href (:volumeImage volumeTemplate))]
     (merge volume-config volume-image skeleton)))
@@ -199,7 +199,7 @@
            [request]
   (delete-impl request))
 
-(def query-impl (crud/get-query-fn resource-name collection-acl collection-uri collection-name resource-tag))
+(def query-impl (crud/get-query-fn resource-name collection-acl collection-uri resource-tag))
 
 (defmethod crud/query resource-name
            [request]

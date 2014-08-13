@@ -1,9 +1,9 @@
-(ns eu.stratuslab.cimi.cb.bootstrap-test
+(ns eu.stratuslab.cimi.db.cb.bootstrap-test
   (:require
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
-    [eu.stratuslab.cimi.cb.bootstrap :refer :all]
-    [eu.stratuslab.cimi.cb.views :as views]
+    [eu.stratuslab.cimi.db.cb.bootstrap :refer :all]
+    [eu.stratuslab.cimi.db.cb.views :as views]
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
     [clojure.test :refer :all]))

@@ -47,7 +47,6 @@
       <dependency>
         <groupId>prismatic</groupId>
         <artifactId>schema</artifactId>
-        <version>0.2.4</version>
       </dependency>
       
       <dependency>
@@ -121,7 +120,13 @@
         <groupId>instaparse</groupId>
         <artifactId>instaparse</artifactId>
       </dependency>
-      
+
+      <dependency>
+        <groupId>slamhound</groupId>
+        <artifactId>slamhound</artifactId>
+        <version>1.5.5</version>
+      </dependency>
+
       <dependency>
         <groupId>reply</groupId>
         <artifactId>reply</artifactId>

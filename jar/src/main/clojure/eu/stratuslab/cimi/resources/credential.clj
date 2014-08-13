@@ -94,7 +94,7 @@
            [request]
   (delete-impl request))
 
-(def query-impl (crud/get-query-fn resource-name collection-acl collection-uri collection-name resource-tag))
+(def query-impl (crud/get-query-fn resource-name collection-acl collection-uri resource-tag))
 
 (defmethod crud/query resource-name
            [request]

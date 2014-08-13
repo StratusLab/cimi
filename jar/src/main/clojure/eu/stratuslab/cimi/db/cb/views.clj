@@ -14,7 +14,7 @@
 ; limitations under the License.
 ;
 
-(ns eu.stratuslab.cimi.cb.views
+(ns eu.stratuslab.cimi.db.cb.views
   "Provides constants and utilities for the views used to
    index and search the CIMI documents in the Couchbase
    database.

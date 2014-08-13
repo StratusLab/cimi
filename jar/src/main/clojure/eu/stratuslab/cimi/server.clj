@@ -8,13 +8,13 @@
     [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
     [eu.stratuslab.authn.workflows.authn-workflows :as aw]
     [eu.stratuslab.cimi.couchbase-cfg :refer [read-cfg]]
-    [eu.stratuslab.cimi.cb.bootstrap :refer [bootstrap]]
     [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
     [eu.stratuslab.cimi.middleware.base-uri :refer [wrap-base-uri]]
     [eu.stratuslab.cimi.middleware.couchbase-store :refer [couchbase-store]]
     [eu.stratuslab.cimi.middleware.exception-handler :refer [wrap-exceptions]]
-    [eu.stratuslab.cimi.db.protocol :as db]
+    [eu.stratuslab.cimi.db.dbops :as db]
     [eu.stratuslab.cimi.db.couchbase :as db-cb]
+    [eu.stratuslab.cimi.db.cb.utils :as db-cb-utils]
     [eu.stratuslab.cimi.routes :as routes]
     [cemerick.friend :as friend]
     [cemerick.friend.workflows :as workflows]
@@ -23,39 +23,14 @@
     [metrics.ring.instrument :refer [instrument]]
     [metrics.ring.expose :refer [expose-metrics-as-json]]
     [metrics.jvm.core :refer [instrument-jvm]]
-    [org.httpkit.server :refer [run-server]])
-  (:import
-    [java.net URI]))
-
-(def cb-client-defaults {:uris     [(URI/create "http://localhost:8091/pools")]
-                         :bucket   "default"
-                         :username ""
-                         :password ""})
-
-;; FIXME: Move this to the Couchbase namespaces
-(defn- create-cb-client
-  "Creates a Couchbase client instance from the given configuration.
-   If the argument is nil, then the default connection parameters
-   are used."
-  [cb-cfg]
-
-  ;; force logging to use SLF4J facade
-  (System/setProperty "net.spy.log.LoggerImpl" "net.spy.memcached.compat.log.SLF4JLogger")
-
-  (log/info "create Couchbase client")
-  (if-let [cfg (read-cfg cb-cfg)]
-    (try
-      (cbc/create-client cfg)
-      (catch Exception e
-        (log/error "error creating couchbase client" (str e))
-        (cbc/create-client cb-client-defaults)))
-    (do
-      (log/warn "using default couchbase configuration")
-      (cbc/create-client cb-client-defaults))))
+    [org.httpkit.server :refer [run-server]]))
 
 (defn set-dbops-value
-  [cb-client]
-  (db/set-dbops! (db-cb/create cb-client)))
+  [cb-cfg-file]
+  (-> cb-cfg-file
+      (db-cb-utils/create-cb-client)
+      (db-cb/create)
+      (db/set-impl!)))
 
 (defn- create-ring-handler
   "Creates a ring handler that wraps all of the service routes
@@ -115,8 +90,8 @@
    state containing the Couchbase client and the function to stop
    the http-kit container."
   [port cb-cfg-file]
-  (set-dbops-value (create-cb-client cb-cfg-file))
-  (db/bootstrap db/*dbops*)
+  (set-dbops-value cb-cfg-file)
+  (db/bootstrap)
   (let [stop-fn (-> (create-ring-handler)
                     (start-container port))]
     {:stop-fn stop-fn}))
@@ -127,8 +102,7 @@
    function as the argument."
   [{:keys [stop-fn]}]
   (log/info "shutting down database client")
-  (if db/*dbops*
-    (db/close db/*dbops*))
+  (db/close)
   (log/info "shutting down http-kit container")
   (if stop-fn
     (stop-fn)))
