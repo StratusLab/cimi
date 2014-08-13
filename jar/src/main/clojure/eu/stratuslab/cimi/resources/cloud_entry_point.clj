@@ -121,7 +121,8 @@
                       (c/set-operations request)
                       (c/validate))
           stripped (apply dissoc updated stripped-keys)]
-      (db/edit stripped))))
+      (db/edit stripped)
+      (r/response updated))))
 
 (defmethod crud/edit resource-name
            [request]
