@@ -17,11 +17,11 @@
 (ns eu.stratuslab.cimi.resources.service-configuration
   "Management of the configuration of the cloud services."
   (:require
-    [eu.stratuslab.cimi.resources.impl.common :as c]
+    [eu.stratuslab.cimi.resources.common.schema :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
-    [eu.stratuslab.cimi.resources.impl.common :as c]
-    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
+    [eu.stratuslab.cimi.resources.common.schema :as c]
+    [eu.stratuslab.cimi.resources.common.crud :as crud]
     [ring.util.response :as r]
     [cemerick.friend :as friend]
     [schema.core :as s]

@@ -3,7 +3,7 @@
   (:require [compojure.core :refer [ANY DELETE GET POST PUT let-routes
                                     routes]]
             [compojure.route :as route]
-            [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
+            [eu.stratuslab.cimi.resources.common.crud :as crud]
             [eu.stratuslab.cimi.resources.utils.dynamic-load :as dyn]
             [eu.stratuslab.cimi.resources.utils.utils :as u]))
 

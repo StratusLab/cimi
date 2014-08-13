@@ -14,13 +14,13 @@
 ; limitations under the License.
 ;
 
-(ns eu.stratuslab.cimi.resources.impl.common-crud
+(ns eu.stratuslab.cimi.resources.common.crud
   (:require
     [clojure.tools.logging :as log]
     [ring.util.response :as r]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
-    [eu.stratuslab.cimi.resources.impl.common :as c]
+    [eu.stratuslab.cimi.resources.common.schema :as c]
     [eu.stratuslab.cimi.db.dbops :as db]))
 
 (defn resource-name-dispatch

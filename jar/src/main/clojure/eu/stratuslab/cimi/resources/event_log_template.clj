@@ -15,7 +15,7 @@
 ;
 (ns eu.stratuslab.cimi.resources.event-log-template
   (:require
-    [eu.stratuslab.cimi.resources.impl.common :as c]
+    [eu.stratuslab.cimi.resources.common.schema :as c]
     [schema.core :as s]))
 
 ;;

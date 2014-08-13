@@ -24,7 +24,7 @@
     [clojure.test :refer :all]
     [clojure.data.json :as json]
     [peridot.core :refer :all]
-    [eu.stratuslab.cimi.resources.impl.common :as c]))
+    [eu.stratuslab.cimi.resources.common.schema :as c]))
 
 (use-fixtures :each t/temp-bucket-fixture)
 

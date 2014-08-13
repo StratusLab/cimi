@@ -14,9 +14,9 @@
 ; limitations under the License.
 ;
 
-(ns eu.stratuslab.cimi.resources.impl.common-test
+(ns eu.stratuslab.cimi.resources.common.schema-test
   (:require
-    [eu.stratuslab.cimi.resources.impl.common :refer :all]
+    [eu.stratuslab.cimi.resources.common.schema :refer :all]
     [schema.core :as s]
     [expectations :refer :all]))
 

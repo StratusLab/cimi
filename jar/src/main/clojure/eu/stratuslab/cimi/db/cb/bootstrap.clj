@@ -11,7 +11,7 @@
     [eu.stratuslab.cimi.db.cb.utils :as cbutils]
     [couchbase-clj.client :as cbc]
     [cemerick.friend.credentials :as creds]
-    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
+    [eu.stratuslab.cimi.resources.common.crud :as crud]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [cemerick.friend :as friend]))
 

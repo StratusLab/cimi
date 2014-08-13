@@ -14,7 +14,7 @@
 ; limitations under the License.
 ;
 
-(ns eu.stratuslab.cimi.resources.impl.common
+(ns eu.stratuslab.cimi.resources.common.schema
   (:require
     [clojure.tools.logging :as log]
     [clojure.string :as str]

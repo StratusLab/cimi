@@ -17,13 +17,13 @@
 (ns eu.stratuslab.cimi.resources.machine-image
   "Utilities for managing the CRUD features for machine images."
   (:require
-    [eu.stratuslab.cimi.resources.impl.common :as c]
+    [eu.stratuslab.cimi.resources.common.schema :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [cemerick.friend :as friend]
     [schema.core :as s]
-    [eu.stratuslab.cimi.resources.impl.common :as c]
-    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]))
+    [eu.stratuslab.cimi.resources.common.schema :as c]
+    [eu.stratuslab.cimi.resources.common.crud :as crud]))
 
 (def ^:const resource-tag :machineImages)
 

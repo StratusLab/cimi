@@ -19,10 +19,10 @@
   (:require
     [clojure.tools.logging :as log]
     [schema.core :as s]
-    [eu.stratuslab.cimi.resources.impl.common :as c]
+    [eu.stratuslab.cimi.resources.common.schema :as c]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.credential-template :as ct]
-    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
+    [eu.stratuslab.cimi.resources.common.crud :as crud]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [cemerick.friend :as friend]))
 

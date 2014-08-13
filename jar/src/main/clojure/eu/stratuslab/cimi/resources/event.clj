@@ -19,11 +19,11 @@
   (:require
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
-    [eu.stratuslab.cimi.resources.impl.common :as c]
+    [eu.stratuslab.cimi.resources.common.schema :as c]
     [ring.util.response :as r]
     [schema.core :as s]
     [clojure.tools.logging :as log]
-    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
+    [eu.stratuslab.cimi.resources.common.crud :as crud]
     [cemerick.friend :as friend]))
 
 (def ^:const resource-tag :events)

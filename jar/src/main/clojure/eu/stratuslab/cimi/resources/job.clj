@@ -16,10 +16,10 @@
 (ns eu.stratuslab.cimi.resources.job
   "Utilities for managing the CRUD features for jobs."
   (:require
-    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
+    [eu.stratuslab.cimi.resources.common.crud :as crud]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
-    [eu.stratuslab.cimi.resources.impl.common :as c]
+    [eu.stratuslab.cimi.resources.common.schema :as c]
     [ring.util.response :as r]
     [clojure.walk :as w]
     [schema.core :as s]

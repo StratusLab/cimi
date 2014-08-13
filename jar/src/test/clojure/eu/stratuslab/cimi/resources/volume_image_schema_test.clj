@@ -20,7 +20,7 @@
     [schema.core :as s]
     [expectations :refer :all]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
-    [eu.stratuslab.cimi.resources.impl.common :as c]))
+    [eu.stratuslab.cimi.resources.common.schema :as c]))
 
 (def valid-acl {:owner {:principal "::ADMIN"
                         :type      "ROLE"}

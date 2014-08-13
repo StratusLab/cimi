@@ -21,8 +21,8 @@
   (:require
     [couchbase-clj.client :as cbc]
     [couchbase-clj.query :as cbq]
-    [eu.stratuslab.cimi.resources.impl.common :as c]
-    [eu.stratuslab.cimi.resources.impl.common-crud :as crud]
+    [eu.stratuslab.cimi.resources.common.schema :as c]
+    [eu.stratuslab.cimi.resources.common.crud :as crud]
     [eu.stratuslab.cimi.resources.utils.utils :as u]
     [eu.stratuslab.cimi.resources.utils.auth-utils :as a]
     [eu.stratuslab.cimi.resources.volume-configuration :as vc]

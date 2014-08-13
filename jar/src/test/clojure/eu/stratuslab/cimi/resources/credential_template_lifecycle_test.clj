@@ -24,7 +24,7 @@
     [clojure.data.json :as json]
     [peridot.core :refer :all]
     [eu.stratuslab.cimi.app.routes :as routes]
-    [eu.stratuslab.cimi.resources.impl.common :as c]))
+    [eu.stratuslab.cimi.resources.common.schema :as c]))
 
 (use-fixtures :each t/flush-bucket-fixture)
 
