@@ -17,7 +17,14 @@
             [metrics.ring.instrument :refer [instrument]]
             [org.httpkit.server :refer [run-server]]
             [ring.middleware.json :refer [wrap-json-body
-                                          wrap-json-response]]))
+                                          wrap-json-response]]
+            [eu.stratuslab.cimi.resources.cloud-entry-point :as cep]
+            [cemerick.friend.credentials :as creds]
+            [eu.stratuslab.cimi.resources.user :as user]))
+
+(def admin-id-map {:current         "admin"
+                   :authentications {"admin" {:identity "admin"
+                                              :roles    ["::ADMIN"]}}})
 
 (defn set-dbops-value
   [cb-cfg-file]
@@ -25,6 +32,61 @@
       (db-cb-utils/create-cb-client)
       (db-cb/create)
       (db/set-impl!)))
+
+(defn create-cep
+  "Checks to see if the CloudEntryPoint exists in the database;
+   if not, it will create one.  The CloudEntryPoint is the core
+   resource of the service and must exist."
+  []
+  (if (cep/add)
+    (log/info "created CloudEntryPoint")
+    (do
+      (log/warn "did NOT create CloudEntryPoint")
+      (try
+        (binding [friend/*identity* admin-id-map]
+          (db/retrieve cep/resource-name))
+        (log/warn "CloudEntryPoint exists")
+        (catch Exception e
+          (log/error "problem retrieving CloudEntryPoint: " (str e)))))))
+
+(defn random-password
+  "A random password of 12 characters consisting of the ASCII
+   characters between 40 '(' and 95 '_'."
+  []
+  (let [valid-chars (map char (concat (range 48 58)
+                                      (range 65 91)
+                                      (range 97 123)))]
+    (reduce str (for [_ (range 12)] (rand-nth valid-chars)))))
+
+(defn create-admin
+  "Checks to see if the User/admin entry exists in the database;
+   if not, it will create one with a randomized password.  The
+   clear text password will be written to the service log."
+  []
+  (binding [friend/*identity* admin-id-map]
+    (try
+      (let [id (str user/resource-name "/admin")]
+        (db/retrieve id)
+        (log/info id "exists"))
+      (catch Exception e
+        (let [password (random-password)
+              admin {:first-name "cloud"
+                     :last-name  "administrator"
+                     :username   "admin"
+                     :password   (creds/hash-bcrypt password)
+                     :enabled    true
+                     :roles      ["::ADMIN"]
+                     :email      "change_me@example.com"}]
+          (try
+            (db/add admin)
+            (log/warn "User/admin entry created; initial password is" password)
+            (catch Exception e
+              (log/error "Error occurred while trying to create User/admin entry:" (str e)))))))))
+
+(defn create-cep-admin
+  []
+  (create-admin)
+  (create-cep))
 
 (defn- create-ring-handler
   "Creates a ring handler that wraps all of the service routes
@@ -86,6 +148,7 @@
   [port cb-cfg-file]
   (set-dbops-value cb-cfg-file)
   (db/bootstrap)
+  (create-cep-admin)
   (let [stop-fn (-> (create-ring-handler)
                     (start-container port))]
     {:stop-fn stop-fn}))

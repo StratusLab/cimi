@@ -17,8 +17,7 @@
 (ns eu.stratuslab.cimi.app.main
   "Entry point for running CIMI server from the command line and
    hence from system service management scripts."
-  (:require [eu.stratuslab.cimi.app.server :refer [register-shutdown-hook
-                                                   start]])
+  (:require [eu.stratuslab.cimi.app.server :refer [register-shutdown-hook start]])
   (:gen-class))
 
 (defn valid-port?
