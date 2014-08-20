@@ -17,21 +17,28 @@
 (ns eu.stratuslab.cimi.middleware.base-uri-test
   (:require
     [eu.stratuslab.cimi.middleware.base-uri :refer :all]
+    [expectations :refer :all]
     [clojure.test :refer [deftest is are]]))
 
-(deftest check-wrapping-works
-  (let [context "cimi"
-        correct-value "http://example.com:9999/cimi/"
-        tfunc (fn [req]
-                (is (= correct-value (:base-uri req))))]
-    ((wrap-base-uri tfunc context) {:scheme      "http"
-                                    :server-name "example.com"
-                                    :server-port 9999})))
+(def request {:headers {"host" "external.example.org:9998"
+                        "x-forwarded-proto" "https"}
+              :scheme :http
+              :server-name "internal.example.com"
+              :server-port 9999})
 
-(deftest check-wrapping-works-without-context
-  (let [correct-value "http://example.com:9999/"
-        tfunc (fn [req]
-                (is (= correct-value (:base-uri req))))]
-    ((wrap-base-uri tfunc) {:scheme      "http"
-                            :server-name "example.com"
-                            :server-port 9999})))
+(def wrapper (wrap-base-uri identity))
+
+(expect "external.example.org:9998" (get-host-port request))
+(expect "internal.example.com:9999" (get-host-port (dissoc request :headers)))
+
+(expect "https" (get-scheme request))
+(expect "http" (get-scheme (dissoc request :headers)))
+
+(expect "https://external.example.org:9998/cimi/" (construct-base-uri request))
+(expect "http://internal.example.com:9999/cimi/" (construct-base-uri (dissoc request :headers)))
+
+(expect "https://external.example.org:9998/cimi/" (:base-uri (wrapper request)))
+(expect "http://internal.example.com:9999/cimi/" (:base-uri (wrapper (dissoc request :headers))))
+
+
+(run-tests [*ns*])
