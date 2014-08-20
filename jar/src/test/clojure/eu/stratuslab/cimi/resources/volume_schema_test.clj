@@ -33,7 +33,7 @@
    :type     "http://schemas.cimi.stratuslab.eu/normal"
    :capacity 1024
    :bootable true
-   :eventLog "EventLog/uuid"})
+   :eventLog {:href "EventLog/uuid"}})
 
 (let [volume (assoc valid-v-entry
                :id "Volume/10"
