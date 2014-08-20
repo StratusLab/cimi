@@ -26,14 +26,14 @@
                          :right     "VIEW"}]})
 
 (def valid-entry
-  {:state "CREATING"
-   :type "http://schemas.cimi.stratuslab.eu/normal"
-   :capacity 1024
-   :bootable true
-   :eventLog "EventLog/uuid"})
+  {:bootable true,
+   :capacity 1024,
+   :type "http://schemas.cimi.stratuslab.eu/normal",
+   :state "CREATING",
+   :resourceURI "http://schemas.dmtf.org/cimi/1/Volume"})
 
-(def valid-template
-  {:resourceURI "http://schemas.dmtf.org/cimi/1/VolumeCreate"
+(def valid-create-entry
+  {:resourceURI create-uri
    :name "template"
    :description "dummy template"
    :volumeTemplate {:volumeConfig {:type "http://schemas.cimi.stratuslab.eu/normal"
@@ -42,6 +42,10 @@
                     :volumeImage {:state "AVAILABLE"
                                   :imageLocation {:href "https://marketplace.stratuslab.eu/A"}
                                   :bootable true}}})
+
+(def invalid-create-entry
+  {:volumeTemplate
+    (assoc valid-create-entry :invalid "BAD")})
 
 (deftest lifecycle
 
@@ -70,7 +74,7 @@
                 (authorize "jane" "user_password")
                 (request base-uri
                          :request-method :post
-                         :body (json/write-str valid-entry))
+                         :body (json/write-str valid-create-entry))
                 (t/is-status 201)
                 (t/location))
         abs-uri (str c/service-context uri)]
@@ -83,6 +87,7 @@
         (request abs-uri)
         (t/is-status 200)
         (dissoc :acl)                                       ;; ACL added automatically
+        (dissoc :eventLog)                                  ;; remove eventLog as well
         (t/does-body-contain valid-entry))
 
     ;; query to see that entry is listed
@@ -108,7 +113,7 @@
         (request abs-uri)
         (t/is-status 404))))
 
-(deftest bad-methods
+#_(deftest bad-methods
   (let [resource-uri (str base-uri "/" (u/random-uuid))]
     (doall
       (for [[uri method] [[base-uri :options]

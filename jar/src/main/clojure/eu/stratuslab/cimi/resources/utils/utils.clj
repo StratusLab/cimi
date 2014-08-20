@@ -71,10 +71,10 @@
    returned."
   [body]
   (if body
-    (if (string? body)
-      (json/read-str body :key-fn keyword :eof-error? false :eof-value {})
-      (json/read (io/reader body) :key-fn keyword :eof-error? false :eof-value {}))
-    {}))
+    (cond
+      (string? body) (json/read-str body :key-fn keyword :eof-error? false :eof-value {})
+      (map? body) body
+      :else (json/read (io/reader body) :key-fn keyword :eof-error? false :eof-value {}))))
 
 (defn json->body
   "Converts a clojure data structure into a string."
@@ -173,7 +173,7 @@
    attribute with the result of merging the referenced resource with the
    values provided locally.  If a reference is found, the common attributes
    are also removed from the map."
-  [cb-client v]
+  [v]
   (w/prewalk resolve-href v))
 
 (defn bad-method

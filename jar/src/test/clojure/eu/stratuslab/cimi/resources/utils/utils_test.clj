@@ -99,4 +99,4 @@
     (cbc/add-json t/*test-cb-client* "Data/2" data2)
     (cbc/add-json t/*test-cb-client* "Data/3" data3)
     (cbc/add-json t/*test-cb-client* "Data/4" data4)
-    (is (= correct (resolve-hrefs t/*test-cb-client* data4)))))
+    (is (= correct (resolve-hrefs data4)))))

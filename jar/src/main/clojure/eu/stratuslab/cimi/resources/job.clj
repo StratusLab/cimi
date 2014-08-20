@@ -106,30 +106,26 @@
       (name v)
       (str v))))
 
-(defn properties-map
-  "Converts the given map into a properties map, with all keys
-   and values converted into strings.  If the map is nil or
-   empty, then an empty map is returned."
-  [props]
-  (if (seq props)
-    {:properties (w/prewalk value-as-string props)}
-    {}))
-
 (defn launch
   "Creates a new job, returning an 'accepted' ring response with
    the CIMI-Job-URI header set.  If the optional props arguments is
    given then the values will be used for job properties.  All of the
    keys and values in the properties will by transformed to strings."
-  [uri action & [props]]
-  (let [job-map (merge
-                  {:acl job-acl :targetResource uri :action action}
-                  (properties-map props))]
-    (if-let [job-resp (crud/add job-map)]                   ;; FIXME: job-map needs to be ring request!
+  [job]
+  (let [request {:request-method :post
+                 :uri            "internal job create"
+                 :body           job
+                 :params         {:resource-name resource-name}
+                 :session        {:cemerick.friend/identity {:current         "root"
+                                                             :authentications {"root" {:identity "root"
+                                                                                       :roles    ["::ADMIN"]}}}}}]
+
+    (if-let [job-resp (crud/add request)]
       (let [job-uri (get-in job-resp [:headers "Location"])]
         (-> (r/response nil)
             (r/status 202)
             (r/header "CIMI-Job-URI" job-uri)))
-      (-> (str "cannot create job [" action ", " uri "]")
+      (-> (str "cannot create job")
           (r/response)
           (r/status 500)))))
 
@@ -181,6 +177,7 @@
            [request]
   (edit-impl request))
 
+;; FIXME: Delete implementation needs to spawn job before deleting the entry.
 (def delete-impl (crud/get-delete-fn resource-name))
 
 (defmethod crud/delete resource-name

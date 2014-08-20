@@ -26,6 +26,7 @@
     [ring.util.response :as r]
     [schema.core :as s]
     [clojure.tools.logging :as log]
+    [clojure.pprint :refer [pprint]]
     [cemerick.friend :as friend]
     [eu.stratuslab.cimi.db.dbops :as db]))
 
@@ -47,6 +48,9 @@
 
 (def ^:const create-uri (str c/cimi-schema-uri resource-name "Create"))
 
+(def job-acl {:owner {:principal "::ADMIN"
+                      :type      "ROLE"}})
+
 ;;
 ;; schemas
 ;;
@@ -60,11 +64,11 @@
           :type                      c/NonBlankString
           :capacity                  c/PosInt
           (s/optional-key :bootable) s/Bool
-          (s/optional-key :eventLog) c/NonBlankString}))
+          (s/optional-key :eventLog) c/ResourceLink}))
 
 (def VolumeCreate
   (merge c/CreateAttrs
-         c/AclAttr
+         ;; c/AclAttr  ;; FIXME: does create need an ACL at this level?
          {:volumeTemplate vt/VolumeTemplateRef}))
 
 (def validate-create (u/create-validation-fn VolumeCreate))
@@ -78,10 +82,10 @@
            [resource]
   (validate-fn resource))
 
-(def validate-fn (u/create-validation-fn VolumeCreate))
+(def create-validate-fn (u/create-validation-fn VolumeCreate))
 (defmethod c/validate create-uri
            [resource]
-  (validate-fn resource))
+  (create-validate-fn resource))
 
 (defmethod crud/add-acl resource-name
            [resource resource-name]
@@ -91,92 +95,71 @@
 ;; functions for special handling of templates
 ;;
 
-(defn volume-skeleton [uri entry]
-  (if (u/correct-resource? create-uri entry)
-    (-> entry
-        (u/strip-service-attrs)
-        (dissoc :volumeTemplate)
-        (assoc :resourceURI resource-uri)
-        (u/update-timestamps)
-        (assoc :state "CREATING" :id uri))
-    (throw (Exception. (str create-uri " resource required")))))
+(defn volume-skeleton
+  [uuid type capacity bootable]
+  (let [id (str resource-name "/" uuid)
+        event-log (str "EventLog/" uuid)]
+    {:id          id
+     :resourceURI resource-uri
+     :state       "CREATING"
+     :type        type
+     :capacity    capacity
+     :bootable    (boolean bootable)
+     :eventLog    {:href event-log}}))
 
-(defn create-req->template [uri create-req]
-  (let [skeleton (volume-skeleton uri create-req)
-        volumeTemplate (:volumeTemplate create-req)
-        volume-config (u/resolve-href (:volumeConfig volumeTemplate))
-        volume-image (u/resolve-href (:volumeImage volumeTemplate))]
-    (merge volume-config volume-image skeleton)))
-
-(defn template->volume [template]
-  (-> (select-keys template [:id :resourceURI :name :description
-                             :created :updated :properties
-                             :state :type :capacity
-                             :bootable :images :meters :eventLog])
-      (assoc :acl {:owner {:principal "::ADMIN" :type "ROLE"}}) ;; FIXME: Add real user ACL!
-      (c/validate)))
-
-(defn template->params [template]
-  (let [params (select-keys template [:type :format :capacity :bootable])]
-    (if-let [imageLocation (get-in template [:imageLocation :href])]
-      (assoc params :imageLocation imageLocation)
-      params)))
-
-(defn add
-  "Add a new Volume to the database based on the VolumeTemplate
-   passed into this method."
-  [entry]
-  (validate-create entry)
-  (let [json entry                                          ;; FIXME: THIS IS WRONG!
-        uri (crud/new-identifier resource-name json)
-        template (create-req->template uri entry)
-        volume (template->volume template)
-        params (template->params template)]
-    (db/add volume)
-    (let [job-resp (job/launch uri "create" params)]
-      (if (= 202 (:status job-resp))
-        (-> job-resp
-            (r/status 201)
-            (r/header "Location" uri))
-        job-resp))))
+;; FIXME: Create real job!
+(defn volume-job
+  [uuid state imageLocation format]
+  {:id             (str "Job/" uuid)
+   :properties     {"state"      state
+                    "image-href" (:href imageLocation)
+                    "format"     format}
+   :targetResource (str "Volume/" uuid)
+   :action         "create"
+   :acl            job-acl})
 
 ;;
 ;; CRUD operations
 ;;
 
-(defn correct-resource-uri?
-  [{:keys [resourceURI] :as resource} expected-resource-uri]
-  (if (= resourceURI expected-resource-uri)
-    resource
-    (let [msg (str "resourceURI mismatch: " expected-resource-uri " (expected) != " resourceURI " (actual)")
-          resp (-> (r/response msg)
-                   (r/status 400))]
-      (throw (ex-info msg resp)))))
+(defn process-template
+  "Accepts a VolumeTemplate and returns a vector with the initialized
+   Volume and a Job."
+  [tpl]
+  (let [uuid (u/random-uuid)
+        {:keys [volumeConfig volumeImage] :as volume-template} (u/resolve-href tpl)
+        {:keys [type format capacity] :as volumeConfig} (u/resolve-href volumeConfig)
+        {:keys [state imageLocation bootable] :as volumeImage} (u/resolve-href volumeImage)]
+    [(volume-skeleton uuid type capacity bootable)
+     (volume-job uuid state imageLocation format)]))
 
-(defn create->template [create-tpl]
-  (let [skeleton (volume-skeleton (:id create-tpl) create-tpl)
-        volumeTemplate (:volumeTemplate create-tpl)
-        volume-config (u/resolve-href (:volumeConfig volumeTemplate))
-        volume-image (u/resolve-href (:volumeImage volumeTemplate))]
-    (merge volume-config volume-image skeleton)))
+(defn dump [m]
+  (pprint m)
+  m)
 
-(defn add-impl [{:keys [body] :as request}]
+(defn add-impl
+  [{:keys [body] :as request}]
   (a/modifiable? {:acl collection-acl} request)
-  (let [json (u/body->json body)
-        uri (crud/new-identifier resource-name json)]
-    (-> json
-        (correct-resource-uri? create-uri)
-        (create->template)
-        (u/strip-service-attrs)
-        (assoc :id uri)
-        (assoc :resourceURI resource-uri)
+  (let [[volume job] (-> (u/body->json body)
+                         (assoc :resourceURI create-uri)
+                         (c/validate)
+                         (:volumeTemplate)
+                         (process-template))]
+    (-> volume
         (u/update-timestamps)
         (crud/add-acl resource-name)
         (c/validate)
-        (db/add))))
+        (db/add))
 
-(def add-impl (crud/get-add-fn resource-name collection-acl resource-uri))
+    (let [id (:id volume)
+          response (job/launch job)]
+      (if (= 202 (:status response))
+        (-> response
+            (r/status 201)
+            (r/header "Location" id))
+        response))))
 
+;; requires a VolumeTemplate to create new Volume
 (defmethod crud/add resource-name
            [request]
   (add-impl request))
