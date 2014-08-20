@@ -8,16 +8,13 @@
     [eu.stratuslab.cimi.couchbase-test-utils :as t]
     [clojure.test :refer :all]))
 
-(use-fixtures :each t/temp-bucket-fixture)
+(use-fixtures :once t/temp-bucket-fixture)
 
-(deftest apply-bootstrap-to-empty-db
-  (bootstrap t/*test-cb-client*)
+(deftest check-bootstrap-adds-views
 
-  ;; verify that the CloudEntryPoint exists
-  (let [cep (cbc/get-json t/*test-cb-client* cep/resource-name)]
-    (is (not (nil? cep)))
-    (is (not (empty? cep)))
-    (is (= cep/resource-uri (:resourceURI cep))))
+  ;; the bootstrap mechanism should be called automatically
+  ;; when the temporary bucket is created; ensure that this
+  ;; has setup the views
 
   ;; verify that views exist
   (let [user-ids-view (views/get-view t/*test-cb-client* :user-ids)
@@ -25,20 +22,5 @@
         resource-type-view (views/get-view t/*test-cb-client* :resource-type)]
     (is (not (nil? user-ids-view)))
     (is (not (nil? resource-uri-view)))
-    (is (not (nil? resource-type-view))))
-
-  ;; check that queries work
-  (let [by-user-ids-q (cbq/create-query {:key          "admin"
-                                         :include-docs false
-                                         :stale        false})
-        by-user-ids-view (views/get-view t/*test-cb-client* :user-ids)
-        by-user-ids (cbc/query t/*test-cb-client* by-user-ids-view by-user-ids-q)
-
-        by-resource-uri-q (cbq/create-query {:key          cep/resource-uri
-                                             :include-docs false
-                                             :stale        false})
-        by-resource-uri-view (views/get-view t/*test-cb-client* :resource-uri)
-        by-resource-uri (cbc/query t/*test-cb-client* by-resource-uri-view by-resource-uri-q)]
-    (is (= 1 (count by-user-ids)))
-    (is (= 1 (count by-resource-uri)))))
+    (is (not (nil? resource-type-view)))))
 
